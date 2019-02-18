@@ -340,7 +340,8 @@ public class StoreMessageManager implements MessageManager {
             // source for the InputStream
             file = File.createTempFile("imap", ".msg");
             try (FileOutputStream out = new FileOutputStream(file);
-                 TeeInputStream tmpMsgIn = new TeeInputStream(new BufferedInputStream(msgIn), new BufferedOutputStream(out));
+                 BufferedOutputStream bufferedOut = new BufferedOutputStream(out);
+                 BufferedInputStream tmpMsgIn = new BufferedInputStream(new TeeInputStream(msgIn, bufferedOut));
                  BodyOffsetInputStream bIn = new BodyOffsetInputStream(tmpMsgIn)) {
                 // Disable line length... This should be handled by the smtp server
                 // component and not the parser itself
@@ -434,6 +435,7 @@ public class StoreMessageManager implements MessageManager {
                     // the file now
                     // via the TeeInputStream
                 }
+                bufferedOut.close();
                 int bodyStartOctet = (int) bIn.getBodyStartOffset();
                 if (bodyStartOctet == -1) {
                     bodyStartOctet = 0;
