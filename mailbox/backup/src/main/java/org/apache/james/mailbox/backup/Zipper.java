@@ -28,12 +28,17 @@ import org.apache.commons.compress.archivers.zip.ExtraFieldUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.apache.james.mailbox.model.MailboxAnnotation;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
 import org.apache.james.mailbox.store.mail.model.MailboxMessage;
 
 import com.github.fge.lambdas.Throwing;
+import com.google.common.base.Charsets;
 
 public class Zipper implements Backup {
+
+    public static final String ANNOTATION_DIRECTORY = "annotations";
+
     public Zipper() {
         ExtraFieldUtils.register(SizeExtraField.class);
         ExtraFieldUtils.register(UidExtraField.class);
@@ -45,7 +50,7 @@ public class Zipper implements Backup {
     }
 
     @Override
-    public void archive(List<Mailbox> mailboxes, Stream<MailboxMessage> messages, OutputStream destination) throws IOException {
+    public void archive(List<MailboxWithAnnotations> mailboxes, Stream<MailboxMessage> messages, OutputStream destination) throws IOException {
         try (ZipArchiveOutputStream archiveOutputStream = new ZipArchiveOutputStream(destination)) {
             storeMailboxes(mailboxes, archiveOutputStream);
             storeMessages(messages, archiveOutputStream);
@@ -53,19 +58,22 @@ public class Zipper implements Backup {
         }
     }
 
-    private void storeMailboxes(List<Mailbox> mailboxes, ZipArchiveOutputStream archiveOutputStream) throws IOException {
-        for (Mailbox mailbox: mailboxes) {
-            storeInArchive(mailbox, archiveOutputStream);
-        }
+    private void storeMailboxes(List<MailboxWithAnnotations> mailboxes, ZipArchiveOutputStream archiveOutputStream) throws IOException {
+        mailboxes.forEach(Throwing.<MailboxWithAnnotations>consumer(mailbox ->
+            storeInArchive(mailbox, archiveOutputStream)
+        ).sneakyThrow());
     }
 
-    private void storeMessages(Stream<MailboxMessage> messages, ZipArchiveOutputStream archiveOutputStream) {
+    private void storeMessages(Stream<MailboxMessage> messages, ZipArchiveOutputStream archiveOutputStream) throws IOException {
         messages.forEach(Throwing.<MailboxMessage>consumer(message -> {
                 storeInArchive(message, archiveOutputStream);
             }).sneakyThrow());
     }
 
-    private void storeInArchive(Mailbox mailbox, ZipArchiveOutputStream archiveOutputStream) throws IOException {
+    private void storeInArchive(MailboxWithAnnotations mailboxWithAnnotations, ZipArchiveOutputStream archiveOutputStream) throws IOException {
+        Mailbox mailbox = mailboxWithAnnotations.mailbox;
+        List<MailboxAnnotation> annotations = mailboxWithAnnotations.annotations;
+
         String name = mailbox.getName();
         ZipArchiveEntry archiveEntry = (ZipArchiveEntry) archiveOutputStream.createArchiveEntry(new Directory(name), name);
 
@@ -73,6 +81,27 @@ public class Zipper implements Backup {
         archiveEntry.addExtraField(new UidValidityExtraField(mailbox.getUidValidity()));
 
         archiveOutputStream.putArchiveEntry(archiveEntry);
+        archiveOutputStream.closeArchiveEntry();
+
+        if (!annotations.isEmpty()) {
+            String annotationsDirectoryPath = name + "/" + ANNOTATION_DIRECTORY;
+            ZipArchiveEntry annotationDirectory = (ZipArchiveEntry) archiveOutputStream.createArchiveEntry(
+                new Directory(annotationsDirectoryPath), annotationsDirectoryPath);
+            archiveOutputStream.putArchiveEntry(annotationDirectory);
+            archiveOutputStream.closeArchiveEntry();
+            annotations.forEach(Throwing.consumer(annotation ->
+                storeInArchive(annotation, annotationsDirectoryPath, archiveOutputStream)));
+        }
+    }
+
+    private void storeInArchive(MailboxAnnotation annotation, String directory, ZipArchiveOutputStream archiveOutputStream) throws IOException {
+        String entryId = directory + "/" + annotation.getKey().asString();
+        ZipArchiveEntry archiveEntry = (ZipArchiveEntry) archiveOutputStream.createArchiveEntry(new File(entryId), entryId);
+
+        archiveOutputStream.putArchiveEntry(archiveEntry);
+        IOUtils.copy(IOUtils.toInputStream(annotation.getValue().orElse(""), Charsets.UTF_8
+        ), archiveOutputStream);
+
         archiveOutputStream.closeArchiveEntry();
     }
 
