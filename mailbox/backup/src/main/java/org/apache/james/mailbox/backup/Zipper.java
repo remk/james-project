@@ -21,6 +21,7 @@ package org.apache.james.mailbox.backup;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -33,7 +34,6 @@ import org.apache.james.mailbox.store.mail.model.Mailbox;
 import org.apache.james.mailbox.store.mail.model.MailboxMessage;
 
 import com.github.fge.lambdas.Throwing;
-import com.google.common.base.Charsets;
 
 public class Zipper implements Backup {
 
@@ -65,9 +65,9 @@ public class Zipper implements Backup {
     }
 
     private void storeMessages(Stream<MailboxMessage> messages, ZipArchiveOutputStream archiveOutputStream) throws IOException {
-        messages.forEach(Throwing.<MailboxMessage>consumer(message -> {
-                storeInArchive(message, archiveOutputStream);
-            }).sneakyThrow());
+        messages.forEach(Throwing.<MailboxMessage>consumer(message ->
+                storeInArchive(message, archiveOutputStream)
+        ).sneakyThrow());
     }
 
     private void storeInArchive(MailboxWithAnnotations mailboxWithAnnotations, ZipArchiveOutputStream archiveOutputStream) throws IOException {
@@ -101,11 +101,13 @@ public class Zipper implements Backup {
     private void storeInArchive(MailboxAnnotation annotation, String directory, ZipArchiveOutputStream archiveOutputStream) throws IOException {
         String entryId = directory + "/" + annotation.getKey().asString();
         ZipArchiveEntry archiveEntry = (ZipArchiveEntry) archiveOutputStream.createArchiveEntry(new File(entryId), entryId);
-
         archiveOutputStream.putArchiveEntry(archiveEntry);
 
-        annotation.getValue().ifPresent(Throwing.consumer(value ->
-            IOUtils.copy(IOUtils.toInputStream(value, Charsets.UTF_8), archiveOutputStream)));
+        annotation.getValue().ifPresent(value -> {
+            try (PrintWriter printWriter = new PrintWriter(archiveOutputStream)) {
+                printWriter.print(value);
+            }
+        });
 
         archiveOutputStream.closeArchiveEntry();
     }
