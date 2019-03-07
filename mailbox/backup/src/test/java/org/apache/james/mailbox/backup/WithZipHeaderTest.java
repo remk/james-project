@@ -19,8 +19,8 @@
 package org.apache.james.mailbox.backup;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class WithZipHeaderTest {
@@ -39,11 +39,11 @@ public class WithZipHeaderTest {
 
     @Test
     void toLittleEndianShouldThrowIfHeaderTooLong() {
-        Assertions.assertThatThrownBy(() -> WithZipHeader.toLittleEndian("aqa"));
+        assertThatThrownBy(() -> WithZipHeader.toLittleEndian("aqa")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void toLittleEndianShouldThrowIfHeaderTooShort() {
-        Assertions.assertThatThrownBy(() -> WithZipHeader.toLittleEndian("a"));
+        assertThatThrownBy(() -> WithZipHeader.toLittleEndian("a")).isInstanceOf(IllegalArgumentException.class);
     }
 }
