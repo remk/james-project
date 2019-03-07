@@ -77,11 +77,18 @@ public interface MailboxMessageFixture {
 
     List<MailboxAnnotation> NO_ANNOTATION = ImmutableList.of();
 
-    MailboxAnnotation ANNOTATION_1 = MailboxAnnotation.newInstance(new MailboxAnnotationKey("/annotation1/test"), "annotation1 content");
-    MailboxAnnotation ANNOTATION_1_BIS = MailboxAnnotation.newInstance(new MailboxAnnotationKey("/annotation1/test"), "annotation1 bis content");
+    MailboxAnnotationKey ANNOTATION_1_KEY = new MailboxAnnotationKey("/annotation1/test");
+    MailboxAnnotationKey ANNOTATION_2_KEY = new MailboxAnnotationKey("/annotation2/void");
+
+    String ANNOTATION_1_CONTENT = "annotation1 content";
+    String ANNOTATION_1_BIS_CONTENT = "annotation1 bis content";
+    String ANNOTATION_2_CONTENT = "annotation2 content";
+
+    MailboxAnnotation ANNOTATION_1 = MailboxAnnotation.newInstance(ANNOTATION_1_KEY, ANNOTATION_1_CONTENT);
+    MailboxAnnotation ANNOTATION_1_BIS = MailboxAnnotation.newInstance(ANNOTATION_1_KEY, ANNOTATION_1_BIS_CONTENT);
     List<MailboxAnnotation> WITH_ANNOTATION_1 = ImmutableList.of(ANNOTATION_1);
 
-    MailboxAnnotation ANNOTATION_2 = MailboxAnnotation.newInstance(new MailboxAnnotationKey("/annotation2/void"), "annotation2 content");
+    MailboxAnnotation ANNOTATION_2 = MailboxAnnotation.newInstance(ANNOTATION_2_KEY, ANNOTATION_2_CONTENT);
     List<MailboxAnnotation> WITH_ANNOTATION_1_AND_2 = ImmutableList.of(ANNOTATION_1, ANNOTATION_2);
 
     SimpleMailboxMessage MESSAGE_1 = SimpleMailboxMessage.builder()

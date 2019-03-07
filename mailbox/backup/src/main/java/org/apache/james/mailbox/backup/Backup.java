@@ -28,9 +28,9 @@ import org.apache.james.mailbox.store.mail.model.MailboxMessage;
 public interface Backup {
 
     /**
-     * @param mailboxes list of mailboxes to be stored in the archive
-     * @param messages a stream of MailboxMessages that will be consumed
+     * @param mailboxes   list of mailboxes and their annotations to be stored in the archive
+     * @param messages    a stream of MailboxMessages that will be consumed
      * @param destination an OutputStream in which the zip will be written
      */
-    public void archive(List<MailboxWithAnnotations> mailboxes, Stream<MailboxMessage> messages, OutputStream destination) throws IOException ;
+    void archive(List<MailboxWithAnnotations> mailboxes, Stream<MailboxMessage> messages, OutputStream destination) throws IOException;
 }

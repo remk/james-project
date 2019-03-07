@@ -20,7 +20,10 @@ package org.apache.james.mailbox.backup;
 
 import static org.apache.james.mailbox.backup.MailboxMessageFixture.ANNOTATION_1;
 import static org.apache.james.mailbox.backup.MailboxMessageFixture.ANNOTATION_1_BIS;
+import static org.apache.james.mailbox.backup.MailboxMessageFixture.ANNOTATION_1_BIS_CONTENT;
+import static org.apache.james.mailbox.backup.MailboxMessageFixture.ANNOTATION_1_CONTENT;
 import static org.apache.james.mailbox.backup.MailboxMessageFixture.ANNOTATION_2;
+import static org.apache.james.mailbox.backup.MailboxMessageFixture.ANNOTATION_2_CONTENT;
 import static org.apache.james.mailbox.backup.MailboxMessageFixture.MAILBOX_1;
 import static org.apache.james.mailbox.backup.MailboxMessageFixture.MAILBOX_1_SUB_1;
 import static org.apache.james.mailbox.backup.MailboxMessageFixture.MAILBOX_2;
@@ -38,18 +41,13 @@ import static org.apache.james.mailbox.backup.MailboxMessageFixture.WITH_ANNOTAT
 import static org.apache.james.mailbox.backup.MailboxMessageFixture.WITH_ANNOTATION_1_AND_2;
 import static org.apache.james.mailbox.backup.ZipAssert.EntryChecks.hasName;
 import static org.apache.james.mailbox.backup.ZipAssert.assertThatZip;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
-import org.apache.james.mailbox.model.MailboxAnnotation;
-import org.apache.james.mailbox.model.MailboxAnnotationKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -192,7 +190,7 @@ class ZipperTest {
     }
 
     @Test
-    void archiveShouldWritNotHaveAnAnnotationsSubDirWhenEmpty() throws Exception {
+    void archiveShouldWriteMailBoxWithoutAnAnnotationSubDirWhenEmpty() throws Exception {
         testee.archive(ImmutableList.of(MAILBOX_1_WITHOUT_ANNOTATION), Stream.of(), output);
 
         try (ZipFile zipFile = new ZipFile(toSeekableByteChannel(output))) {
@@ -227,9 +225,9 @@ class ZipperTest {
                     hasName(MAILBOX_1.getName() + "/"),
                     hasName(MAILBOX_1.getName() + "/annotations/").isDirectory(),
                     hasName(MAILBOX_1.getName() + "/annotations/" + ANNOTATION_1.getKey().asString())
-                        .hasStringContent(ANNOTATION_1.getValue().orElse("")),
+                        .hasStringContent(ANNOTATION_1_CONTENT),
                     hasName(MAILBOX_1.getName() + "/annotations/" + ANNOTATION_2.getKey().asString())
-                        .hasStringContent(ANNOTATION_2.getValue().orElse(""))
+                        .hasStringContent(ANNOTATION_2_CONTENT)
                 );
         }
     }
@@ -244,9 +242,9 @@ class ZipperTest {
                     hasName(MAILBOX_1.getName() + "/"),
                     hasName(MAILBOX_1.getName() + "/annotations/").isDirectory(),
                     hasName(MAILBOX_1.getName() + "/annotations/" + ANNOTATION_1.getKey().asString())
-                        .hasStringContent(ANNOTATION_1.getValue().orElse("")),
+                        .hasStringContent(ANNOTATION_1_CONTENT),
                     hasName(MAILBOX_1.getName() + "/annotations/" + ANNOTATION_1.getKey().asString())
-                        .hasStringContent(ANNOTATION_1_BIS.getValue().orElse(""))
+                        .hasStringContent(ANNOTATION_1_BIS_CONTENT)
                 );
         }
     }

@@ -83,6 +83,10 @@ public class Zipper implements Backup {
         archiveOutputStream.putArchiveEntry(archiveEntry);
         archiveOutputStream.closeArchiveEntry();
 
+        storeAllAnnotationsInArchive(archiveOutputStream, annotations, name);
+    }
+
+    private void storeAllAnnotationsInArchive(ZipArchiveOutputStream archiveOutputStream, List<MailboxAnnotation> annotations, String name) throws IOException {
         if (!annotations.isEmpty()) {
             String annotationsDirectoryPath = name + "/" + ANNOTATION_DIRECTORY;
             ZipArchiveEntry annotationDirectory = (ZipArchiveEntry) archiveOutputStream.createArchiveEntry(
@@ -99,8 +103,7 @@ public class Zipper implements Backup {
         ZipArchiveEntry archiveEntry = (ZipArchiveEntry) archiveOutputStream.createArchiveEntry(new File(entryId), entryId);
 
         archiveOutputStream.putArchiveEntry(archiveEntry);
-        IOUtils.copy(IOUtils.toInputStream(annotation.getValue().orElse(""), Charsets.UTF_8
-        ), archiveOutputStream);
+        IOUtils.copy(IOUtils.toInputStream(annotation.getValue().orElse(""), Charsets.UTF_8), archiveOutputStream);
 
         archiveOutputStream.closeArchiveEntry();
     }
