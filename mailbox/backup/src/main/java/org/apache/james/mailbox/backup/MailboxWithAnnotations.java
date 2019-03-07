@@ -35,11 +35,12 @@ public class MailboxWithAnnotations {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MailboxWithAnnotations that = (MailboxWithAnnotations) o;
-        return Objects.equals(mailbox, that.mailbox) &&
-            Objects.equals(annotations, that.annotations);
+        if (o instanceof MailboxAnnotation) {
+            MailboxWithAnnotations that = (MailboxWithAnnotations) o;
+            return Objects.equals(mailbox, that.mailbox) &&
+                Objects.equals(annotations, that.annotations);
+        }
+        return false;
     }
 
     @Override
