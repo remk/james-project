@@ -30,7 +30,7 @@ import org.apache.james.util.StreamUtils;
 
 public class FlagsExtraField extends StringExtraField implements WithZipHeader {
 
-    public static final ZipShort ID_AP = new ZipShort(WithZipHeader.toLittleEndian("ap"));
+    public static final ZipShort ID_AP = new ZipShort(WithZipHeader.toLittleEndian('a', 'p'));
 
     private static String serializeFlags(Flags flags) {
         return Stream.concat(

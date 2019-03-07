@@ -25,11 +25,7 @@ import org.apache.james.mime4j.Charsets;
 
 public interface WithZipHeader {
 
-    static int toLittleEndian(String s) {
-        if (s.length() == 2) {
-            return ByteBuffer.wrap(s.getBytes(Charsets.US_ASCII)).order(ByteOrder.LITTLE_ENDIAN).getShort();
-        } else {
-            throw new IllegalArgumentException("The zip header should be 2 characters long.");
-        }
+    static int toLittleEndian(char lowByte, char highByte) {
+        return ByteBuffer.wrap(("" + lowByte + highByte).getBytes(Charsets.US_ASCII)).order(ByteOrder.LITTLE_ENDIAN).getShort();
     }
 }

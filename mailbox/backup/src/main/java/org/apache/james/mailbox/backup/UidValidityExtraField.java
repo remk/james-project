@@ -24,7 +24,7 @@ import org.apache.commons.compress.archivers.zip.ZipShort;
 
 public class UidValidityExtraField extends LongExtraField implements WithZipHeader {
 
-    public static final ZipShort ID_AN = new ZipShort(WithZipHeader.toLittleEndian("an"));
+    public static final ZipShort ID_AN = new ZipShort(WithZipHeader.toLittleEndian('a', 'n'));
 
     public UidValidityExtraField() {
         super();

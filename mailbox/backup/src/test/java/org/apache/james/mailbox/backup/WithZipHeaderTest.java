@@ -19,31 +19,20 @@
 package org.apache.james.mailbox.backup;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-public class WithZipHeaderTest {
+class WithZipHeaderTest {
     private static final short al = 0x6C61;
     private static final short aq = 0x7161;
 
     @Test
     void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAl() {
-        assertThat(WithZipHeader.toLittleEndian("al")).isEqualTo(al);
+        assertThat(WithZipHeader.toLittleEndian('a', 'l')).isEqualTo(al);
     }
 
     @Test
     void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAq() {
-        assertThat(WithZipHeader.toLittleEndian("aq")).isEqualTo(aq);
-    }
-
-    @Test
-    void toLittleEndianShouldThrowIfHeaderTooLong() {
-        assertThatThrownBy(() -> WithZipHeader.toLittleEndian("aqa")).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void toLittleEndianShouldThrowIfHeaderTooShort() {
-        assertThatThrownBy(() -> WithZipHeader.toLittleEndian("a")).isInstanceOf(IllegalArgumentException.class);
+        assertThat(WithZipHeader.toLittleEndian('a', 'q')).isEqualTo(aq);
     }
 }

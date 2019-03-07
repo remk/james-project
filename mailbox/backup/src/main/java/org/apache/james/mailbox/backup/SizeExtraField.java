@@ -24,7 +24,7 @@ import org.apache.commons.compress.archivers.zip.ZipShort;
 
 public class SizeExtraField extends LongExtraField implements WithZipHeader {
 
-    public static final ZipShort ID_AJ = new ZipShort(WithZipHeader.toLittleEndian("aj"));
+    public static final ZipShort ID_AJ = new ZipShort(WithZipHeader.toLittleEndian('a', 'j'));
 
     public SizeExtraField() {
         super();
