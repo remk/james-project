@@ -74,6 +74,17 @@ public class ZipAssertTest {
     }
 
     @Test
+    public void hasNoEntryShouldNotThrowWhenEmpty() throws Exception {
+       buildZipFile();
+
+        try (ZipFile zipFile = new ZipFile(destination)) {
+            assertThatCode(() -> assertThatZip(zipFile)
+                .hasNoEntry())
+                .doesNotThrowAnyException();
+        }
+    }
+
+    @Test
     public void hasNoEntryShouldThrowWhenNotEmpty() throws Exception {
         buildZipFile(ENTRY);
 
