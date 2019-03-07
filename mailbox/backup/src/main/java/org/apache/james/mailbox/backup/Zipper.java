@@ -103,7 +103,9 @@ public class Zipper implements Backup {
         ZipArchiveEntry archiveEntry = (ZipArchiveEntry) archiveOutputStream.createArchiveEntry(new File(entryId), entryId);
 
         archiveOutputStream.putArchiveEntry(archiveEntry);
-        IOUtils.copy(IOUtils.toInputStream(annotation.getValue().orElse(""), Charsets.UTF_8), archiveOutputStream);
+
+        annotation.getValue().ifPresent(Throwing.consumer(value ->
+            IOUtils.copy(IOUtils.toInputStream(value, Charsets.UTF_8), archiveOutputStream)));
 
         archiveOutputStream.closeArchiveEntry();
     }
