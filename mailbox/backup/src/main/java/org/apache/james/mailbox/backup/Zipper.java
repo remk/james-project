@@ -39,7 +39,8 @@ import com.google.common.base.Charsets;
 
 public class Zipper implements Backup {
 
-    public static final String ANNOTATION_DIRECTORY = "annotations";
+    private static final String ANNOTATION_DIRECTORY = "annotations";
+    private static final boolean AUTO_FLUSH = true;
 
     public Zipper() {
         ExtraFieldUtils.register(SizeExtraField.class);
@@ -106,7 +107,7 @@ public class Zipper implements Backup {
         archiveOutputStream.putArchiveEntry(archiveEntry);
 
         annotation.getValue().ifPresent(value -> {
-            try (PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(archiveOutputStream, Charsets.UTF_8), true)) {
+            try (PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(archiveOutputStream, Charsets.UTF_8), AUTO_FLUSH)) {
                 printWriter.print(value);
             }
         });
