@@ -21,6 +21,7 @@ package org.apache.james.mailbox.backup;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.stream.Stream;
@@ -34,6 +35,7 @@ import org.apache.james.mailbox.store.mail.model.Mailbox;
 import org.apache.james.mailbox.store.mail.model.MailboxMessage;
 
 import com.github.fge.lambdas.Throwing;
+import com.google.common.base.Charsets;
 
 public class Zipper implements Backup {
 
@@ -104,7 +106,7 @@ public class Zipper implements Backup {
         archiveOutputStream.putArchiveEntry(archiveEntry);
 
         annotation.getValue().ifPresent(value -> {
-            try (PrintWriter printWriter = new PrintWriter(archiveOutputStream)) {
+            try (PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(archiveOutputStream, Charsets.UTF_8), true)) {
                 printWriter.print(value);
             }
         });
