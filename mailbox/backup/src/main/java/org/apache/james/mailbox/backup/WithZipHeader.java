@@ -18,14 +18,15 @@
  ****************************************************************/
 package org.apache.james.mailbox.backup;
 
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.CharBuffer;
 
 import org.apache.james.mime4j.Charsets;
 
 public interface WithZipHeader {
 
     static int toLittleEndian(char lowByte, char highByte) {
-        return ByteBuffer.wrap(("" + lowByte + highByte).getBytes(Charsets.US_ASCII)).order(ByteOrder.LITTLE_ENDIAN).getShort();
+        char[] chars = new char[]{lowByte, highByte};
+        return Charsets.US_ASCII.encode(CharBuffer.wrap(chars)).order(ByteOrder.LITTLE_ENDIAN).getShort();
     }
 }
