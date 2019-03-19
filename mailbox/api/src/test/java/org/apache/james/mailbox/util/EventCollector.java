@@ -43,6 +43,11 @@ public class EventCollector implements MailboxListener.GroupMailboxListener {
     }
 
     @Override
+    public boolean isUsed(Event event) {
+        return true;
+    }
+
+    @Override
     public void event(Event event) {
         events.add(event);
     }

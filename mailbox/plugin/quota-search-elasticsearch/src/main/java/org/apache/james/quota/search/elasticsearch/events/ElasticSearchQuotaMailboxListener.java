@@ -53,8 +53,13 @@ public class ElasticSearchQuotaMailboxListener implements MailboxListener.GroupM
     }
 
     @Override
+    public boolean isUsed(Event event) {
+        return event instanceof QuotaUsageUpdatedEvent;
+    }
+
+    @Override
     public void event(Event event) throws JsonProcessingException {
-        if (event instanceof QuotaUsageUpdatedEvent) {
+        if (isUsed(event)) {
             handleEvent(event.getUser(), (QuotaUsageUpdatedEvent) event);
         }
     }

@@ -35,16 +35,18 @@ public class MailboxListenerExecutor {
     }
 
     void execute(MailboxListener listener, MDCBuilder mdcBuilder, Event event) throws Exception {
-        TimeMetric timer = metricFactory.timer(timerName(listener));
-        try (Closeable mdc = mdcBuilder
+        if (listener.isUsed(event)) {
+            TimeMetric timer = metricFactory.timer(timerName(listener));
+            try (Closeable mdc = mdcBuilder
                 .addContext(EventBus.StructuredLoggingFields.EVENT_ID, event.getEventId())
                 .addContext(EventBus.StructuredLoggingFields.EVENT_CLASS, event.getClass())
                 .addContext(EventBus.StructuredLoggingFields.USER, event.getUser())
                 .addContext(EventBus.StructuredLoggingFields.LISTENER_CLASS, listener.getClass())
                 .build()) {
-            listener.event(event);
-        } finally {
-            timer.stopAndPublish();
+                listener.event(event);
+            } finally {
+                timer.stopAndPublish();
+            }
         }
     }
 }

@@ -41,10 +41,14 @@ public class CacheInvalidatingMailboxListener implements MailboxListener.GroupMa
         eventBus.register(this);
     }
 
+    @Override
+    public boolean isUsed(Event event) {
+        return event instanceof MailboxEvent;
+    }
 
     @Override
     public void event(Event event) {
-        if (event instanceof MailboxEvent) {
+        if (isUsed(event)) {
             mailboxEvent((MailboxEvent) event);
         }
     }

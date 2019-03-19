@@ -59,13 +59,18 @@ public abstract class ListeningMessageSearchIndex implements MessageSearchIndex,
         this.sessionProvider = sessionProvider;
     }
 
+    @Override
+    public boolean isUsed(Event event) {
+        return INTERESTING_EVENTS.contains(event.getClass());
+    }
+
     /**
      * Process the {@link Event} and update the index if
      * something relevant is received
      */
     @Override
     public void event(Event event) throws Exception {
-        if (INTERESTING_EVENTS.contains(event.getClass())) {
+        if (isUsed(event)) {
             handleMailboxEvent(event,
                 sessionProvider.createSystemSession(event.getUser().asString()),
                 (MailboxEvent) event);

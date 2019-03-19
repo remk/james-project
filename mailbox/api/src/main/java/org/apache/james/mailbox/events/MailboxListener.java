@@ -63,6 +63,18 @@ public interface MailboxListener {
         return ExecutionMode.SYNCHRONOUS;
     }
 
+
+    /**
+     * Indicate if the event is taken into account by the listener.
+     * Is used internally by the event(Event event) method.
+     *
+     * @param event not null
+     * @return isUsed
+     */
+    default boolean isUsed(Event event) {
+        return true;
+    }
+
     /**
      * Informs this listener about the given event.
      *
