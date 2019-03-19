@@ -64,14 +64,7 @@ public interface MailboxListener {
     }
 
 
-    /**
-     * Indicate if the event is taken into account by the listener.
-     * Is used internally by the event(Event event) method.
-     *
-     * @param event not null
-     * @return isUsed
-     */
-    default boolean isUsed(Event event) {
+    default boolean isHandling(Event event) {
         return true;
     }
 

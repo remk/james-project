@@ -37,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoProcessor;
 import reactor.core.scheduler.Schedulers;
@@ -83,15 +82,9 @@ public class InVmEventDelivery implements EventDelivery {
     }
 
     private void doDeliverToListener(MailboxListener mailboxListener, Event event) {
-        if (mailboxListener.isUsed(event)) {
+        if (mailboxListener.isHandling(event)) {
             TimeMetric timer = metricFactory.timer(timerName(mailboxListener));
-            try (Closeable mdc = MDCBuilder.create()
-                .addContext(EventBus.StructuredLoggingFields.EVENT_ID, event.getEventId())
-                .addContext(EventBus.StructuredLoggingFields.EVENT_CLASS, event.getClass())
-                .addContext(EventBus.StructuredLoggingFields.USER, event.getUser())
-                .addContext(EventBus.StructuredLoggingFields.LISTENER_CLASS, mailboxListener.getClass())
-                .build()) {
-
+            try (Closeable mdc = buildMDC(mailboxListener, event)) {
                 mailboxListener.event(event);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -99,6 +92,15 @@ public class InVmEventDelivery implements EventDelivery {
                 timer.stopAndPublish();
             }
         }
+    }
+
+    private Closeable buildMDC(MailboxListener mailboxListener, Event event) {
+        return MDCBuilder.create()
+            .addContext(EventBus.StructuredLoggingFields.EVENT_ID, event.getEventId())
+            .addContext(EventBus.StructuredLoggingFields.EVENT_CLASS, event.getClass())
+            .addContext(EventBus.StructuredLoggingFields.USER, event.getUser())
+            .addContext(EventBus.StructuredLoggingFields.LISTENER_CLASS, mailboxListener.getClass())
+            .build();
     }
 
     private StructuredLogger structuredLogger(Event event, MailboxListener mailboxListener) {

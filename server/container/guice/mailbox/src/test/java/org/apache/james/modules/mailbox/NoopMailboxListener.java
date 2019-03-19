@@ -34,7 +34,7 @@ public class NoopMailboxListener implements MailboxListener.GroupMailboxListener
 
 
     @Override
-    public boolean isUsed(Event event) {
+    public boolean isHandling(Event event) {
         return true;
     }
 

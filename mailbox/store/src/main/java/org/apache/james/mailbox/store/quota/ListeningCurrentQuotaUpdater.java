@@ -60,7 +60,7 @@ public class ListeningCurrentQuotaUpdater implements MailboxListener.GroupMailbo
     }
 
     @Override
-    public boolean isUsed(Event event) {
+    public boolean isHandling(Event event) {
         return event instanceof Added || event instanceof Expunged || event instanceof MailboxDeletion;
     }
 

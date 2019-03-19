@@ -44,7 +44,7 @@ public interface EventBusTestFixture {
         private final AtomicInteger calls = new AtomicInteger(0);
 
         @Override
-        public boolean isUsed(Event event) {
+        public boolean isHandling(Event event) {
             return true;
         }
 
@@ -66,7 +66,7 @@ public interface EventBusTestFixture {
         }
 
         @Override
-        public boolean isUsed(Event event) {
+        public boolean isHandling(Event event) {
             return true;
         }
 

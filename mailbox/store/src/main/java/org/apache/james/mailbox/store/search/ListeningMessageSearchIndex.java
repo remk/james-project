@@ -60,7 +60,7 @@ public abstract class ListeningMessageSearchIndex implements MessageSearchIndex,
     }
 
     @Override
-    public boolean isUsed(Event event) {
+    public boolean isHandling(Event event) {
         return INTERESTING_EVENTS.contains(event.getClass());
     }
 
@@ -70,7 +70,7 @@ public abstract class ListeningMessageSearchIndex implements MessageSearchIndex,
      */
     @Override
     public void event(Event event) throws Exception {
-        if (isUsed(event)) {
+        if (isHandling(event)) {
             handleMailboxEvent(event,
                 sessionProvider.createSystemSession(event.getUser().asString()),
                 (MailboxEvent) event);

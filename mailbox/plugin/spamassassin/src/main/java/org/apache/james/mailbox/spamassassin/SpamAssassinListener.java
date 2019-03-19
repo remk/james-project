@@ -82,20 +82,19 @@ public class SpamAssassinListener implements SpamEventListener {
     }
 
     @Override
-    public boolean isUsed(Event event) {
+    public boolean isHandling(Event event) {
         return event instanceof MessageMoveEvent || event instanceof Added;
     }
 
     @Override
     public void event(Event event) throws MailboxException {
-        if (isUsed(event)) {
+        if (event instanceof MessageMoveEvent) {
             MailboxSession session = mailboxManager.createSystemSession(getClass().getCanonicalName());
-            if (event instanceof MessageMoveEvent) {
-                handleMessageMove(event, session, (MessageMoveEvent) event);
-            }
-            if (event instanceof Added) {
-                handleAdded(event, session, (Added) event);
-            }
+            handleMessageMove(event, session, (MessageMoveEvent) event);
+        }
+        if (event instanceof Added) {
+            MailboxSession session = mailboxManager.createSystemSession(getClass().getCanonicalName());
+            handleAdded(event, session, (Added) event);
         }
     }
 
