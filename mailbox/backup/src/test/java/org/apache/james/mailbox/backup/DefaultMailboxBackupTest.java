@@ -24,11 +24,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import org.apache.james.core.User;
 import org.apache.james.mailbox.MailboxManager;
 import org.apache.james.mailbox.MailboxSession;
 import org.apache.james.mailbox.MessageManager;
 import org.apache.james.mailbox.backup.ZipAssert.EntryChecks;
+import org.apache.james.mailbox.backup.zip.Zipper;
 import org.apache.james.mailbox.extension.PreDeletionHook;
 import org.apache.james.mailbox.inmemory.MemoryMailboxManagerProvider;
 import org.apache.james.mailbox.model.MailboxId;
@@ -40,13 +40,6 @@ import com.github.fge.lambdas.Throwing;
 
 class DefaultMailboxBackupTest implements MailboxMessageFixture {
 
-    private static final String USER = "user";
-    private static final String OTHER_USER = "otherUser";
-
-    private static final User USER1 = User.fromUsername(USER);
-    private static final MailboxPath MAILBOX_PATH_USER1_MAILBOX1 = MailboxPath.forUser(USER, MAILBOX_1_NAME);
-    private static final MailboxPath MAILBOX_PATH_USER1_MAILBOX2 = MailboxPath.forUser(USER, MAILBOX_2_NAME);
-    private static final MailboxPath MAILBOX_PATH_OTHER_USER_MAILBOX1 = MailboxPath.forUser(OTHER_USER, MAILBOX_OTHER_USER_NAME);
     private static final HashSet<PreDeletionHook> PRE_DELETION_HOOKS = new HashSet<>();
 
     private static final int BUFFER_SIZE = 4096;
@@ -88,6 +81,22 @@ class DefaultMailboxBackupTest implements MailboxMessageFixture {
         backup.backupAccount(USER1, destination);
         try (ZipAssert zipAssert = ZipAssert.assertThatZip(destination)) {
             zipAssert.containsOnlyEntriesMatching(EntryChecks.hasName(MAILBOX_1_NAME + "/").isDirectory());
+        }
+    }
+
+    @Test
+    void doBackupMailboxWithAnnotationShouldStoreAnArchiveWithMailboxAndAnnotation() throws Exception {
+        ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
+        MailboxSession session = mailboxManager.createSystemSession(USER);
+        createMailBoxWithMessage(session, MAILBOX_PATH_USER1_MAILBOX1);
+        mailboxManager.updateAnnotations(MAILBOX_PATH_USER1_MAILBOX1, session, WITH_ANNOTATION_1);
+
+        backup.backupAccount(USER1, destination);
+        try (ZipAssert zipAssert = ZipAssert.assertThatZip(destination)) {
+            zipAssert.containsOnlyEntriesMatching(EntryChecks.hasName(MAILBOX_1_NAME + "/").isDirectory(),
+                EntryChecks.hasName(MAILBOX_1_NAME + "/" + "annotations" + "/").isDirectory(),
+                EntryChecks.hasName(MAILBOX_1_NAME + "/" + "annotations" + "/" + ANNOTATION_1_KEY.asString()).hasStringContent(ANNOTATION_1_CONTENT)
+            );
         }
     }
 

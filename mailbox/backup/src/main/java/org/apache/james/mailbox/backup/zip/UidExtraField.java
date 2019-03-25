@@ -16,17 +16,31 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-package org.apache.james.mailbox.backup;
 
-import java.nio.ByteOrder;
-import java.nio.CharBuffer;
+package org.apache.james.mailbox.backup.zip;
 
-import org.apache.james.mime4j.Charsets;
+import java.util.Optional;
 
-public interface WithZipHeader {
+import org.apache.commons.compress.archivers.zip.ZipShort;
 
-    static int toLittleEndian(char lowByte, char highByte) {
-        char[] chars = new char[]{lowByte, highByte};
-        return Charsets.US_ASCII.encode(CharBuffer.wrap(chars)).order(ByteOrder.LITTLE_ENDIAN).getShort();
+public class UidExtraField extends LongExtraField implements WithZipHeader {
+
+    public static final ZipShort ID_AK = new ZipShort(WithZipHeader.toLittleEndian('a', 'k'));
+
+    public UidExtraField() {
+        super();
+    }
+
+    public UidExtraField(long value) {
+        super(value);
+    }
+
+    public UidExtraField(Optional<Long> value) {
+        super(value);
+    }
+
+    @Override
+    public ZipShort getHeaderId() {
+        return ID_AK;
     }
 }
