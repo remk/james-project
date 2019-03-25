@@ -16,36 +16,57 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-
 package org.apache.james.mailbox.backup;
 
-import java.util.Optional;
+import java.io.InputStream;
+import java.util.Date;
 
-import org.apache.commons.compress.archivers.zip.ZipShort;
-import org.apache.james.mailbox.model.MessageId;
+import javax.mail.Flags;
 
-public class MessageIdExtraField extends StringExtraField implements WithZipHeader {
+public class MessageArchiveEntry implements MailArchiveEntry {
 
-    public static final ZipShort ID_AL = new ZipShort(WithZipHeader.toLittleEndian('a', 'l'));
+    private final SerializedMessageId messageId;
+    private final SerializedMailboxId mailboxId;
+    private final long size;
+    private final Date internalDate;
+    private final Flags flags;
+    private final InputStream content;
 
-    public MessageIdExtraField() {
-        super();
+    public MessageArchiveEntry(SerializedMessageId messageId, SerializedMailboxId mailboxId, long size, Date internalDate, Flags flags, InputStream content) {
+        this.messageId = messageId;
+        this.mailboxId = mailboxId;
+        this.size = size;
+        this.internalDate = internalDate;
+        this.flags = flags;
+        this.content = content;
     }
 
-    public MessageIdExtraField(String value) {
-        super(Optional.of(value));
+    public SerializedMessageId getMessageId() {
+        return messageId;
     }
 
-    public MessageIdExtraField(Optional<String> value) {
-        super(value);
+    public SerializedMailboxId getMailboxId() {
+        return mailboxId;
     }
 
-    public MessageIdExtraField(MessageId messageId) {
-        super(Optional.of(messageId.serialize()));
+    public long getSize() {
+        return size;
+    }
+
+    public Date getInternalDate() {
+        return internalDate;
+    }
+
+    public Flags getFlags() {
+        return flags;
+    }
+
+    public InputStream getContent() {
+        return content;
     }
 
     @Override
-    public ZipShort getHeaderId() {
-        return ID_AL;
+    public ArchiveEntryType getType() {
+        return ArchiveEntryType.MESSAGE;
     }
 }

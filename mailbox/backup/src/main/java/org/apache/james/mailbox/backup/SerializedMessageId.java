@@ -16,36 +16,40 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-
 package org.apache.james.mailbox.backup;
 
-import java.util.Optional;
+import org.apache.james.mailbox.model.MessageId;
 
-import org.apache.commons.compress.archivers.zip.ZipShort;
-import org.apache.james.mailbox.model.MailboxId;
+import com.google.common.base.Objects;
 
-public class MailboxIdExtraField extends StringExtraField implements WithZipHeader {
+public class SerializedMessageId {
+    private final String value;
 
-    public static final ZipShort ID_AM = new ZipShort(WithZipHeader.toLittleEndian('a', 'm'));
-
-    public MailboxIdExtraField() {
-        super();
+    public SerializedMessageId(String value) {
+        this.value = value;
     }
 
-    public MailboxIdExtraField(String value) {
-        super(Optional.of(value));
+    public SerializedMessageId(MessageId messageId) {
+        this.value = messageId.serialize();
     }
 
-    public MailboxIdExtraField(Optional<String> value) {
-        super(value);
-    }
-
-    public MailboxIdExtraField(MailboxId mailboxId) {
-        super(Optional.of(mailboxId.serialize()));
+    public String getValue() {
+        return value;
     }
 
     @Override
-    public ZipShort getHeaderId() {
-        return ID_AM;
+    public boolean equals(Object o) {
+        if (o instanceof SerializedMessageId) {
+            SerializedMessageId that = (SerializedMessageId) o;
+            return Objects.equal(value, that.value);
+        } else {
+            return false;
+        }
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(value);
+    }
+
 }

@@ -16,17 +16,31 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-package org.apache.james.mailbox.backup;
+package org.apache.james.mailbox.backup.zip;
 
-import java.nio.ByteOrder;
-import java.nio.CharBuffer;
+import java.util.Optional;
+import java.util.zip.ZipEntry;
 
-import org.apache.james.mime4j.Charsets;
+import com.google.common.io.ByteSource;
 
-public interface WithZipHeader {
+public class ZipEntryWithContent {
+    private final ZipEntry entry;
+    private final Optional<ByteSource> content;
 
-    static int toLittleEndian(char lowByte, char highByte) {
-        char[] chars = new char[]{lowByte, highByte};
-        return Charsets.US_ASCII.encode(CharBuffer.wrap(chars)).order(ByteOrder.LITTLE_ENDIAN).getShort();
+    public ZipEntryWithContent(ZipEntry entry, Optional<ByteSource> content) {
+        this.entry = entry;
+        this.content = content;
+    }
+
+    public ZipEntry getEntry() {
+        return entry;
+    }
+
+    public String getEntryName() {
+        return entry.getName();
+    }
+
+    public Optional<ByteSource> getContent() {
+        return content;
     }
 }

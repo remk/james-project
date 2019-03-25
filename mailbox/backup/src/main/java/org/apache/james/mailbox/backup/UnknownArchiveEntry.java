@@ -18,22 +18,21 @@
  ****************************************************************/
 package org.apache.james.mailbox.backup;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class UnknownArchiveEntry implements MailArchiveEntry {
 
-import org.apache.james.mailbox.backup.zip.WithZipHeader;
-import org.junit.jupiter.api.Test;
+    private final String entryName;
 
-class WithZipHeaderTest {
-    private static final short al = 0x6C61;
-    private static final short aq = 0x7161;
-
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAl() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'l')).isEqualTo(al);
+    public UnknownArchiveEntry(String entryName) {
+        this.entryName = entryName;
     }
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAq() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'q')).isEqualTo(aq);
+    public String getEntryName() {
+        return entryName;
     }
+
+    @Override
+    public ArchiveEntryType getType() {
+        return ArchiveEntryType.UNKNOWN;
+    }
+
 }

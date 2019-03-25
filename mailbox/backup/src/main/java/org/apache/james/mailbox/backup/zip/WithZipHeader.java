@@ -16,24 +16,17 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-package org.apache.james.mailbox.backup;
+package org.apache.james.mailbox.backup.zip;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.nio.ByteOrder;
+import java.nio.CharBuffer;
 
-import org.apache.james.mailbox.backup.zip.WithZipHeader;
-import org.junit.jupiter.api.Test;
+import org.apache.james.mime4j.Charsets;
 
-class WithZipHeaderTest {
-    private static final short al = 0x6C61;
-    private static final short aq = 0x7161;
+public interface WithZipHeader {
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAl() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'l')).isEqualTo(al);
-    }
-
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAq() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'q')).isEqualTo(aq);
+    static int toLittleEndian(char lowByte, char highByte) {
+        char[] chars = new char[]{lowByte, highByte};
+        return Charsets.US_ASCII.encode(CharBuffer.wrap(chars)).order(ByteOrder.LITTLE_ENDIAN).getShort();
     }
 }

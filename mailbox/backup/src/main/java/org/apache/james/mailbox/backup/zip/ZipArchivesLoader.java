@@ -16,24 +16,35 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-package org.apache.james.mailbox.backup;
+package org.apache.james.mailbox.backup.zip;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.zip.ZipInputStream;
 
-import org.apache.james.mailbox.backup.zip.WithZipHeader;
-import org.junit.jupiter.api.Test;
+import org.apache.james.mailbox.backup.MailArchiveIterator;
+import org.apache.james.mailbox.backup.MailArchivesLoader;
 
-class WithZipHeaderTest {
-    private static final short al = 0x6C61;
-    private static final short aq = 0x7161;
+public class ZipArchivesLoader implements MailArchivesLoader {
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAl() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'l')).isEqualTo(al);
+    public static final int DEFAULT_FILE_THRESHOLD = 32768;
+    private final int fileThreshold;
+
+    public ZipArchivesLoader() {
+        fileThreshold = DEFAULT_FILE_THRESHOLD;
     }
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAq() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'q')).isEqualTo(aq);
+    /**
+     * @param fileThreshold The size of the content since it starts to be stored in a temporary file, if lower it is stored in memory.
+     */
+    public ZipArchivesLoader(int fileThreshold) {
+        this.fileThreshold = fileThreshold;
+    }
+
+    @Override
+    public MailArchiveIterator load(InputStream inputStream) throws IOException {
+        ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+        ZipEntryIterator zipEntryIterator = new ZipEntryIterator(fileThreshold, zipInputStream);
+        return new MailAccountZipIterator(zipEntryIterator);
     }
 }

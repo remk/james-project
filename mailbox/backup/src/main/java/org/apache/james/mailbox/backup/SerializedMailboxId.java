@@ -18,22 +18,38 @@
  ****************************************************************/
 package org.apache.james.mailbox.backup;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.apache.james.mailbox.model.MailboxId;
 
-import org.apache.james.mailbox.backup.zip.WithZipHeader;
-import org.junit.jupiter.api.Test;
+import com.google.common.base.Objects;
 
-class WithZipHeaderTest {
-    private static final short al = 0x6C61;
-    private static final short aq = 0x7161;
+public class SerializedMailboxId {
+    private final String value;
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAl() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'l')).isEqualTo(al);
+    public SerializedMailboxId(String value) {
+        this.value = value;
     }
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAq() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'q')).isEqualTo(aq);
+    public SerializedMailboxId(MailboxId mailboxId) {
+        this.value = mailboxId.serialize();
     }
+
+    public String getValue() {
+        return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof SerializedMailboxId) {
+            SerializedMailboxId that = (SerializedMailboxId) o;
+            return Objects.equal(value, that.value);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(value);
+    }
+
 }

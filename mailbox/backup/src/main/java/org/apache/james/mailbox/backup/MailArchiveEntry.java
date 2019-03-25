@@ -18,22 +18,13 @@
  ****************************************************************/
 package org.apache.james.mailbox.backup;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import org.apache.james.mailbox.backup.zip.WithZipHeader;
-import org.junit.jupiter.api.Test;
-
-class WithZipHeaderTest {
-    private static final short al = 0x6C61;
-    private static final short aq = 0x7161;
-
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAl() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'l')).isEqualTo(al);
+public interface MailArchiveEntry {
+    enum ArchiveEntryType {
+        MAILBOX,
+        MESSAGE,
+        UNKNOWN
     }
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAq() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'q')).isEqualTo(aq);
-    }
+    ArchiveEntryType getType();
+
 }

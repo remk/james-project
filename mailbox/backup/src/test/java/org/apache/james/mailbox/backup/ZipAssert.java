@@ -39,6 +39,7 @@ import org.apache.commons.compress.archivers.zip.ZipExtraField;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.IOUtils;
+import org.apache.james.mailbox.backup.zip.WithZipHeader;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.error.BasicErrorMessageFactory;
 import org.assertj.core.error.ErrorMessageFactory;
@@ -158,6 +159,21 @@ public class ZipAssert extends AbstractAssert<ZipAssert, ZipFile> implements Aut
         List<ZipArchiveEntry> entries = Collections.list(zipFile.getEntries())
             .stream()
             .sorted(Comparator.comparing(ZipArchiveEntry::getName))
+            .collect(Guavate.toImmutableList());
+        if (entries.size() != entryChecks.length) {
+            throwAssertionError(shouldHaveSize(zipFile, entryChecks.length, entries.size()));
+        }
+        for (int i = 0; i < entries.size(); i++) {
+            sortedEntryChecks.get(i).check.test(assertThatZipEntry(zipFile, entries.get(i)));
+        }
+        return myself;
+    }
+    public ZipAssert containsExactlyEntriesMatching(EntryChecks... entryChecks) throws Exception {
+        isNotNull();
+        List<EntryChecks> sortedEntryChecks = Arrays.stream(entryChecks)
+            .collect(Guavate.toImmutableList());
+        List<ZipArchiveEntry> entries = Collections.list(zipFile.getEntries())
+            .stream()
             .collect(Guavate.toImmutableList());
         if (entries.size() != entryChecks.length) {
             throwAssertionError(shouldHaveSize(zipFile, entryChecks.length, entries.size()));

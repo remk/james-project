@@ -16,24 +16,36 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-package org.apache.james.mailbox.backup;
 
-import static org.assertj.core.api.Assertions.assertThat;
+package org.apache.james.mailbox.backup.zip;
 
-import org.apache.james.mailbox.backup.zip.WithZipHeader;
-import org.junit.jupiter.api.Test;
+import java.util.Optional;
 
-class WithZipHeaderTest {
-    private static final short al = 0x6C61;
-    private static final short aq = 0x7161;
+import org.apache.commons.compress.archivers.zip.ZipShort;
+import org.apache.james.mailbox.model.MailboxId;
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAl() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'l')).isEqualTo(al);
+public class MailboxIdExtraField extends StringExtraField implements WithZipHeader {
+
+    public static final ZipShort ID_AM = new ZipShort(WithZipHeader.toLittleEndian('a', 'm'));
+
+    public MailboxIdExtraField() {
+        super();
     }
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAq() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'q')).isEqualTo(aq);
+    public MailboxIdExtraField(String value) {
+        super(Optional.of(value));
+    }
+
+    public MailboxIdExtraField(Optional<String> value) {
+        super(value);
+    }
+
+    public MailboxIdExtraField(MailboxId mailboxId) {
+        super(Optional.of(mailboxId.serialize()));
+    }
+
+    @Override
+    public ZipShort getHeaderId() {
+        return ID_AM;
     }
 }

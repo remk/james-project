@@ -16,24 +16,42 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-package org.apache.james.mailbox.backup;
+package org.apache.james.mailbox.backup.zip;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Map;
+import java.util.Optional;
 
-import org.apache.james.mailbox.backup.zip.WithZipHeader;
-import org.junit.jupiter.api.Test;
+import com.google.common.collect.ImmutableMap;
 
-class WithZipHeaderTest {
-    private static final short al = 0x6C61;
-    private static final short aq = 0x7161;
+public enum ZipEntryType {
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAl() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'l')).isEqualTo(al);
+    MAILBOX(ZipEntryType.MAILBOX_VALUE),
+    MAILBOX_ANNOTATION_DIR(ZipEntryType.MAILBOX_ANNOTATION_DIR_VALUE),
+    MAILBOX_ANNOTATION(ZipEntryType.MAILBOX_ANNOTATION_VALUE),
+    MESSAGE(ZipEntryType.MESSAGE_VALUE);
+
+    private final long value;
+
+    ZipEntryType(long value) {
+        this.value = value;
     }
 
-    @Test
-    void toLittleEndianShouldReturnLittleEndianRepresentationOfStringAq() {
-        assertThat(WithZipHeader.toLittleEndian('a', 'q')).isEqualTo(aq);
+    private static final long MAILBOX_VALUE = 1L;
+    private static final long MAILBOX_ANNOTATION_DIR_VALUE = 2L;
+    private static final long MAILBOX_ANNOTATION_VALUE = 3L;
+    private static final long MESSAGE_VALUE = 4L;
+
+    private static final Map<Long, ZipEntryType> entryByValue = ImmutableMap.of(MAILBOX_VALUE, MAILBOX,
+        MAILBOX_ANNOTATION_DIR_VALUE, MAILBOX_ANNOTATION_DIR,
+        MAILBOX_ANNOTATION_VALUE, MAILBOX_ANNOTATION,
+        MESSAGE_VALUE, MESSAGE
+    );
+
+    public long getValue() {
+        return value;
+    }
+
+    public static Optional<ZipEntryType> getFromValue(long value) {
+        return Optional.ofNullable(entryByValue.get(value));
     }
 }

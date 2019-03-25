@@ -18,28 +18,9 @@
  ****************************************************************/
 package org.apache.james.mailbox.backup;
 
-import java.util.Optional;
+import java.io.Closeable;
+import java.util.Iterator;
 
-import org.apache.commons.compress.archivers.zip.ZipShort;
+public interface MailArchiveIterator extends Iterator<MailArchiveEntry>, Closeable {
 
-public class SizeExtraField extends LongExtraField implements WithZipHeader {
-
-    public static final ZipShort ID_AJ = new ZipShort(WithZipHeader.toLittleEndian('a', 'j'));
-
-    public SizeExtraField() {
-        super();
-    }
-
-    public SizeExtraField(long value) {
-        super(value);
-    }
-
-    public SizeExtraField(Optional<Long> value) {
-        super(value);
-    }
-
-    @Override
-    public ZipShort getHeaderId() {
-        return ID_AJ;
-    }
 }
