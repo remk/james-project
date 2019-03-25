@@ -16,30 +16,42 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-package org.apache.james.mailbox.backup;
+package org.apache.james.mailbox.backup.zip;
 
+import java.util.Map;
 import java.util.Optional;
 
-import org.apache.commons.compress.archivers.zip.ZipShort;
+import com.google.common.collect.ImmutableMap;
 
-public class SizeExtraField extends LongExtraField implements WithZipHeader {
+public enum ZipEntryType {
 
-    public static final ZipShort ID_AJ = new ZipShort(WithZipHeader.toLittleEndian('a', 'j'));
+    MAILBOX(ZipEntryType.MAILBOX_VALUE),
+    MAILBOX_ANNOTATION_DIR(ZipEntryType.MAILBOX_ANNOTATION_DIR_VALUE),
+    MAILBOX_ANNOTATION(ZipEntryType.MAILBOX_ANNOTATION_VALUE),
+    MESSAGE(ZipEntryType.MESSAGE_VALUE);
 
-    public SizeExtraField() {
-        super();
+    private final long value;
+
+    ZipEntryType(long value) {
+        this.value = value;
     }
 
-    public SizeExtraField(long value) {
-        super(value);
+    private static final long MAILBOX_VALUE = 1L;
+    private static final long MAILBOX_ANNOTATION_DIR_VALUE = 2L;
+    private static final long MAILBOX_ANNOTATION_VALUE = 3L;
+    private static final long MESSAGE_VALUE = 4L;
+
+    private static final Map<Long, ZipEntryType> entryByValue = ImmutableMap.of(MAILBOX_VALUE, MAILBOX,
+        MAILBOX_ANNOTATION_DIR_VALUE, MAILBOX_ANNOTATION_DIR,
+        MAILBOX_ANNOTATION_VALUE, MAILBOX_ANNOTATION,
+        MESSAGE_VALUE, MESSAGE
+    );
+
+    public long getValue() {
+        return value;
     }
 
-    public SizeExtraField(Optional<Long> value) {
-        super(value);
-    }
-
-    @Override
-    public ZipShort getHeaderId() {
-        return ID_AJ;
+    public static Optional<ZipEntryType> getFromValue(long value) {
+        return Optional.ofNullable(entryByValue.get(value));
     }
 }
