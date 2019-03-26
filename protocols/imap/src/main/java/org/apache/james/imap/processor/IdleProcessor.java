@@ -176,9 +176,7 @@ public class IdleProcessor extends AbstractMailboxProcessor<IdleRequest> impleme
 
         @Override
         public void event(Event event) {
-            if (isHandling(event)) {
                 unsolicitedResponses(session, responder, false);
-            }
         }
 
         @Override
