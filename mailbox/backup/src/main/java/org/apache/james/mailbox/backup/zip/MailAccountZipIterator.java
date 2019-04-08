@@ -19,15 +19,20 @@
 package org.apache.james.mailbox.backup.zip;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
+import javax.mail.Flags;
+
 import org.apache.james.mailbox.backup.MailArchiveEntry;
 import org.apache.james.mailbox.backup.MailArchiveIterator;
 import org.apache.james.mailbox.backup.MailboxWithAnnotationsArchiveEntry;
+import org.apache.james.mailbox.backup.MessageArchiveEntry;
 import org.apache.james.mailbox.backup.SerializedMailboxId;
+import org.apache.james.mailbox.backup.SerializedMessageId;
 import org.apache.james.mailbox.backup.UnknownArchiveEntry;
 import org.apache.james.mailbox.model.MailboxAnnotation;
 import org.apache.james.mailbox.model.MailboxAnnotationKey;
@@ -134,6 +139,52 @@ public class MailAccountZipIterator implements MailArchiveIterator {
         }
     }
 
+    private Optional<MailArchiveEntry> fromMessageEntry(ZipEntryWithContent entryWithContent) throws ZipException {
+        ZipEntry entry = entryWithContent.getEntry();
+        Optional<SerializedMessageId> messageIdO = ExtraFieldExtractor.getMessageId(entry);
+        Optional<SerializedMailboxId> mailboxIdO = getMailBoxId(entry);
+        Optional<Long> sizeO = ExtraFieldExtractor.getSize(entry);
+        Optional<Date> internalDateO = ExtraFieldExtractor.getInternalDate(entry);
+        Optional<Flags> flagsO = ExtraFieldExtractor.getFlags(entry);
+
+        if (!messageIdO.isPresent()) {
+            LOGGER.error("No message id in message entry " + entry.getName());
+            return Optional.empty();
+        }
+        if (!mailboxIdO.isPresent()) {
+            LOGGER.error("No mailbox id in message entry " + entry.getName());
+            return Optional.empty();
+        }
+        if (!sizeO.isPresent()) {
+            LOGGER.error("No size defined in message entry " + entry.getName());
+            return Optional.empty();
+        }
+        if (!internalDateO.isPresent()) {
+            LOGGER.error("No internal date defined in message entry " + entry.getName());
+            return Optional.empty();
+        }
+        if (!flagsO.isPresent()) {
+            LOGGER.error("No flags defined in message entry " + entry.getName());
+            return Optional.empty();
+        }
+
+        try {
+            return entryWithContent.getContent().map(Throwing.function(ByteSource::openStream).sneakyThrow())
+                .map(messageContentStream -> {
+                    MessageArchiveEntry messageArchiveEntry = new MessageArchiveEntry(messageIdO.get(),
+                        mailboxIdO.get(),
+                        sizeO.get(),
+                        internalDateO.get(),
+                        flagsO.get(),
+                        messageContentStream);
+                    return messageArchiveEntry;
+                });
+        } catch (Exception e) {
+            LOGGER.error("Error when opening input stream on content of message entry " + entry.getName(), e);
+            return Optional.empty();
+        }
+    }
+
     private Optional<byte[]> getCurrentEntryContentBytes(ByteSource currentContent) {
         try {
             return Optional.ofNullable(currentContent.read());
@@ -162,6 +213,9 @@ public class MailAccountZipIterator implements MailArchiveIterator {
                 return next();
             case MAILBOX_ANNOTATION:
                 return fromMailboxAnnotationEntry(current, nextZipEntry);
+            case MESSAGE:
+                return fromMessageEntry(current)
+                    .orElseGet(() -> new UnknownArchiveEntry(current.getEntryName()));
             default:
                 return new UnknownArchiveEntry(current.getEntryName());
         }

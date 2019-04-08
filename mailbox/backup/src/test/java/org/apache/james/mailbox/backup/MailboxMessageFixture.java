@@ -70,6 +70,9 @@ public interface MailboxMessageFixture {
     MessageId MESSAGE_ID_1 = MESSAGE_ID_FACTORY.generate();
     MessageId MESSAGE_ID_2 = MESSAGE_ID_FACTORY.generate();
 
+    SerializedMessageId SERIALIZED_MESSAGE_ID_1 = new SerializedMessageId(MESSAGE_ID_1);
+    SerializedMessageId SERIALIZED_MESSAGE_ID_2 = new SerializedMessageId(MESSAGE_ID_2);
+
     MessageId MESSAGE_ID_OTHER_USER_1 = MESSAGE_ID_FACTORY.generate();
 
     long SIZE_1 = MESSAGE_CONTENT_BYTES_1.length;
@@ -86,6 +89,7 @@ public interface MailboxMessageFixture {
 
     SerializedMailboxId SERIALIZED_MAILBOX_ID_1 = new SerializedMailboxId(MAILBOX_ID_1);
     SerializedMailboxId SERIALIZED_MAILBOX_ID_2 = new SerializedMailboxId(MAILBOX_ID_2);
+    SerializedMailboxId SERIALIZED_MAILBOX_ID_11 = new SerializedMailboxId(MAILBOX_ID_11);
 
     Flags flags1 = new Flags("myFlags");
 
