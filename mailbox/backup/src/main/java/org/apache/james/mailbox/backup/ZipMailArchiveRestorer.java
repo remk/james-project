@@ -60,7 +60,55 @@ public class ZipMailArchiveRestorer implements MailArchiveRestorer {
     private void restoreEntries(InputStream source, MailboxSession session) throws IOException {
         try (MailArchiveIterator archiveIterator = archiveLoader.load(source)) {
             ImmutablePair<List<MailboxWithAnnotationsArchiveEntry>, Optional<MessageArchiveEntry>> mailboxesAndFirstMessage = readMailboxes(archiveIterator);
-            restoreMailboxes(session, mailboxesAndFirstMessage.left);
+
+            Map<SerializedMailboxId, MessageManager> oldToNewMailbox = restoreMailboxes(session, mailboxesAndFirstMessage.left);
+            Optional<MessageArchiveEntry> firstMessage = mailboxesAndFirstMessage.right;
+
+            firstMessage.ifPresent(message -> restoreNonMailboxEntry(session, oldToNewMailbox, message));
+            archiveIterator.forEachRemaining(entry -> restoreNonMailboxEntry(session, oldToNewMailbox, entry));
+        }
+    }
+
+    private void restoreNonMailboxEntry(MailboxSession session, Map<SerializedMailboxId, MessageManager> oldToNewMailbox, MailArchiveEntry entry) {
+        switch (entry.getType()) {
+            case MESSAGE:
+                MessageArchiveEntry messageArchiveEntry = (MessageArchiveEntry) entry;
+                restoreMessageEntryWithErrorHandling(session, oldToNewMailbox, messageArchiveEntry);
+                break;
+            case MAILBOX:
+                MailboxWithAnnotationsArchiveEntry mailboxArchiveEntry = ((MailboxWithAnnotationsArchiveEntry) entry);
+                LOGGER.error(getMailboxEntryInWrongPositionErrorMessage(mailboxArchiveEntry));
+                break;
+            case UNKNOWN:
+                String entryName = ((UnknownArchiveEntry) entry).getEntryName();
+                LOGGER.error("unknow entry found in zip :" + entryName);
+                break;
+        }
+    }
+
+    private String getMailboxEntryInWrongPositionErrorMessage(MailboxWithAnnotationsArchiveEntry mailboxArchiveEntry) {
+        return "mailbox entry found in wrong position in zip, should be before messages." + " id :"
+            + mailboxArchiveEntry.getMailboxId().getValue()
+            + " - name : " + mailboxArchiveEntry.getMailboxName();
+    }
+
+    private void restoreMessageEntryWithErrorHandling(MailboxSession session, Map<SerializedMailboxId, MessageManager> oldToNewMailbox, MessageArchiveEntry messageArchiveEntry) {
+        try {
+            restoreMessageEntry(session, oldToNewMailbox, messageArchiveEntry);
+        } catch (IOException | MailboxException e) {
+            LOGGER.error("Error when restoring message :" + messageArchiveEntry.getMessageId(), e);
+        }
+    }
+
+    private void restoreMessageEntry(MailboxSession session, Map<SerializedMailboxId, MessageManager> oldToNewMailbox,
+                                     MessageArchiveEntry messageArchiveEntry) throws IOException, MailboxException {
+        try (InputStream content = messageArchiveEntry.getContent()) {
+            MessageManager mailbox = oldToNewMailbox.get(messageArchiveEntry.getMailboxId());
+            MessageManager.AppendCommand appendCommand = MessageManager.AppendCommand.builder()
+                .withFlags(messageArchiveEntry.getFlags())
+                .withInternalDate(messageArchiveEntry.getInternalDate())
+                .build(content);
+            mailbox.appendMessage(appendCommand, session);
         }
     }
 
@@ -79,6 +127,8 @@ public class ZipMailArchiveRestorer implements MailArchiveRestorer {
                 case MAILBOX:
                     mailboxes.add((MailboxWithAnnotationsArchiveEntry) entry);
                     break;
+                case MESSAGE:
+                    return ImmutablePair.of(mailboxes.build(), Optional.of((MessageArchiveEntry) entry));
                 case UNKNOWN:
                     String entryName = ((UnknownArchiveEntry) entry).getEntryName();
                     LOGGER.error("unknown entry found in zip :" + entryName);

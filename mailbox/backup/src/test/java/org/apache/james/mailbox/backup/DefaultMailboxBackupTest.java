@@ -324,13 +324,11 @@ class DefaultMailboxBackupTest implements MailboxMessageFixture {
         assertThat(mailAccountContent.getMessages().count()).isEqualTo(2);
     }
 
-    @Disabled
     @Test
     void backupAccountWithOneMailboxAndTwoMessageThenRestoringItInUser2AccountShouldCreateOneMailboxWithTwoMessageInMemory() throws Exception {
         backupAccountWithOneMailboxAndTwoMessageThenRestoringItInUser2AccountShouldCreateOneMailboxWithTwoMessage();
     }
-    
-    @Disabled
+
     @Test
     void backupAccountWithOneMailboxAndTwoMessageThenRestoringItInUser2AccountShouldCreateOneMailboxWithTwoMessageInFile() throws Exception {
         prepareForTestWithContentInTempFile();
@@ -358,13 +356,11 @@ class DefaultMailboxBackupTest implements MailboxMessageFixture {
         assertThat(mailAccountContent.getMessages().count()).isEqualTo(2);
     }
 
-    @Disabled
     @Test
     void backupAccountWithOneMailboxWithAnnotationsAndTwoMessageThenRestoringItInUser2AccountShouldRestoreAllElementsInMemory() throws Exception {
         backupAccountWithOneMailboxWithAnnotationsAndTwoMessageThenRestoringItInUser2AccountShouldRestoreAllElements();
     }
 
-    @Disabled
     @Test
     void backupAccountWithOneMailboxWithAnnotationsAndTwoMessageThenRestoringItInUser2AccountShouldRestoreAllElementsInFile() throws Exception {
         prepareForTestWithContentInTempFile();
