@@ -19,17 +19,31 @@
 package org.apache.james.mailbox.backup.zip;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
+import javax.mail.Flags;
+
 import org.apache.commons.compress.archivers.zip.ExtraFieldUtils;
 import org.apache.commons.compress.archivers.zip.ZipExtraField;
 import org.apache.commons.compress.archivers.zip.ZipShort;
+import org.apache.james.mailbox.backup.SerializedMailboxId;
+import org.apache.james.mailbox.backup.SerializedMessageId;
 import org.apache.james.util.OptionalUtils;
 
 public class ExtraFieldExtractor {
+
+    public static Optional<Long> getLongExtraField(ZipShort id, ZipEntry entry) throws ZipException {
+        ZipExtraField[] extraFields = ExtraFieldUtils.parse(entry.getExtra());
+        return Arrays.stream(extraFields)
+            .filter(field -> field.getHeaderId().equals(id))
+            .map(extraField -> ((LongExtraField) extraField).getValue())
+            .findFirst()
+            .flatMap(Function.identity());
+    }
 
     public static Optional<String> getStringExtraField(ZipShort id, ZipEntry entry) throws ZipException {
         ZipExtraField[] extraFields = ExtraFieldUtils.parse(entry.getExtra());
@@ -53,4 +67,29 @@ public class ExtraFieldExtractor {
         }
     }
 
+    public static Optional<SerializedMailboxId> getMailBoxId(ZipEntry entry) throws ZipException {
+        return getStringExtraField(MailboxIdExtraField.ID_AM, entry).map(SerializedMailboxId::new);
+    }
+
+    public static Optional<SerializedMessageId> getMessageId(ZipEntry entry) throws ZipException {
+        return getStringExtraField(MessageIdExtraField.ID_AL, entry).map(SerializedMessageId::new);
+    }
+
+    public static Optional<Long> getSize(ZipEntry entry) throws ZipException {
+        return getLongExtraField(SizeExtraField.ID_AJ, entry);
+    }
+
+    public static Optional<Date> getInternalDate(ZipEntry entry) throws ZipException {
+        ZipExtraField[] extraFields = ExtraFieldUtils.parse(entry.getExtra());
+        return Arrays.stream(extraFields)
+            .filter(field -> field.getHeaderId().equals(InternalDateExtraField.ID_AO))
+            .map(extraField -> ((InternalDateExtraField) extraField).getDateValue())
+            .findFirst()
+            .flatMap(Function.identity());
+    }
+
+    public static Optional<Flags> getFlags(ZipEntry entry) throws ZipException {
+        return getStringExtraField(FlagsExtraField.ID_AP, entry).map(Flags::new);
+    }
+    
 }

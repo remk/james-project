@@ -30,18 +30,21 @@ import org.apache.james.mailbox.backup.MailboxWithAnnotationsArchiveEntry;
 import org.apache.james.mailbox.backup.SerializedMailboxId;
 import org.apache.james.mailbox.backup.UnknownArchiveEntry;
 import org.apache.james.mailbox.model.MailboxAnnotation;
+import org.apache.james.mailbox.model.MailboxAnnotationKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.fge.lambdas.Throwing;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteSource;
 
 public class MailAccountZipIterator implements MailArchiveIterator {
     private static final Logger LOGGER = LoggerFactory.getLogger(MailAccountZipIterator.class);
     private static final List<MailboxAnnotation> NO_ANNOTATION = ImmutableList.of();
     private final ZipEntryIterator zipEntryIterator;
     private Optional<MailboxWithAnnotationsArchiveEntry> currentMailBox;
-    private Optional<ZipEntry> next;
+    private Optional<ZipEntryWithContent> next;
 
     public MailAccountZipIterator(ZipEntryIterator zipEntryIterator) {
         this.zipEntryIterator = zipEntryIterator;
@@ -63,24 +66,25 @@ public class MailAccountZipIterator implements MailArchiveIterator {
         return next.map(this::doNext).orElse(null);
     }
 
-    private MailArchiveEntry doNext(ZipEntry currentElement) {
+    private MailArchiveEntry doNext(ZipEntryWithContent currentElement) {
         next = Optional.ofNullable(zipEntryIterator.next());
+        Optional<ZipEntry> nextZipEntry = next.map(ZipEntryWithContent::getEntry);
         try {
-            return getMailArchiveEntry(currentElement);
+            return getMailArchiveEntry(currentElement, nextZipEntry);
         } catch (Exception e) {
-            LOGGER.error("Error when reading archive on entry : " + currentElement.getName(), e);
+            LOGGER.error("Error when reading archive on entry : " + currentElement.getEntryName(), e);
             next = Optional.empty();
-            return new UnknownArchiveEntry(currentElement.getName());
+            return new UnknownArchiveEntry(currentElement.getEntryName());
         }
     }
 
-    private MailArchiveEntry getMailArchiveEntry(ZipEntry currentElement) throws Exception {
-        Optional<ZipEntryType> entryType = ExtraFieldExtractor.getEntryType(currentElement);
+    private MailArchiveEntry getMailArchiveEntry(ZipEntryWithContent currentElement, Optional<ZipEntry> nextZipEntry) throws Exception {
+        Optional<ZipEntryType> entryType = ExtraFieldExtractor.getEntryType(currentElement.getEntry());
         return entryType
             .map(Throwing.<ZipEntryType, MailArchiveEntry>function(type ->
-                from(currentElement, type)).sneakyThrow()
+                from(currentElement, type, nextZipEntry)).sneakyThrow()
             )
-            .orElseGet(() -> new UnknownArchiveEntry(currentElement.getName()));
+            .orElseGet(() -> new UnknownArchiveEntry(currentElement.getEntryName()));
     }
 
     private Optional<SerializedMailboxId> getMailBoxId(ZipEntry entry) throws ZipException {
@@ -91,17 +95,75 @@ public class MailAccountZipIterator implements MailArchiveIterator {
         return current.getName().substring(0, current.getName().length() - 1);
     }
 
-    private MailArchiveEntry fromMailboxEntry(ZipEntry current) throws ZipException {
-        return new MailboxWithAnnotationsArchiveEntry(getMailboxName(current), getMailBoxId(current).get(), NO_ANNOTATION);
-
+    private MailArchiveEntry fromMailboxEntry(ZipEntryWithContent current, Optional<ZipEntry> nextZipEntry) throws ZipException {
+        ZipEntry entry = current.getEntry();
+        if (isLastEntryOrHasNoAnnotationsDirectory(nextZipEntry)) {
+            //no annotation directory or end of iterator => get Mailbox
+            currentMailBox = Optional.empty();
+            return new MailboxWithAnnotationsArchiveEntry(getMailboxName(entry), getMailBoxId(entry).get(), NO_ANNOTATION);
+        } else {
+            // annotation directory => save current mailbox and fetch next entry
+            currentMailBox = Optional.of(new MailboxWithAnnotationsArchiveEntry(getMailboxName(entry), getMailBoxId(entry).get(), NO_ANNOTATION));
+            return next();
+        }
     }
 
-    private MailArchiveEntry from(ZipEntry current, ZipEntryType currentEntryType) throws ZipException {
+    private boolean isLastEntryOrNextEntryIsNotOfType(Optional<ZipEntry> nextZipEntry, ZipEntryType mailboxAnnotationDir) throws ZipException {
+        return !nextZipEntry.isPresent() || !ExtraFieldExtractor.getEntryType(nextZipEntry.get()).equals(Optional.of(mailboxAnnotationDir));
+    }
+
+    private boolean isLastEntryOrHasNoAnnotationsDirectory(Optional<ZipEntry> nextZipEntry) throws ZipException {
+        return isLastEntryOrNextEntryIsNotOfType(nextZipEntry, ZipEntryType.MAILBOX_ANNOTATION_DIR);
+    }
+
+    private boolean isLastEntryOrNextEntryIsNotOfType(Optional<ZipEntry> nextZipEntry) throws ZipException {
+        return isLastEntryOrNextEntryIsNotOfType(nextZipEntry, ZipEntryType.MAILBOX_ANNOTATION);
+    }
+
+    private MailArchiveEntry fromMailboxAnnotationEntry(ZipEntryWithContent current, Optional<ZipEntry> next) throws ZipException {
+        MailboxAnnotation annotation = MailboxAnnotation.newInstance(getAnnotationKey(currentMailBox.get(), current.getEntry()),
+            getAnnotationContent(current).orElse(""));
+        MailboxWithAnnotationsArchiveEntry mailboxUpdated = currentMailBox.get().appendAnnotation(annotation);
+
+        if (isLastEntryOrNextEntryIsNotOfType(next)) {
+            currentMailBox = Optional.empty();
+            return mailboxUpdated;
+        } else {
+            currentMailBox = Optional.of(mailboxUpdated);
+            return next();
+        }
+    }
+
+    private Optional<byte[]> getCurrentEntryContentBytes(ByteSource currentContent) {
+        try {
+            return Optional.ofNullable(currentContent.read());
+        } catch (IOException e) {
+            LOGGER.error("Error when reading entry content", e);
+            return Optional.empty();
+        }
+    }
+
+    private Optional<String> getAnnotationContent(ZipEntryWithContent entry) {
+        return entry.getContent()
+            .flatMap(content -> getCurrentEntryContentBytes(content))
+            .map(raw -> new String(raw, Charsets.UTF_8));
+    }
+
+    private MailboxAnnotationKey getAnnotationKey(MailboxWithAnnotationsArchiveEntry mailbox, ZipEntry entry) {
+        String key = entry.getName().substring((mailbox.getMailboxName() + "/" + Zipper.ANNOTATION_DIRECTORY + "/").length());
+        return new MailboxAnnotationKey(key);
+    }
+
+    private MailArchiveEntry from(ZipEntryWithContent current, ZipEntryType currentEntryType, Optional<ZipEntry> nextZipEntry) throws ZipException {
         switch (currentEntryType) {
             case MAILBOX:
-                return fromMailboxEntry(current);
+                return fromMailboxEntry(current, nextZipEntry);
+            case MAILBOX_ANNOTATION_DIR:
+                return next();
+            case MAILBOX_ANNOTATION:
+                return fromMailboxAnnotationEntry(current, nextZipEntry);
             default:
-                return new UnknownArchiveEntry(current.getName());
+                return new UnknownArchiveEntry(current.getEntryName());
         }
     }
 }

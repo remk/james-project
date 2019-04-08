@@ -25,16 +25,24 @@ import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZipEntryIterator implements Iterator<ZipEntry>, Closeable {
+import com.google.common.io.ByteSource;
+import com.google.common.io.FileBackedOutputStream;
+
+public class ZipEntryIterator implements Iterator<ZipEntryWithContent>, Closeable {
+    private  final int fileThreshold;
+    private static final boolean RESET_ON_FINALIZE = true;
+
     private final ZipInputStream zipInputStream;
     private Optional<ZipEntry> next;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZipEntryIterator.class);
 
-    public ZipEntryIterator(ZipInputStream inputStream) {
+    public ZipEntryIterator(int fileThreshold, ZipInputStream inputStream) {
+        this.fileThreshold = fileThreshold;
         zipInputStream = inputStream;
         try {
             next = Optional.ofNullable(zipInputStream.getNextEntry());
@@ -50,17 +58,18 @@ public class ZipEntryIterator implements Iterator<ZipEntry>, Closeable {
     }
 
     @Override
-    public ZipEntry next() {
+    public ZipEntryWithContent next() {
         Optional<ZipEntry> current = next;
         if (!current.isPresent()) {
             return null;
         }
 
         ZipEntry currentEntry = current.get();
+        Optional<ByteSource> content = getCurrentEntryContent(currentEntry);
 
         readNextEntry();
 
-        return currentEntry;
+        return new ZipEntryWithContent(currentEntry, content);
     }
 
     private void readNextEntry() {
@@ -75,6 +84,26 @@ public class ZipEntryIterator implements Iterator<ZipEntry>, Closeable {
     @Override
     public void close() throws IOException {
         zipInputStream.close();
+    }
+
+    private Optional<ByteSource> getCurrentEntryContent(ZipEntry current) {
+        if (current.isDirectory()) {
+            return Optional.empty();
+        } else {
+            FileBackedOutputStream currentContent = new FileBackedOutputStream(fileThreshold, RESET_ON_FINALIZE);
+            try {
+                IOUtils.copy(zipInputStream, currentContent);
+                return Optional.of(currentContent.asByteSource());
+            } catch (IOException e) {
+                LOGGER.error("ERROR when copying content of current entry", e);
+                try {
+                    currentContent.close();
+                } catch (IOException closeException) {
+                    LOGGER.error("Error when closing entry output stream", closeException);
+                }
+                return Optional.empty();
+            }
+        }
     }
 
 }

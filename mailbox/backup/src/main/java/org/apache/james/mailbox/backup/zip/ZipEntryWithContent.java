@@ -18,33 +18,29 @@
  ****************************************************************/
 package org.apache.james.mailbox.backup.zip;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.zip.ZipInputStream;
+import java.util.Optional;
+import java.util.zip.ZipEntry;
 
-import org.apache.james.mailbox.backup.MailArchiveIterator;
-import org.apache.james.mailbox.backup.MailArchivesLoader;
+import com.google.common.io.ByteSource;
 
-public class ZipArchivesLoader implements MailArchivesLoader {
+public class ZipEntryWithContent {
+    private final ZipEntry entry;
+    private final Optional<ByteSource> content;
 
-    public static final int DEFAULT_FILE_THRESHOLD = 32768;
-    private final int fileThreshold;
-
-    public ZipArchivesLoader() {
-        fileThreshold = DEFAULT_FILE_THRESHOLD;
+    public ZipEntryWithContent(ZipEntry entry, Optional<ByteSource> content) {
+        this.entry = entry;
+        this.content = content;
     }
 
-    /**
-     * @param fileThreshold The size of the content since it starts to be stored in a temporary file, if lower it is stored in memory.
-     */
-    public ZipArchivesLoader(int fileThreshold) {
-        this.fileThreshold = fileThreshold;
+    public ZipEntry getEntry() {
+        return entry;
     }
 
-    @Override
-    public MailArchiveIterator load(InputStream inputStream) throws IOException {
-        ZipInputStream zipInputStream = new ZipInputStream(inputStream);
-        ZipEntryIterator zipEntryIterator = new ZipEntryIterator(fileThreshold, zipInputStream);
-        return new MailAccountZipIterator(zipEntryIterator);
+    public String getEntryName() {
+        return entry.getName();
+    }
+
+    public Optional<ByteSource> getContent() {
+        return content;
     }
 }

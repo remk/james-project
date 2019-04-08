@@ -134,6 +134,42 @@ public class ZipArchivesLoaderTest implements MailboxMessageFixture {
         verifyMailboxArchiveEntry(mailArchiveIterator, expectedSecondMailbox, resultSecondMailbox, false);
     }
 
+    @Test
+    void mailAccountIteratorFromArchiveWithOneMailboxAndOneAnnotationShouldContainsOneMailbox() throws Exception {
+        MailboxSession session = mailboxManager.createSystemSession(USER);
+        createMailBoxWithMessage(session, MAILBOX_PATH_USER1_MAILBOX1);
+        mailboxManager.updateAnnotations(MAILBOX_PATH_USER1_MAILBOX1, session, WITH_ANNOTATION_1);
+
+        ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
+        backup.backupAccount(USER1, destination);
+
+        InputStream source = new ByteArrayInputStream(destination.toByteArray());
+        MailArchiveIterator mailArchiveIterator = archiveLoader.load(source);
+        assertThat(mailArchiveIterator.hasNext()).isEqualTo(true);
+
+        MailboxWithAnnotationsArchiveEntry expectedMailbox = new MailboxWithAnnotationsArchiveEntry(MAILBOX_1_NAME, SERIALIZED_MAILBOX_ID_1, WITH_ANNOTATION_1);
+        MailboxWithAnnotationsArchiveEntry resultMailbox = (MailboxWithAnnotationsArchiveEntry) mailArchiveIterator.next();
+        verifyMailboxArchiveEntry(mailArchiveIterator, expectedMailbox, resultMailbox, false);
+    }
+
+    @Test
+    void mailAccountIteratorFromArchiveWithOneMailboxAndTwoAnnotationShouldContainsOneMailbox() throws Exception {
+        MailboxSession session = mailboxManager.createSystemSession(USER);
+        createMailBoxWithMessage(session, MAILBOX_PATH_USER1_MAILBOX1);
+        mailboxManager.updateAnnotations(MAILBOX_PATH_USER1_MAILBOX1, session, WITH_ANNOTATION_1_AND_2);
+
+        ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
+        backup.backupAccount(USER1, destination);
+
+        InputStream source = new ByteArrayInputStream(destination.toByteArray());
+        MailArchiveIterator mailArchiveIterator = archiveLoader.load(source);
+        assertThat(mailArchiveIterator.hasNext()).isEqualTo(true);
+
+        MailboxWithAnnotationsArchiveEntry expectedMailbox = new MailboxWithAnnotationsArchiveEntry(MAILBOX_1_NAME, SERIALIZED_MAILBOX_ID_1, WITH_ANNOTATION_1_AND_2);
+        MailboxWithAnnotationsArchiveEntry resultMailbox = (MailboxWithAnnotationsArchiveEntry) mailArchiveIterator.next();
+        verifyMailboxArchiveEntry(mailArchiveIterator, expectedMailbox, resultMailbox, false);
+    }
+
     private void verifyMailboxArchiveEntry(MailArchiveIterator mailArchiveIterator, MailboxWithAnnotationsArchiveEntry expectedMailbox,
                                            MailboxWithAnnotationsArchiveEntry resultMailbox, boolean iteratorHasNextElement) {
         assertThat(resultMailbox.getMailboxId()).isEqualTo(expectedMailbox.getMailboxId());
