@@ -52,7 +52,7 @@ public class ObjectStorageBlobsDAOBuilder {
         private final ContainerName containerName;
         private final BlobId.Factory blobIdFactory;
         private Optional<PayloadCodec> payloadCodec;
-        private Optional<Function<Blob, String>> putBlob;
+        private Optional<Function<Blob, BlobId>> putBlob;
 
         public ReadyToBuild(Supplier<BlobStore> supplier, BlobId.Factory blobIdFactory, ContainerName containerName) {
             this.blobIdFactory = blobIdFactory;
@@ -72,7 +72,7 @@ public class ObjectStorageBlobsDAOBuilder {
             return this;
         }
 
-        public ReadyToBuild putBlob(Optional<Function<Blob, String>> putBlob) {
+        public ReadyToBuild putBlob(Optional<Function<Blob, BlobId>> putBlob) {
             this.putBlob = putBlob;
             return this;
         }
@@ -86,7 +86,7 @@ public class ObjectStorageBlobsDAOBuilder {
             return new ObjectStorageBlobsDAO(containerName,
                 blobIdFactory,
                 blobStore,
-                putBlob.orElse((blob) -> blobStore.putBlob(containerName.value(), blob)),
+                putBlob.orElse((blob) -> blobIdFactory.from(blobStore.putBlob(containerName.value(), blob))),
                 payloadCodec.orElse(PayloadCodec.DEFAULT_CODEC));
         }
 

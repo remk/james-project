@@ -70,7 +70,7 @@ public class ObjectStorageDependenciesModule extends AbstractModule {
             .container(configuration.getNamespace())
             .blobIdFactory(blobIdFactory)
             .payloadCodec(configuration.getPayloadCodec())
-            .putBlob(putBlob(configuration))
+            .putBlob(putBlob(blobIdFactory, configuration))
             .build();
         dao.createContainer(configuration.getNamespace()).block(Duration.ofMinutes(1));
         return dao;
@@ -86,12 +86,12 @@ public class ObjectStorageDependenciesModule extends AbstractModule {
         throw new IllegalArgumentException("unknown provider " + configuration.getProvider());
     }
 
-    private Optional<Function<Blob, String>> putBlob(ObjectStorageBlobConfiguration configuration) {
+    private Optional<Function<Blob, BlobId>> putBlob(BlobId.Factory blobIdFactory, ObjectStorageBlobConfiguration configuration) {
         switch (configuration.getProvider()) {
             case SWIFT:
                 return Optional.empty();
             case AWSS3:
-                return AwsS3ObjectStorage.putBlob(configuration.getNamespace(), (AwsS3AuthConfiguration) configuration.getSpecificAuthConfiguration());
+                return AwsS3ObjectStorage.putBlob(blobIdFactory, configuration.getNamespace(), (AwsS3AuthConfiguration) configuration.getSpecificAuthConfiguration());
         }
         throw new IllegalArgumentException("unknown provider " + configuration.getProvider());
 

@@ -55,12 +55,12 @@ public class ObjectStorageBlobsDAO implements BlobStore {
 
     private final ContainerName containerName;
     private final org.jclouds.blobstore.BlobStore blobStore;
-    private final Function<Blob, String> putBlob;
+    private final Function<Blob, BlobId> putBlob;
     private final PayloadCodec payloadCodec;
 
     ObjectStorageBlobsDAO(ContainerName containerName, BlobId.Factory blobIdFactory,
                           org.jclouds.blobstore.BlobStore blobStore,
-                          Function<Blob, String> putBlob,
+                          Function<Blob, BlobId> putBlob,
                           PayloadCodec payloadCodec) {
         this.blobIdFactory = blobIdFactory;
         this.containerName = containerName;
