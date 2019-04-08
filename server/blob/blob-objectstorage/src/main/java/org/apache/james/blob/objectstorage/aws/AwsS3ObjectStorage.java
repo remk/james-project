@@ -20,7 +20,6 @@
 package org.apache.james.blob.objectstorage.aws;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.Executors;
