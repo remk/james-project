@@ -23,17 +23,16 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.objectstorage.ContainerName;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobsDAOBuilder;
+import org.apache.james.blob.objectstorage.PutBlobFunction;
 import org.apache.james.util.Size;
 import org.jclouds.ContextBuilder;
 import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
-import org.jclouds.blobstore.domain.Blob;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 
 import com.amazonaws.AmazonClientException;
@@ -68,7 +67,7 @@ public class AwsS3ObjectStorage {
         return ObjectStorageBlobsDAOBuilder.forBlobStore(new BlobStoreBuilder(configuration));
     }
 
-    public static Optional<Function<Blob, BlobId>> putBlob(BlobId.Factory blobIdFactory, ContainerName containerName, AwsS3AuthConfiguration configuration) {
+    public static Optional<PutBlobFunction> putBlob(BlobId.Factory blobIdFactory, ContainerName containerName, AwsS3AuthConfiguration configuration) {
         return Optional.of((blob) -> {
             try {
                 PutObjectRequest request = new PutObjectRequest(containerName.value(),

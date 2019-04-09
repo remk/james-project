@@ -24,7 +24,6 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
 import javax.inject.Singleton;
 
@@ -34,12 +33,12 @@ import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobsDAO;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobsDAOBuilder;
+import org.apache.james.blob.objectstorage.PutBlobFunction;
 import org.apache.james.blob.objectstorage.aws.AwsS3AuthConfiguration;
 import org.apache.james.blob.objectstorage.aws.AwsS3ObjectStorage;
 import org.apache.james.modules.mailbox.ConfigurationComponent;
 import org.apache.james.modules.objectstorage.swift.SwiftObjectStorage;
 import org.apache.james.utils.PropertiesProvider;
-import org.jclouds.blobstore.domain.Blob;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -86,7 +85,7 @@ public class ObjectStorageDependenciesModule extends AbstractModule {
         throw new IllegalArgumentException("unknown provider " + configuration.getProvider());
     }
 
-    private Optional<Function<Blob, BlobId>> putBlob(BlobId.Factory blobIdFactory, ObjectStorageBlobConfiguration configuration) {
+    private Optional<PutBlobFunction> putBlob(BlobId.Factory blobIdFactory, ObjectStorageBlobConfiguration configuration) {
         switch (configuration.getProvider()) {
             case SWIFT:
                 return Optional.empty();

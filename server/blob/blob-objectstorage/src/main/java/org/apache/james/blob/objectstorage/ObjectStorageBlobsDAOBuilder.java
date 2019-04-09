@@ -20,12 +20,10 @@
 package org.apache.james.blob.objectstorage;
 
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.apache.james.blob.api.BlobId;
 import org.jclouds.blobstore.BlobStore;
-import org.jclouds.blobstore.domain.Blob;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -52,7 +50,7 @@ public class ObjectStorageBlobsDAOBuilder {
         private final ContainerName containerName;
         private final BlobId.Factory blobIdFactory;
         private Optional<PayloadCodec> payloadCodec;
-        private Optional<Function<Blob, BlobId>> putBlob;
+        private Optional<PutBlobFunction> putBlob;
 
         public ReadyToBuild(Supplier<BlobStore> supplier, BlobId.Factory blobIdFactory, ContainerName containerName) {
             this.blobIdFactory = blobIdFactory;
@@ -72,7 +70,7 @@ public class ObjectStorageBlobsDAOBuilder {
             return this;
         }
 
-        public ReadyToBuild putBlob(Optional<Function<Blob, BlobId>> putBlob) {
+        public ReadyToBuild putBlob(Optional<PutBlobFunction> putBlob) {
             this.putBlob = putBlob;
             return this;
         }
@@ -86,8 +84,12 @@ public class ObjectStorageBlobsDAOBuilder {
             return new ObjectStorageBlobsDAO(containerName,
                 blobIdFactory,
                 blobStore,
-                putBlob.orElse((blob) -> blobIdFactory.from(blobStore.putBlob(containerName.value(), blob))),
+                putBlob.orElse(defaultPutBlob(blobStore)),
                 payloadCodec.orElse(PayloadCodec.DEFAULT_CODEC));
+        }
+
+        public PutBlobFunction defaultPutBlob(BlobStore blobStore) {
+            return (blob) -> blobIdFactory.from(blobStore.putBlob(containerName.value(), blob));
         }
 
         @VisibleForTesting

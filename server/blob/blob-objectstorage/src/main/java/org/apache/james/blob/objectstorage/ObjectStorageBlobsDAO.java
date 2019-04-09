@@ -23,7 +23,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.james.blob.api.BlobId;
@@ -55,12 +54,12 @@ public class ObjectStorageBlobsDAO implements BlobStore {
 
     private final ContainerName containerName;
     private final org.jclouds.blobstore.BlobStore blobStore;
-    private final Function<Blob, BlobId> putBlob;
+    private final PutBlobFunction putBlob;
     private final PayloadCodec payloadCodec;
 
     ObjectStorageBlobsDAO(ContainerName containerName, BlobId.Factory blobIdFactory,
                           org.jclouds.blobstore.BlobStore blobStore,
-                          Function<Blob, BlobId> putBlob,
+                          PutBlobFunction putBlob,
                           PayloadCodec payloadCodec) {
         this.blobIdFactory = blobIdFactory;
         this.containerName = containerName;
@@ -83,6 +82,12 @@ public class ObjectStorageBlobsDAO implements BlobStore {
 
     public static ObjectStorageBlobsDAOBuilder.RequireContainerName builder(AwsS3AuthConfiguration testConfig) {
         return AwsS3ObjectStorage.daoBuilder(testConfig);
+    }
+
+    public static PutBlobFunction defaultPutBlob(BlobId.Factory blobIdFactory, ContainerName containerName, org.jclouds.blobstore.BlobStore blobStore) {
+        return (blob) -> {
+            return blobIdFactory.from(blobStore.putBlob(containerName.value(), blob));
+        };
     }
 
     public Mono<ContainerName> createContainer(ContainerName name) {
