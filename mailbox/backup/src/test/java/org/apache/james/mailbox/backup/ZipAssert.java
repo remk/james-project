@@ -179,6 +179,11 @@ public class ZipAssert extends AbstractAssert<ZipAssert, ZipFile> implements Aut
         return sortedStream.collect(Guavate.toImmutableList());
     }
 
+    /**
+     * Check that the zip entries in the zip file contains only the entries matching
+     * the entryChecks, with the same number of checks as entries.
+     * The order of the entries in the zip file is independent from the one of the entryChecks.
+     */
     public ZipAssert containsOnlyEntriesMatching(EntryChecks... entryChecks) throws Exception {
         Comparator<ZipArchiveEntry> entryComparator = Comparator.comparing(ZipArchiveEntry::getName);
         Comparator<EntryChecks> entryCheckComparator = Comparator.comparing(check -> check.name);
@@ -186,6 +191,11 @@ public class ZipAssert extends AbstractAssert<ZipAssert, ZipFile> implements Aut
         return containsEntriesMatchingWithComparator(Optional.of(entryComparator), Optional.of(entryCheckComparator), entryChecks);
     }
 
+    /**
+     * Check that the zip entries in the zip file contains only the entries matching
+     * the entryChecks, with the same number of checks as entries.
+     * The order of the entries in the zip file must match the one of the entryChecks.
+     */
     public ZipAssert containsExactlyEntriesMatching(EntryChecks... entryChecks) throws Exception {
         return containsEntriesMatchingWithComparator(Optional.empty(), Optional.empty(), entryChecks);
     }
