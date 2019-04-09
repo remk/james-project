@@ -38,11 +38,13 @@ public class EntryTypeExtraField extends LongExtraField implements WithZipHeader
     }
 
     public EntryTypeExtraField(ZipEntryType entryType) {
-        super(entryType.getValue());
+        super(entryType.ordinal());
     }
 
-    public Optional<ZipEntryType> getEnumValue() throws IllegalArgumentException {
-        return getValue().flatMap(ZipEntryType::getFromValue);
+    public Optional<ZipEntryType> getEnumValue() {
+        return getValue()
+            .map(Long::intValue)
+            .flatMap(ZipEntryType::zipEntryType);
     }
 
     @Override

@@ -20,38 +20,29 @@ package org.apache.james.mailbox.backup.zip;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
-import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
+import com.github.steveash.guavate.Guavate;
 
 public enum ZipEntryType {
+    MAILBOX,
+    MAILBOX_ANNOTATION_DIR,
+    MAILBOX_ANNOTATION,
+    MESSAGE;
 
-    MAILBOX(ZipEntryType.MAILBOX_VALUE),
-    MAILBOX_ANNOTATION_DIR(ZipEntryType.MAILBOX_ANNOTATION_DIR_VALUE),
-    MAILBOX_ANNOTATION(ZipEntryType.MAILBOX_ANNOTATION_VALUE),
-    MESSAGE(ZipEntryType.MESSAGE_VALUE);
+    private static final Map<Integer, ZipEntryType> entryByOrdinal;
 
-    private final long value;
-
-    ZipEntryType(long value) {
-        this.value = value;
+    static {
+        ZipEntryType[] elements = values();
+        IntStream indices = IntStream.range(0, values().length);
+        entryByOrdinal = indices
+            .mapToObj(i -> ImmutablePair.of(i, elements[i]))
+            .collect(Guavate.entriesToImmutableMap());
     }
 
-    private static final long MAILBOX_VALUE = 1L;
-    private static final long MAILBOX_ANNOTATION_DIR_VALUE = 2L;
-    private static final long MAILBOX_ANNOTATION_VALUE = 3L;
-    private static final long MESSAGE_VALUE = 4L;
-
-    private static final Map<Long, ZipEntryType> entryByValue = ImmutableMap.of(MAILBOX_VALUE, MAILBOX,
-        MAILBOX_ANNOTATION_DIR_VALUE, MAILBOX_ANNOTATION_DIR,
-        MAILBOX_ANNOTATION_VALUE, MAILBOX_ANNOTATION,
-        MESSAGE_VALUE, MESSAGE
-    );
-
-    public long getValue() {
-        return value;
-    }
-
-    public static Optional<ZipEntryType> getFromValue(long value) {
-        return Optional.ofNullable(entryByValue.get(value));
+    public static Optional<ZipEntryType> zipEntryType(int ordinal) {
+        return Optional.ofNullable(entryByOrdinal.get(ordinal));
     }
 }

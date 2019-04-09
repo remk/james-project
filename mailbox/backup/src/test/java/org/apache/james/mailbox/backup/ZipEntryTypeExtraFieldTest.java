@@ -83,36 +83,28 @@ public class ZipEntryTypeExtraFieldTest {
     }
 
     @Test
-    void getLocalFileDataDataShouldReturnZeroWhenZero() {
-        byte[] actual = new EntryTypeExtraField(ZipEntryType.MAILBOX).getLocalFileDataData();
-        assertThat(actual).isEqualTo(ONE_AS_BYTE_ARRAY);
-    }
-
-
-    @Test
     void getLocalFileDataShouldReturnValueInLittleIndianWhenMailbox() {
         byte[] actual = new EntryTypeExtraField(ZipEntryType.MAILBOX).getLocalFileDataData();
-        assertThat(actual).isEqualTo(ONE_AS_BYTE_ARRAY);
+        assertThat(actual).isEqualTo(ZERO_AS_BYTE_ARRAY);
     }
 
     @Test
     void getLocalFileDataShouldReturnValueInLittleIndianWhenMailboxAnnotationDir() {
         byte[] actual = new EntryTypeExtraField(ZipEntryType.MAILBOX_ANNOTATION_DIR).getLocalFileDataData();
-        assertThat(actual).isEqualTo(TWO_AS_BYTE_ARRAY);
+        assertThat(actual).isEqualTo(ONE_AS_BYTE_ARRAY);
     }
 
     @Test
     void getLocalFileDataShouldReturnValueInLittleIndianWhenMailboxAnnotation() {
         byte[] actual = new EntryTypeExtraField(ZipEntryType.MAILBOX_ANNOTATION).getLocalFileDataData();
-        assertThat(actual).isEqualTo(THREE_AS_BYTE_ARRAY);
+        assertThat(actual).isEqualTo(TWO_AS_BYTE_ARRAY);
     }
 
     @Test
     void getLocalFileDataShouldReturnValueInLittleIndianWhenMessage() {
         byte[] actual = new EntryTypeExtraField(ZipEntryType.MESSAGE).getLocalFileDataData();
-        assertThat(actual).isEqualTo(FOUR_AS_BYTE_ARRAY);
+        assertThat(actual).isEqualTo(THREE_AS_BYTE_ARRAY);
     }
-
 
     @Test
     void getCentralDirectoryDataShouldThrowWhenNoValue() {
@@ -120,55 +112,43 @@ public class ZipEntryTypeExtraFieldTest {
             .isInstanceOf(RuntimeException.class);
     }
 
-
     @Test
     void getCentralDirectoryDataShouldReturnValueInLittleIndianWhenMailbox() {
         byte[] actual = new EntryTypeExtraField(ZipEntryType.MAILBOX).getCentralDirectoryData();
-        assertThat(actual).isEqualTo(ONE_AS_BYTE_ARRAY);
+        assertThat(actual).isEqualTo(ZERO_AS_BYTE_ARRAY);
     }
 
     @Test
     void getCentralDirectoryDataShouldReturnValueInLittleIndianWhenMailboxAnnotationDir() {
         byte[] actual = new EntryTypeExtraField(ZipEntryType.MAILBOX_ANNOTATION_DIR).getCentralDirectoryData();
-        assertThat(actual).isEqualTo(TWO_AS_BYTE_ARRAY);
+        assertThat(actual).isEqualTo(ONE_AS_BYTE_ARRAY);
     }
 
     @Test
     void getCentralDirectoryDataShouldReturnValueInLittleIndianWhenMailboxAnnotation() {
         byte[] actual = new EntryTypeExtraField(ZipEntryType.MAILBOX_ANNOTATION).getCentralDirectoryData();
-        assertThat(actual).isEqualTo(THREE_AS_BYTE_ARRAY);
+        assertThat(actual).isEqualTo(TWO_AS_BYTE_ARRAY);
     }
 
     @Test
     void getCentralDirectoryDataShouldReturnValueInLittleIndianWhenMessage() {
         byte[] actual = new EntryTypeExtraField(ZipEntryType.MESSAGE).getCentralDirectoryData();
-        assertThat(actual).isEqualTo(FOUR_AS_BYTE_ARRAY);
+        assertThat(actual).isEqualTo(THREE_AS_BYTE_ARRAY);
     }
 
     @Test
     void parseFromLocalFileDataShouldThrownWhenLengthIsSmallerThan8() {
-        byte[] input = new byte[]{0, 0, 0, 0, 0, 0, 0};
+        byte[] input = new byte[7];
         assertThatThrownBy(() -> testee.parseFromLocalFileData(input, 0, 7))
             .isInstanceOf(ZipException.class);
     }
 
     @Test
     void parseFromLocalFileDataShouldThrownWhenLengthIsBiggerThan8() {
-        byte[] input = new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0};
+        byte[] input = new byte[8];
         assertThatThrownBy(() -> testee.parseFromLocalFileData(input, 0, 9))
             .isInstanceOf(ZipException.class);
     }
-
-    @Test
-    void parseFromLocalFileDataShouldParseWhenZero() throws Exception {
-        testee.parseFromLocalFileData(ZERO_AS_BYTE_ARRAY, 0, 8);
-        assertThat(testee.getValue())
-            .contains(0L);
-
-        assertThat(testee.getEnumValue())
-            .isEqualTo(Optional.empty());
-    }
-
 
     @Test
     void parseFromCentralDirectoryDataShouldThrownWhenLengthIsSmallerThan8() {
@@ -185,10 +165,10 @@ public class ZipEntryTypeExtraFieldTest {
     }
 
     @Test
-    void parseFromCentralDirectoryDataShouldParseWhenZero() throws Exception {
-        testee.parseFromCentralDirectoryData(ZERO_AS_BYTE_ARRAY, 0, 8);
+    void parseFromCentralDirectoryDataShouldParseWhenNotAnEnumValue() throws Exception {
+        testee.parseFromCentralDirectoryData(FOUR_AS_BYTE_ARRAY, 0, 8);
         assertThat(testee.getValue())
-            .contains(0L);
+            .contains(4L);
 
         assertThat(testee.getEnumValue())
             .isEqualTo(Optional.empty());

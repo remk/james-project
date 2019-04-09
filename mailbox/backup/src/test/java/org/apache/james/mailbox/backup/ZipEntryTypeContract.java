@@ -25,27 +25,27 @@ import org.junit.jupiter.api.Test;
 
 class ZipEntryTypeContract {
 
-    private void assertZipEntryTypeDeserializedFromValue(long value, ZipEntryType expectedType) {
-        assertThat(ZipEntryType.getFromValue(value)).contains(expectedType);
+    private void assertZipEntryTypeDeserializedFromValue(int value, ZipEntryType expectedType) {
+        assertThat(ZipEntryType.zipEntryType( value)).contains(expectedType);
     }
 
     @Test
     void mailboxShouldBeDeserializedFromOne() {
-        assertZipEntryTypeDeserializedFromValue(1L, ZipEntryType.MAILBOX);
+        assertZipEntryTypeDeserializedFromValue(0, ZipEntryType.MAILBOX);
     }
 
     @Test
     void mailboxAnnotationDirShouldBeDeserializedFromTwo() {
-        assertZipEntryTypeDeserializedFromValue(2L, ZipEntryType.MAILBOX_ANNOTATION_DIR);
+        assertZipEntryTypeDeserializedFromValue(1, ZipEntryType.MAILBOX_ANNOTATION_DIR);
     }
 
     @Test
     void mailboxAnnotationShouldBeDeserializedFromThree() {
-        assertZipEntryTypeDeserializedFromValue(3L, ZipEntryType.MAILBOX_ANNOTATION);
+        assertZipEntryTypeDeserializedFromValue(2, ZipEntryType.MAILBOX_ANNOTATION);
     }
 
     @Test
     void messageShouldBeDeserializedFromFour() {
-        assertZipEntryTypeDeserializedFromValue(4L, ZipEntryType.MESSAGE);
+        assertZipEntryTypeDeserializedFromValue(3, ZipEntryType.MESSAGE);
     }
 }
