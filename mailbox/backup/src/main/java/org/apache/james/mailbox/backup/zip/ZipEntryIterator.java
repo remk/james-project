@@ -33,7 +33,7 @@ import com.google.common.io.ByteSource;
 import com.google.common.io.FileBackedOutputStream;
 
 public class ZipEntryIterator implements Iterator<ZipEntryWithContent>, Closeable {
-    private  final int fileThreshold;
+    private final int fileThreshold;
     private static final boolean RESET_ON_FINALIZE = true;
 
     private final ZipInputStream zipInputStream;
@@ -90,17 +90,11 @@ public class ZipEntryIterator implements Iterator<ZipEntryWithContent>, Closeabl
         if (current.isDirectory()) {
             return Optional.empty();
         } else {
-            FileBackedOutputStream currentContent = new FileBackedOutputStream(fileThreshold, RESET_ON_FINALIZE);
-            try {
+            try (FileBackedOutputStream currentContent = new FileBackedOutputStream(fileThreshold, RESET_ON_FINALIZE)) {
                 IOUtils.copy(zipInputStream, currentContent);
                 return Optional.of(currentContent.asByteSource());
             } catch (IOException e) {
                 LOGGER.error("ERROR when copying content of current entry", e);
-                try {
-                    currentContent.close();
-                } catch (IOException closeException) {
-                    LOGGER.error("Error when closing entry output stream", closeException);
-                }
                 return Optional.empty();
             }
         }

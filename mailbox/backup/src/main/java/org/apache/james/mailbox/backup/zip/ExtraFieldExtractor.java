@@ -19,7 +19,6 @@
 package org.apache.james.mailbox.backup.zip;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.zip.ZipEntry;
@@ -32,36 +31,30 @@ import org.apache.commons.compress.archivers.zip.ZipExtraField;
 import org.apache.commons.compress.archivers.zip.ZipShort;
 import org.apache.james.mailbox.backup.SerializedMailboxId;
 import org.apache.james.mailbox.backup.SerializedMessageId;
-import org.apache.james.util.OptionalUtils;
 
 public class ExtraFieldExtractor {
 
-    public static Optional<Long> getLongExtraField(ZipShort id, ZipEntry entry) throws ZipException {
+    private static <E, T> Optional<T> extractField(ZipShort id, ZipEntry entry, Function<Object, E> castExtraField, Function<E, Optional<T>> readValue) throws ZipException {
         ZipExtraField[] extraFields = ExtraFieldUtils.parse(entry.getExtra());
         return Arrays.stream(extraFields)
             .filter(field -> field.getHeaderId().equals(id))
-            .map(extraField -> ((LongExtraField) extraField).getValue())
+            .map(castExtraField)
+            .map(readValue)
             .findFirst()
             .flatMap(Function.identity());
     }
 
+    public static Optional<Long> getLongExtraField(ZipShort id, ZipEntry entry) throws ZipException {
+        return extractField(id, entry, LongExtraField.class::cast, LongExtraField::getValue);
+    }
+
     public static Optional<String> getStringExtraField(ZipShort id, ZipEntry entry) throws ZipException {
-        ZipExtraField[] extraFields = ExtraFieldUtils.parse(entry.getExtra());
-        return Arrays.stream(extraFields)
-            .filter(field -> field.getHeaderId().equals(id))
-            .map(extraField -> ((StringExtraField) extraField).getValue())
-            .findFirst()
-            .flatMap(Function.identity());
+        return extractField(id, entry, StringExtraField.class::cast, StringExtraField::getValue);
     }
 
     public static Optional<ZipEntryType> getEntryType(ZipEntry entry) {
         try {
-            ZipExtraField[] extraFields = ExtraFieldUtils.parse(entry.getExtra());
-            return Arrays.stream(extraFields)
-                .filter(field -> field.getHeaderId().equals(EntryTypeExtraField.ID_AQ))
-                .flatMap(extraField ->
-                    OptionalUtils.toStream(((EntryTypeExtraField) extraField).getEnumValue()))
-                .findFirst();
+            return extractField(EntryTypeExtraField.ID_AQ, entry, EntryTypeExtraField.class::cast, EntryTypeExtraField::getEnumValue);
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -79,17 +72,8 @@ public class ExtraFieldExtractor {
         return getLongExtraField(SizeExtraField.ID_AJ, entry);
     }
 
-    public static Optional<Date> getInternalDate(ZipEntry entry) throws ZipException {
-        ZipExtraField[] extraFields = ExtraFieldUtils.parse(entry.getExtra());
-        return Arrays.stream(extraFields)
-            .filter(field -> field.getHeaderId().equals(InternalDateExtraField.ID_AO))
-            .map(extraField -> ((InternalDateExtraField) extraField).getDateValue())
-            .findFirst()
-            .flatMap(Function.identity());
-    }
-
     public static Optional<Flags> getFlags(ZipEntry entry) throws ZipException {
         return getStringExtraField(FlagsExtraField.ID_AP, entry).map(Flags::new);
     }
-    
+
 }

@@ -42,6 +42,7 @@ import com.google.common.io.ByteSource;
 public class MailAccountZipIterator implements MailArchiveIterator {
     private static final Logger LOGGER = LoggerFactory.getLogger(MailAccountZipIterator.class);
     private static final List<MailboxAnnotation> NO_ANNOTATION = ImmutableList.of();
+    public static final String EMPTY_ANNOTATION_CONTENT = "";
     private final ZipEntryIterator zipEntryIterator;
     private Optional<MailboxWithAnnotationsArchiveEntry> currentMailBox;
     private Optional<ZipEntryWithContent> next;
@@ -108,8 +109,16 @@ public class MailAccountZipIterator implements MailArchiveIterator {
         }
     }
 
-    private boolean isLastEntryOrNextEntryIsNotOfType(Optional<ZipEntry> nextZipEntry, ZipEntryType mailboxAnnotationDir) throws ZipException {
-        return !nextZipEntry.isPresent() || !ExtraFieldExtractor.getEntryType(nextZipEntry.get()).equals(Optional.of(mailboxAnnotationDir));
+    private boolean isOfType(ZipEntry nextZipEntry, ZipEntryType expectedType) {
+        Optional<ZipEntryType> zipEntryType = ExtraFieldExtractor.getEntryType(nextZipEntry);
+
+        return zipEntryType
+            .map(actualType -> actualType.equals(expectedType))
+            .orElseGet(() -> false);
+    }
+
+    private boolean isLastEntryOrNextEntryIsNotOfType(Optional<ZipEntry> nextZipEntry, ZipEntryType zipEntryType) throws ZipException {
+        return !nextZipEntry.isPresent() || !isOfType(nextZipEntry.get(), zipEntryType);
     }
 
     private boolean isLastEntryOrHasNoAnnotationsDirectory(Optional<ZipEntry> nextZipEntry) throws ZipException {
@@ -122,7 +131,7 @@ public class MailAccountZipIterator implements MailArchiveIterator {
 
     private MailArchiveEntry fromMailboxAnnotationEntry(ZipEntryWithContent current, Optional<ZipEntry> next) throws ZipException {
         MailboxAnnotation annotation = MailboxAnnotation.newInstance(getAnnotationKey(currentMailBox.get(), current.getEntry()),
-            getAnnotationContent(current).orElse(""));
+            getAnnotationContent(current).orElse(EMPTY_ANNOTATION_CONTENT));
         MailboxWithAnnotationsArchiveEntry mailboxUpdated = currentMailBox.get().appendAnnotation(annotation);
 
         if (isLastEntryOrNextEntryIsNotOfType(next)) {
