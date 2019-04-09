@@ -18,13 +18,16 @@
  ****************************************************************/
 package org.apache.james.mailbox.backup.zip;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import com.github.steveash.guavate.Guavate;
+import com.google.common.collect.Streams;
 
 public enum ZipEntryType {
     MAILBOX,
@@ -35,10 +38,10 @@ public enum ZipEntryType {
     private static final Map<Integer, ZipEntryType> entryByOrdinal;
 
     static {
-        ZipEntryType[] elements = values();
-        IntStream indices = IntStream.range(0, values().length);
-        entryByOrdinal = indices
-            .mapToObj(i -> ImmutablePair.of(i, elements[i]))
+        Stream<ZipEntryType> valuesAsStream = Arrays.stream(values());
+        Stream<Integer> indices = IntStream.range(0, values().length).boxed();
+
+        entryByOrdinal = Streams.zip(indices, valuesAsStream, ImmutablePair::of)
             .collect(Guavate.entriesToImmutableMap());
     }
 
