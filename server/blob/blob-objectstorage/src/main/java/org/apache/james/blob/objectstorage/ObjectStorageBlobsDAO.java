@@ -84,12 +84,6 @@ public class ObjectStorageBlobsDAO implements BlobStore {
         return AwsS3ObjectStorage.daoBuilder(testConfig);
     }
 
-    public static PutBlobFunction defaultPutBlob(BlobId.Factory blobIdFactory, ContainerName containerName, org.jclouds.blobstore.BlobStore blobStore) {
-        return (blob) -> {
-            return blobIdFactory.from(blobStore.putBlob(containerName.value(), blob));
-        };
-    }
-
     public Mono<ContainerName> createContainer(ContainerName name) {
         return Mono.fromCallable(() -> blobStore.createContainerInLocation(DEFAULT_LOCATION, name.value()))
             .filter(created -> created == false)
