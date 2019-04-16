@@ -23,20 +23,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.james.blob.objectstorage.AESPayloadCodec;
 import org.apache.james.blob.objectstorage.PayloadCodec;
-import org.apache.james.modules.objectstorage.swift.DockerSwiftTestRule;
+import org.apache.james.modules.objectstorage.aws.s3.DockerAwsS3TestRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-@ExtendWith(WithEncryptedSwiftExtension.class)
-public class WithEncryptedSwift implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
+@ExtendWith(WithEncryptedAwsS3Extension.class)
+public class WithEncryptedAwsS3Test implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
 
     @Test
     void encryptedPayloadShouldBeConfiguredWhenProvidingEncryptedPayloadConfiguration(GuiceJamesServer jamesServer) {
-        PayloadCodec payloadCodec = jamesServer.getProbe(DockerSwiftTestRule.TestSwiftBlobStoreProbe.class)
-            .getSwiftPayloadCodec();
+        PayloadCodec payloadCodec = jamesServer.getProbe(DockerAwsS3TestRule.TestAwsS3BlobStoreProbe.class)
+            .getAwsS3PayloadCodec();
 
         assertThat(payloadCodec)
             .isInstanceOf(AESPayloadCodec.class);
     }
-
 }

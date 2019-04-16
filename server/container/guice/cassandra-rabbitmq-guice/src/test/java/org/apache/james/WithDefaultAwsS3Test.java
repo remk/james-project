@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(WithDefaultAwsS3Extension.class)
-public class WithDefaultAwsS3 implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
+public class WithDefaultAwsS3Test implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
 
     @Test
     void defaultPayloadShouldBeByDefault(GuiceJamesServer jamesServer) {

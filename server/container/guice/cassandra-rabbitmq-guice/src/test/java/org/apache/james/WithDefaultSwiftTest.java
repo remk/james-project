@@ -19,8 +19,23 @@
 
 package org.apache.james;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.apache.james.blob.objectstorage.DefaultPayloadCodec;
+import org.apache.james.blob.objectstorage.PayloadCodec;
+import org.apache.james.modules.objectstorage.swift.DockerSwiftTestRule;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-@ExtendWith(WithoutSwiftOrAwsS3Extension.class)
-public class WithoutSwiftOrAwsS3 implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
+@ExtendWith(WithDefaultSwiftExtension.class)
+public class WithDefaultSwiftTest implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
+
+    @Test
+    void defaultPayloadShouldBeByDefault(GuiceJamesServer jamesServer) {
+        PayloadCodec payloadCodec = jamesServer.getProbe(DockerSwiftTestRule.TestSwiftBlobStoreProbe.class)
+            .getSwiftPayloadCodec();
+
+        assertThat(payloadCodec)
+            .isInstanceOf(DefaultPayloadCodec.class);
+    }
 }

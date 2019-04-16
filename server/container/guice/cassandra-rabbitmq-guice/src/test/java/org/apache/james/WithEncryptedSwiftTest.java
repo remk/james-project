@@ -21,21 +21,22 @@ package org.apache.james;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.apache.james.blob.objectstorage.DefaultPayloadCodec;
+import org.apache.james.blob.objectstorage.AESPayloadCodec;
 import org.apache.james.blob.objectstorage.PayloadCodec;
 import org.apache.james.modules.objectstorage.swift.DockerSwiftTestRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-@ExtendWith(WithDefaultSwiftExtension.class)
-public class WithDefaultSwift implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
+@ExtendWith(WithEncryptedSwiftExtension.class)
+public class WithEncryptedSwiftTest implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
 
     @Test
-    void defaultPayloadShouldBeByDefault(GuiceJamesServer jamesServer) {
+    void encryptedPayloadShouldBeConfiguredWhenProvidingEncryptedPayloadConfiguration(GuiceJamesServer jamesServer) {
         PayloadCodec payloadCodec = jamesServer.getProbe(DockerSwiftTestRule.TestSwiftBlobStoreProbe.class)
             .getSwiftPayloadCodec();
 
         assertThat(payloadCodec)
-            .isInstanceOf(DefaultPayloadCodec.class);
+            .isInstanceOf(AESPayloadCodec.class);
     }
+
 }
