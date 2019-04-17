@@ -19,16 +19,8 @@
 
 package org.apache.james;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import org.apache.james.blob.objectstorage.AESPayloadCodec;
-import org.apache.james.blob.objectstorage.PayloadCodec;
 import org.apache.james.modules.AwsS3BlobStoreExtension;
 import org.apache.james.modules.objectstorage.PayloadCodecFactory;
-import org.apache.james.modules.objectstorage.aws.s3.DockerAwsS3TestRule;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -37,7 +29,6 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 public class WithEncryptedAwsS3Extension implements CassandraRabbitMQJamesServerTest, BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback, ParameterResolver {
 
@@ -46,7 +37,6 @@ public class WithEncryptedAwsS3Extension implements CassandraRabbitMQJamesServer
     WithEncryptedAwsS3Extension() {
         jamesServerExtension = baseExtensionBuilder()
             .extension(new AwsS3BlobStoreExtension(PayloadCodecFactory.AES256))
-            .server(CassandraRabbitMQJamesServerTest.CONFIGURATION_BUILDER)
             .build();
     }
 
