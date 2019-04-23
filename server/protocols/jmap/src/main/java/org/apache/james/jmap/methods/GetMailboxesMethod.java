@@ -33,6 +33,7 @@ import org.apache.james.jmap.model.GetMailboxesResponse;
 import org.apache.james.jmap.model.MailboxFactory;
 import org.apache.james.jmap.model.MailboxProperty;
 import org.apache.james.jmap.model.mailbox.Mailbox;
+import org.apache.james.jmap.model.mailbox.Quotas;
 import org.apache.james.mailbox.MailboxManager;
 import org.apache.james.mailbox.MailboxSession;
 import org.apache.james.mailbox.exception.MailboxException;
@@ -54,6 +55,8 @@ public class GetMailboxesMethod implements Method {
 
     private static final Method.Request.Name METHOD_NAME = Method.Request.name("getMailboxes");
     private static final Method.Response.Name RESPONSE_NAME = Method.Response.name("mailboxes");
+    private static final Optional<List<MailboxMetaData>> NO_PRELOADED_METADATA = Optional.empty();
+    private static final Optional<Quotas> NO_PRELOADED_QUOTAS = Optional.empty();
 
     private final MailboxManager mailboxManager; 
     private final MailboxFactory mailboxFactory;
@@ -121,31 +124,45 @@ public class GetMailboxesMethod implements Method {
             .orElseGet(Throwing.supplier(() -> retrieveAllMailboxes(mailboxSession)).sneakyThrow());
     }
 
+    private MailboxFactory.MailboxBuilder getBuilder(
+        MailboxSession mailboxSession,
+        MailboxId mailboxId,
+        Optional<List<MailboxMetaData>> preloadedMailboxMetadata,
+        Optional<Quotas> defaultQuotas) {
+        final MailboxFactory.MailboxBuilder builder = mailboxFactory.builder()
+            .id(mailboxId)
+            .session(mailboxSession);
+        final MailboxFactory.MailboxBuilder builderWithQuotas = defaultQuotas.map(builder::usingPreloadedUserDefaultQuotas).orElse(builder);
+        return preloadedMailboxMetadata.map(builderWithQuotas::usingPreloadedMailboxesMetadata).orElse(builderWithQuotas);
+    }
+
     private Stream<Mailbox> retrieveSpecificMailboxes(MailboxSession mailboxSession, ImmutableList<MailboxId> mailboxIds) {
         return mailboxIds
             .stream()
-            .map(mailboxId -> mailboxFactory.builder()
-                .id(mailboxId)
-                .session(mailboxSession)
-                .build())
+            .map(mailboxId -> getBuilder(mailboxSession, mailboxId, NO_PRELOADED_METADATA, NO_PRELOADED_QUOTAS)
+                .build()
+            )
             .flatMap(OptionalUtils::toStream);
     }
 
     private Stream<Mailbox> retrieveAllMailboxes(MailboxSession mailboxSession) throws MailboxException {
-        List<MailboxMetaData> userMailboxes = mailboxManager.search(
-            MailboxQuery.builder()
-                .matchesAllMailboxNames()
-                .build(),
-            mailboxSession);
+        List<MailboxMetaData> userMailboxes = getAllMailboxesMetaData(mailboxSession);
+        Quotas inboxQuotas =  mailboxFactory.getUserDefaultQuotas(mailboxSession);
+
         return userMailboxes
             .stream()
             .map(MailboxMetaData::getId)
-            .map(mailboxId -> mailboxFactory.builder()
-                .id(mailboxId)
-                .session(mailboxSession)
-                .usingPreloadedMailboxesMetadata(userMailboxes)
+            .map(mailboxId -> getBuilder(mailboxSession, mailboxId, Optional.of(userMailboxes), Optional.of(inboxQuotas))
                 .build())
             .flatMap(OptionalUtils::toStream);
+    }
+
+    private List<MailboxMetaData> getAllMailboxesMetaData(MailboxSession mailboxSession) throws MailboxException {
+        return mailboxManager.search(
+                MailboxQuery.builder()
+                    .matchesAllMailboxNames()
+                    .build(),
+                mailboxSession);
     }
 
 }

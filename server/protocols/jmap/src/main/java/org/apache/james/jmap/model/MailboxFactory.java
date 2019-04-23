@@ -60,6 +60,7 @@ public class MailboxFactory {
         private MailboxSession session;
         private MailboxId id;
         private List<MailboxMetaData> userMailboxesMetadata;
+        private Optional<Quotas> preloadedUserDefaultQuotas = Optional.empty();
 
         private MailboxBuilder(MailboxFactory mailboxFactory) {
             this.mailboxFactory = mailboxFactory;
@@ -80,13 +81,18 @@ public class MailboxFactory {
             return this;
         }
 
+        public MailboxBuilder usingPreloadedUserDefaultQuotas(Quotas preloadedUserDefaultQuotas) {
+            this.preloadedUserDefaultQuotas = Optional.of(preloadedUserDefaultQuotas);
+            return this;
+        }
+
         public Optional<Mailbox> build() {
             Preconditions.checkNotNull(id);
             Preconditions.checkNotNull(session);
 
             try {
                 MessageManager mailbox = mailboxFactory.mailboxManager.getMailbox(id, session);
-                return Optional.of(mailboxFactory.fromMessageManager(mailbox, Optional.ofNullable(userMailboxesMetadata), session));
+                return Optional.of(mailboxFactory.fromMessageManager(mailbox, Optional.ofNullable(userMailboxesMetadata), preloadedUserDefaultQuotas, session));
             } catch (MailboxNotFoundException e) {
                 return Optional.empty();
             } catch (MailboxException e) {
@@ -106,8 +112,10 @@ public class MailboxFactory {
         return new MailboxBuilder(this);
     }
 
-    private Mailbox fromMessageManager(MessageManager messageManager, Optional<List<MailboxMetaData>> userMailboxesMetadata,
-                                                 MailboxSession mailboxSession) throws MailboxException {
+    private Mailbox fromMessageManager(MessageManager messageManager,
+                                       Optional<List<MailboxMetaData>> userMailboxesMetadata,
+                                       Optional<Quotas> preloadedDefaultUserQuotas,
+                                       MailboxSession mailboxSession) throws MailboxException {
         MailboxPath mailboxPath = messageManager.getMailboxPath();
         boolean isOwner = mailboxPath.belongsTo(mailboxSession);
         Optional<Role> role = Role.from(mailboxPath.getName());
@@ -116,7 +124,8 @@ public class MailboxFactory {
         Rights rights = Rights.fromACL(messageManager.getResolvedAcl(mailboxSession))
             .removeEntriesFor(Username.forMailboxPath(mailboxPath));
         Username username = Username.fromSession(mailboxSession);
-        Quotas quotas = getQuotas(mailboxPath);
+
+        Quotas quotas = getQuotas(mailboxPath, preloadedDefaultUserQuotas);
 
         return Mailbox.builder()
             .id(messageManager.getId())
@@ -138,13 +147,22 @@ public class MailboxFactory {
             .build();
     }
 
-    private Quotas getQuotas(MailboxPath mailboxPath) throws MailboxException {
+    private Quotas getQuotas(MailboxPath mailboxPath, Optional<Quotas> preloadedUserDefaultQuotas) throws MailboxException {
         QuotaRoot quotaRoot = quotaRootResolver.getQuotaRoot(mailboxPath);
+        QuotaId quotaId = QuotaId.fromQuotaRoot(quotaRoot);
+        if (preloadedUserDefaultQuotas.isPresent() && preloadedUserDefaultQuotas.get().getQuotas().containsKey(quotaId)) {
+            return preloadedUserDefaultQuotas.get();
+        }
         return Quotas.from(
-            QuotaId.fromQuotaRoot(quotaRoot),
+            quotaId,
             Quotas.Quota.from(
                 quotaToValue(quotaManager.getStorageQuota(quotaRoot)),
                 quotaToValue(quotaManager.getMessageQuota(quotaRoot))));
+    }
+
+    public Quotas getUserDefaultQuotas(MailboxSession mailboxSession) throws MailboxException {
+        MailboxPath inboxPath = MailboxPath.inbox(mailboxSession);
+        return (getQuotas(inboxPath, Optional.empty()));
     }
 
     private <T extends QuotaValue<T>> Quotas.Value<T> quotaToValue(Quota<T> quota) {
