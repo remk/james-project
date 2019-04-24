@@ -69,7 +69,7 @@ public class Quotas {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public final boolean equals(Object o) {
             if (o instanceof QuotaId) {
                 QuotaId other = (QuotaId) o;
                 return Objects.equals(quotaRoot, other.quotaRoot);
@@ -78,7 +78,7 @@ public class Quotas {
         }
 
         @Override
-        public int hashCode() {
+        public final int hashCode() {
             return Objects.hashCode(quotaRoot);
         }
     }
