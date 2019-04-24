@@ -132,8 +132,12 @@ public class GetMailboxesMethod implements Method {
         MailboxFactory.MailboxBuilder builder = mailboxFactory.builder()
             .id(mailboxId)
             .session(mailboxSession);
-        MailboxFactory.MailboxBuilder builderWithQuotas = defaultQuotas.map(builder::usingPreloadedUserDefaultQuotas).orElse(builder);
-        return preloadedMailboxMetadata.map(builderWithQuotas::usingPreloadedMailboxesMetadata).orElse(builderWithQuotas);
+        MailboxFactory.MailboxBuilder builderWithQuotas = defaultQuotas
+            .map(builder::usingPreloadedUserDefaultQuotas)
+            .orElse(builder);
+        return preloadedMailboxMetadata
+            .map(builderWithQuotas::usingPreloadedMailboxesMetadata)
+            .orElse(builderWithQuotas);
     }
 
     private Stream<Mailbox> retrieveSpecificMailboxes(MailboxSession mailboxSession, ImmutableList<MailboxId> mailboxIds) {
