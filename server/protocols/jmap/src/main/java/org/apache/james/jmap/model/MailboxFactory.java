@@ -162,7 +162,7 @@ public class MailboxFactory {
 
     public Quotas getUserDefaultQuotas(MailboxSession mailboxSession) throws MailboxException {
         MailboxPath inboxPath = MailboxPath.inbox(mailboxSession);
-        return (getQuotas(inboxPath, Optional.empty()));
+        return getQuotas(inboxPath, Optional.empty());
     }
 
     private <T extends QuotaValue<T>> Quotas.Value<T> quotaToValue(Quota<T> quota) {
