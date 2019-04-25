@@ -45,6 +45,7 @@ import org.apache.james.util.MDCBuilder;
 import org.apache.james.util.OptionalUtils;
 
 import com.github.fge.lambdas.Throwing;
+import com.github.steveash.guavate.Guavate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -109,10 +110,10 @@ public class GetMailboxesMethod implements Method {
         GetMailboxesResponse.Builder builder = GetMailboxesResponse.builder();
         try {
             Optional<ImmutableList<MailboxId>> mailboxIds = mailboxesRequest.getIds();
-            retrieveMailboxes(mailboxIds, mailboxSession)
+            List<Mailbox> mailboxes = retrieveMailboxes(mailboxIds, mailboxSession)
                 .sorted(Comparator.comparing(Mailbox::getSortOrder))
-                .forEach(builder::add);
-            return builder.build();
+                .collect(Guavate.toImmutableList());
+            return builder.addAll(mailboxes).build();
         } catch (MailboxException e) {
             throw new RuntimeException(e);
         }
