@@ -59,7 +59,7 @@ public class MailboxFactory {
         private final MailboxFactory mailboxFactory;
         private MailboxSession session;
         private MailboxId id;
-        private List<MailboxMetaData> userMailboxesMetadata;
+        private Optional<List<MailboxMetaData>> userMailboxesMetadata = Optional.empty();
         private Optional<Quotas> preloadedUserDefaultQuotas = Optional.empty();
 
         private MailboxBuilder(MailboxFactory mailboxFactory) {
@@ -76,13 +76,13 @@ public class MailboxFactory {
             return this;
         }
 
-        public MailboxBuilder usingPreloadedMailboxesMetadata(List<MailboxMetaData> userMailboxesMetadata) {
+        public MailboxBuilder usingPreloadedMailboxesMetadata(Optional<List<MailboxMetaData>> userMailboxesMetadata) {
             this.userMailboxesMetadata = userMailboxesMetadata;
             return this;
         }
 
-        public MailboxBuilder usingPreloadedUserDefaultQuotas(Quotas preloadedUserDefaultQuotas) {
-            this.preloadedUserDefaultQuotas = Optional.of(preloadedUserDefaultQuotas);
+        public MailboxBuilder usingPreloadedUserDefaultQuotas(Optional<Quotas> preloadedUserDefaultQuotas) {
+            this.preloadedUserDefaultQuotas = preloadedUserDefaultQuotas;
             return this;
         }
 
@@ -92,7 +92,7 @@ public class MailboxFactory {
 
             try {
                 MessageManager mailbox = mailboxFactory.mailboxManager.getMailbox(id, session);
-                return Optional.of(mailboxFactory.fromMessageManager(mailbox, Optional.ofNullable(userMailboxesMetadata), preloadedUserDefaultQuotas, session));
+                return Optional.of(mailboxFactory.fromMessageManager(mailbox, userMailboxesMetadata, preloadedUserDefaultQuotas, session));
             } catch (MailboxNotFoundException e) {
                 return Optional.empty();
             } catch (MailboxException e) {
