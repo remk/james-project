@@ -150,7 +150,8 @@ public class MailboxFactory {
     private Quotas getQuotas(MailboxPath mailboxPath, Optional<Quotas> preloadedUserDefaultQuotas) throws MailboxException {
         QuotaRoot quotaRoot = quotaRootResolver.getQuotaRoot(mailboxPath);
         QuotaId quotaId = QuotaId.fromQuotaRoot(quotaRoot);
-        if (preloadedUserDefaultQuotas.isPresent() && preloadedUserDefaultQuotas.get().getQuotas().containsKey(quotaId)) {
+
+        if (containsQuotaId(preloadedUserDefaultQuotas, quotaId)) {
             return preloadedUserDefaultQuotas.get();
         }
         return Quotas.from(
@@ -158,6 +159,13 @@ public class MailboxFactory {
             Quotas.Quota.from(
                 quotaToValue(quotaManager.getStorageQuota(quotaRoot)),
                 quotaToValue(quotaManager.getMessageQuota(quotaRoot))));
+    }
+
+    private boolean containsQuotaId(Optional<Quotas> preloadedUserDefaultQuotas, QuotaId quotaId) {
+        return preloadedUserDefaultQuotas
+                .map(Quotas::getQuotas)
+                .map(quotaIdQuotaMap -> quotaIdQuotaMap.containsKey(quotaId))
+                .orElse(false);
     }
 
     public Quotas getUserDefaultQuotas(MailboxSession mailboxSession) throws MailboxException {
