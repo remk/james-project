@@ -151,12 +151,12 @@ public class GetMailboxesMethod implements Method {
 
     private Stream<Mailbox> retrieveAllMailboxes(MailboxSession mailboxSession) throws MailboxException {
         List<MailboxMetaData> userMailboxes = getAllMailboxesMetaData(mailboxSession);
-        Quotas inboxQuotas =  mailboxFactory.getUserDefaultQuotas(mailboxSession);
+        Quotas mailboxQuotas =  mailboxFactory.getUserDefaultQuotas(mailboxSession);
 
         return userMailboxes
             .stream()
             .map(MailboxMetaData::getId)
-            .map(mailboxId -> getBuilder(mailboxSession, mailboxId, Optional.of(userMailboxes), Optional.of(inboxQuotas))
+            .map(mailboxId -> getBuilder(mailboxSession, mailboxId, Optional.of(userMailboxes), Optional.of(mailboxQuotas))
                 .build())
             .flatMap(OptionalUtils::toStream);
     }
