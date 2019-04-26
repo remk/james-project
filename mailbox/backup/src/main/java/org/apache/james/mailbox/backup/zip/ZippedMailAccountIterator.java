@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.james.mailbox.backup.MailArchiveEntry;
 import org.apache.james.mailbox.backup.MailArchiveIterator;
 import org.apache.james.mailbox.backup.MailboxWithAnnotationsArchiveEntry;
@@ -84,11 +85,12 @@ public class ZippedMailAccountIterator implements MailArchiveIterator {
     }
 
     private Optional<SerializedMailboxId> getMailBoxId(ZipEntry entry) throws ZipException {
-        return ExtraFieldExtractor.getStringExtraField(MailboxIdExtraField.ID_AM, entry).map(SerializedMailboxId::new);
+        return ExtraFieldExtractor.getStringExtraField(MailboxIdExtraField.ID_AM, entry)
+            .map(SerializedMailboxId::new);
     }
 
     private String getMailboxName(ZipEntry current) {
-        return current.getName().substring(0, current.getName().length() - 1);
+        return StringUtils.chop(current.getName());
     }
 
     private MailArchiveEntry fromMailboxEntry(ZipEntry current) throws ZipException {
