@@ -118,8 +118,11 @@ public class DefaultMailboxBackup implements MailboxBackup {
 
     @VisibleForTesting
     List<MailAccountContent> getAccountContentForUser(MailboxSession session) throws MailboxException {
-        MailboxQuery queryUser = MailboxQuery.builder().user(session.getUser()).build();
-        Stream<MailboxPath> paths = mailboxManager.search(queryUser, session).stream()
+        MailboxQuery queryUser = MailboxQuery.builder()
+            .user(session.getUser())
+            .build();
+        Stream<MailboxPath> paths = mailboxManager.search(queryUser, session)
+            .stream()
             .map(MailboxMetaData::getPath);
         List<MailAccountContent> mailboxes = paths
             .flatMap(path -> getMailboxWithAnnotationsFromPath(session, path))

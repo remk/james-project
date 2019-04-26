@@ -74,7 +74,7 @@ class DefaultMailboxBackupTest implements MailboxMessageFixture {
         );
     }
 
-    private void createMailBox(MailboxSession session, MailboxPath mailboxPath) throws Exception {
+    private void createMailbox(MailboxSession session, MailboxPath mailboxPath) throws Exception {
         createMailBoxWithMessages(session, mailboxPath);
     }
 
@@ -90,7 +90,7 @@ class DefaultMailboxBackupTest implements MailboxMessageFixture {
     @Test
     void doBackupWithoutMessageShouldStoreAnArchiveWithOnlyOneEntry() throws Exception {
         ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
-        createMailBox(sessionUser, MAILBOX_PATH_USER1_MAILBOX1);
+        createMailbox(sessionUser, MAILBOX_PATH_USER1_MAILBOX1);
 
         backup.backupAccount(USER1, destination);
         try (ZipAssert zipAssert = ZipAssert.assertThatZip(destination)) {
@@ -101,7 +101,7 @@ class DefaultMailboxBackupTest implements MailboxMessageFixture {
     @Test
     void doBackupMailboxWithAnnotationShouldStoreAnArchiveWithMailboxAndAnnotation() throws Exception {
         ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
-        createMailBox(sessionUser, MAILBOX_PATH_USER1_MAILBOX1);
+        createMailbox(sessionUser, MAILBOX_PATH_USER1_MAILBOX1);
         mailboxManager.updateAnnotations(MAILBOX_PATH_USER1_MAILBOX1, sessionUser, WITH_ANNOTATION_1);
 
         backup.backupAccount(USER1, destination);
@@ -132,7 +132,7 @@ class DefaultMailboxBackupTest implements MailboxMessageFixture {
     void doBackupWithTwoMailboxesAndOneMessageShouldStoreAnArchiveWithThreeEntries() throws Exception {
         ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
         createMailBoxWithMessages(sessionUser, MAILBOX_PATH_USER1_MAILBOX1, getMessage1AppendCommand());
-        createMailBox(sessionUser, MAILBOX_PATH_USER1_MAILBOX2);
+        createMailbox(sessionUser, MAILBOX_PATH_USER1_MAILBOX2);
 
         backup.backupAccount(USER1, destination);
 
@@ -176,7 +176,7 @@ class DefaultMailboxBackupTest implements MailboxMessageFixture {
 
     @Test
     void backupAccountWithOneMailboxThenRestoringItInUser2AccountShouldCreateOneMailbox() throws Exception {
-        createMailBox(sessionUser, MAILBOX_PATH_USER1_MAILBOX1);
+        createMailbox(sessionUser, MAILBOX_PATH_USER1_MAILBOX1);
 
         ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
         backup.backupAccount(USER1, destination);
@@ -195,8 +195,8 @@ class DefaultMailboxBackupTest implements MailboxMessageFixture {
 
     @Test
     void backupAccountWithTwoMailboxesThenRestoringItInUser2AccountShouldCreateTwoMailboxes() throws Exception {
-        createMailBox(sessionUser, MAILBOX_PATH_USER1_MAILBOX1);
-        createMailBox(sessionUser, MAILBOX_PATH_USER1_MAILBOX2);
+        createMailbox(sessionUser, MAILBOX_PATH_USER1_MAILBOX1);
+        createMailbox(sessionUser, MAILBOX_PATH_USER1_MAILBOX2);
 
         ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
         backup.backupAccount(USER1, destination);

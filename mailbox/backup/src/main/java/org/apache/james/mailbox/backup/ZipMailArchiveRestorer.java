@@ -95,7 +95,7 @@ public class ZipMailArchiveRestorer implements MailArchiveRestorer {
         MailboxPath mailboxPath = MailboxPath.forUser(session.getUser().asString(), mailboxWithAnnotationsArchiveEntry.getMailboxName());
         Optional<MailboxId> newMailboxId = mailboxManager.createMailbox(mailboxPath, session);
         mailboxManager.updateAnnotations(mailboxPath, session, mailboxWithAnnotationsArchiveEntry.getAnnotations());
-        return newMailboxId.map(Throwing.function(newId ->
-            ImmutablePair.of(mailboxWithAnnotationsArchiveEntry.getMailboxId(), mailboxManager.getMailbox(newId, session))));
+        return newMailboxId.map(Throwing.<MailboxId, ImmutablePair<SerializedMailboxId, MessageManager>>function(newId ->
+            ImmutablePair.of(mailboxWithAnnotationsArchiveEntry.getMailboxId(), mailboxManager.getMailbox(newId, session))).sneakyThrow());
     }
 }
