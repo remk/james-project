@@ -29,7 +29,7 @@ public class SerializedMessageId {
         this.value = value;
     }
 
-    public SerializedMessageId from(MessageId messageId) {
+    public static SerializedMessageId from(MessageId messageId) {
         return new SerializedMessageId(messageId.serialize());
     }
 
