@@ -18,10 +18,22 @@
  ****************************************************************/
 
 /**
- * The zip archive format for the backup of an account
- * This archive contains the following entries for each mailbox of the user:
+ *  The zip archive format for the backup of an account
+ *
+ *  This archive contains the mailboxes of the account. And for each mailbox :
+ *   - its annotations
+ *   - its messages
+ *
+ *  This structure is repeated sequentially for each mailbox.
+ *  The order presented here is the order in which the entries are added to the zip file.
+ *  This is important and must be respected because during the restoration, the file is read iteratively in memory from an inputstream,
+ *  without storing the whole structure on memory nor on disk.
+ *
+ *  So we have by order of insertion mailbox1 followed by it's elements then mailbox2 and its elements ...
+ *
+ *  This archive contains the following entries for each mailbox of the user :
  *<ul>
- * <li>'mailboxName/' : directory entry</li>
+ * <li><b>'mailboxName/'</b> : directory entry</li>
  * <li>'mailboxName/annotations/' : directory entry, optional. Is present only if the mailbox contains some annotations</li>
  * <li>'mailboxName/annotations/annotation1Key' : file entry which name is the key of the annotation,
  *                                              the content of the annotation is stored in the content of the file</li>
@@ -29,11 +41,10 @@
  * <li>'messageId1' : file entry which name is the serialized {@link org.apache.james.mailbox.model.MessageId} of the message,
  *                  the raw RFC822 message is stored in the content of the file</li>
  * <li>'messageId2' : a mailbox may contains several messages.</li>
+ * <li><b>mailbox2Name</b></li>
  * <li>...</li>
  *</ul>
- * The order in which the entries are added to the zip file is important and must respect this structure.
- * This is important because during the restoration the file is read iteratively in memory from an inputstream,
- * without storing the whole structure on memory nor on disk.
+ *
  *
  * @see the unit test {@link= org.apache.james.mailbox.backup.ZipperTest} for more information about this format
  *
