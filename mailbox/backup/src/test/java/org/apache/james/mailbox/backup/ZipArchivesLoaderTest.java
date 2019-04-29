@@ -19,11 +19,13 @@
 package org.apache.james.mailbox.backup;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 import org.apache.james.mailbox.MailboxManager;
 import org.apache.james.mailbox.MailboxSession;
@@ -71,7 +73,7 @@ public class ZipArchivesLoaderTest implements MailboxMessageFixture {
     }
 
     @Test
-    void mailAccountIteratorFromEmptyArchiveShouldBeEmpty() throws Exception {
+    void mailAccountIteratorFromEmptyArchiveShouldThrowNoSuchElementException() throws Exception {
         ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
         backup.backupAccount(USER1, destination);
 
@@ -79,11 +81,11 @@ public class ZipArchivesLoaderTest implements MailboxMessageFixture {
         MailArchiveIterator mailArchiveIterator = archiveLoader.load(source);
 
         assertThat(mailArchiveIterator.hasNext()).isEqualTo(false);
-        assertThat(mailArchiveIterator.next()).isEqualTo(null);
+        assertThatThrownBy(() -> mailArchiveIterator.next()).isInstanceOf(NoSuchElementException.class);
     }
 
     @Test
-    void callingNextSeveralTimeOnAnEmptyIteratorShouldReturnNull() throws Exception {
+    void callingNextSeveralTimeOnAnEmptyIteratorShouldThrowNoSuchElementException()  throws Exception {
         ByteArrayOutputStream destination = new ByteArrayOutputStream(BUFFER_SIZE);
         backup.backupAccount(USER1, destination);
 
@@ -91,9 +93,9 @@ public class ZipArchivesLoaderTest implements MailboxMessageFixture {
         MailArchiveIterator mailArchiveIterator = archiveLoader.load(source);
 
         assertThat(mailArchiveIterator.hasNext()).isEqualTo(false);
-        assertThat(mailArchiveIterator.next()).isEqualTo(null);
-        assertThat(mailArchiveIterator.next()).isEqualTo(null);
-        assertThat(mailArchiveIterator.next()).isEqualTo(null);
+        assertThatThrownBy(() -> mailArchiveIterator.next()).isInstanceOf(NoSuchElementException.class);
+        assertThatThrownBy(() -> mailArchiveIterator.next()).isInstanceOf(NoSuchElementException.class);
+        assertThatThrownBy(() -> mailArchiveIterator.next()).isInstanceOf(NoSuchElementException.class);
     }
 
     @Test

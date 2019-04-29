@@ -20,6 +20,7 @@ package org.apache.james.mailbox.backup.zip;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -61,7 +62,7 @@ public class ZippedMailAccountIterator implements MailArchiveIterator {
 
     @Override
     public MailArchiveEntry next() {
-        return next.map(this::doNext).orElse(null);
+        return next.map(this::doNext).orElseThrow(() -> new NoSuchElementException());
     }
 
     private MailArchiveEntry doNext(ZipEntry currentElement) {
