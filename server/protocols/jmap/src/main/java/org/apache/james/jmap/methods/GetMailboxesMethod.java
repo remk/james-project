@@ -125,23 +125,16 @@ public class GetMailboxesMethod implements Method {
             .orElseGet(Throwing.supplier(() -> retrieveAllMailboxes(mailboxSession)).sneakyThrow());
     }
 
-    private MailboxFactory.MailboxBuilder getBuilder(
-        MailboxSession mailboxSession,
-        MailboxId mailboxId,
-        Optional<List<MailboxMetaData>> preloadedMailboxMetadata,
-        Optional<Quotas> defaultQuotas) {
 
-        return mailboxFactory.builder()
-            .id(mailboxId)
-            .session(mailboxSession)
-            .usingPreloadedMailboxesMetadata(preloadedMailboxMetadata)
-            .usingPreloadedUserDefaultQuotas(defaultQuotas);
-    }
 
     private Stream<Mailbox> retrieveSpecificMailboxes(MailboxSession mailboxSession, ImmutableList<MailboxId> mailboxIds) {
         return mailboxIds
             .stream()
-            .map(mailboxId -> getBuilder(mailboxSession, mailboxId, NO_PRELOADED_METADATA, NO_PRELOADED_QUOTAS)
+            .map(mailboxId ->  mailboxFactory.builder()
+                .id(mailboxId)
+                .session(mailboxSession)
+                .usingPreloadedMailboxesMetadata(NO_PRELOADED_METADATA)
+                .usingPreloadedUserDefaultQuotas(NO_PRELOADED_QUOTAS)
                 .build()
             )
             .flatMap(OptionalUtils::toStream);
@@ -154,7 +147,11 @@ public class GetMailboxesMethod implements Method {
         return userMailboxes
             .stream()
             .map(MailboxMetaData::getId)
-            .map(mailboxId -> getBuilder(mailboxSession, mailboxId, Optional.of(userMailboxes), Optional.of(mailboxQuotas))
+            .map(mailboxId -> mailboxFactory.builder()
+                .id(mailboxId)
+                .session(mailboxSession)
+                .usingPreloadedMailboxesMetadata(Optional.of(userMailboxes))
+                .usingPreloadedUserDefaultQuotas(Optional.of(mailboxQuotas))
                 .build())
             .flatMap(OptionalUtils::toStream);
     }
