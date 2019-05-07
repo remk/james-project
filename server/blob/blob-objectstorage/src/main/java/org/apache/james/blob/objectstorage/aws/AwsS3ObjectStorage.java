@@ -40,14 +40,17 @@ import org.jclouds.blobstore.domain.Blob;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
+import com.amazonaws.services.s3.transfer.Upload;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
 
@@ -56,6 +59,7 @@ public class AwsS3ObjectStorage {
     private static final Iterable<Module> JCLOUDS_MODULES =
         ImmutableSet.of(new SLF4JLoggingModule());
     public static final int MAX_UPLOAD_THREADS = 5;
+    private static final int MAX_ERROR_RETRY = 5;
     public static Size MULTIPART_UPLOAD_THRESHOLD;
 
     static {
@@ -94,21 +98,21 @@ public class AwsS3ObjectStorage {
                 blob.getMetadata().getName(),
                 file);
 
-            return blobIdFactory.from(getTransferManager(configuration)
-                .upload(request)
+            Upload upload = getTransferManager(configuration)
+                .upload(request);
+
+            return blobIdFactory.from(upload
                 .waitForUploadResult()
                 .getETag());
         } catch (AmazonClientException | InterruptedException e) {
+
             throw new RuntimeException(e);
         }
     }
 
     private static TransferManager getTransferManager(AwsS3AuthConfiguration configuration) {
-        AmazonS3 amazonS3 = AmazonS3ClientBuilder
-            .standard()
-            .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(configuration.getAccessKeyId(), configuration.getSecretKey())))
-            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(configuration.getEndpoint(), null))
-            .build();
+        ClientConfiguration clientConfiguration = getClientConfiguration();
+        AmazonS3 amazonS3 = getS3Client(configuration, clientConfiguration);
 
         return TransferManagerBuilder
             .standard()
@@ -116,6 +120,21 @@ public class AwsS3ObjectStorage {
             .withMultipartUploadThreshold(MULTIPART_UPLOAD_THRESHOLD.getValue())
             .withExecutorFactory(() -> Executors.newFixedThreadPool(MAX_UPLOAD_THREADS))
             .build();
+    }
+
+    private static AmazonS3 getS3Client(AwsS3AuthConfiguration configuration, ClientConfiguration clientConfiguration) {
+        return AmazonS3ClientBuilder
+                .standard()
+                .withClientConfiguration(clientConfiguration)
+                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(configuration.getAccessKeyId(), configuration.getSecretKey())))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(configuration.getEndpoint(), null))
+                .build();
+    }
+
+    private static ClientConfiguration getClientConfiguration() {
+        ClientConfiguration clientConfiguration = new ClientConfiguration();
+        clientConfiguration.setRetryPolicy(PredefinedRetryPolicies.getDefaultRetryPolicyWithCustomMaxRetries(MAX_ERROR_RETRY));
+        return clientConfiguration;
     }
 
     private static class BlobStoreBuilder implements Supplier<BlobStore> {
