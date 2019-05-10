@@ -25,9 +25,7 @@ import java.util.function.Supplier;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.james.lifecycle.api.Startable;
-import org.apache.james.mailrepository.api.MailRepositoryProvider;
 import org.apache.james.mailrepository.api.MailRepositoryStore;
-import org.apache.james.mailrepository.file.FileMailRepositoryProvider;
 import org.apache.james.mailrepository.memory.MailRepositoryStoreConfiguration;
 import org.apache.james.mailrepository.memory.MemoryMailRepositoryStore;
 import org.apache.james.server.core.configuration.ConfigurationProvider;
@@ -56,8 +54,6 @@ public class MailStoreRepositoryModule extends AbstractModule {
         bind(MemoryMailRepositoryStore.class).in(Scopes.SINGLETON);
         bind(MailRepositoryStore.class).to(MemoryMailRepositoryStore.class);
 
-        Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder(), MailRepositoryProvider.class);
-        multibinder.addBinding().to(FileMailRepositoryProvider.class);
         Multibinder.newSetBinder(binder(), ConfigurationPerformer.class).addBinding().to(MailRepositoryStoreModuleConfigurationPerformer.class);
         Multibinder.newSetBinder(binder(), GuiceProbe.class).addBinding().to(MailRepositoryProbeImpl.class);
     }
