@@ -87,29 +87,42 @@ public class MemoryTaskManagerWorker implements TaskManagerWorker {
     public void cancelTask(TaskId id, Consumer<TaskExecutionDetailsUpdater> updateDetails) {
         Optional.ofNullable(idToFuture.remove(id))
             .ifPresent(future -> {
-                updateDetails.accept(details -> {
-                    if (details.getStatus().equals(TaskManager.Status.WAITING) || details.getStatus().equals(TaskManager.Status.IN_PROGRESS)) {
-                        return details.cancelRequested();
-                    }
-                    return details;
-                });
-                future.cancel(INTERRUPT_IF_RUNNING);
-
-                Flux.interval(CHECK_CANCELED_PERIOD)
-                    .map(ignore -> future.isCancelled())
-                    .filter(FunctionalUtils.identityPredicate())
-                    .take(FIRST)
-                    .subscribe(effectivelyCancelled -> {
-                        updateDetails.accept(details -> {
-                            if (details.getStatus().equals(TaskManager.Status.WAITING)
-                                || details.getStatus().equals(TaskManager.Status.IN_PROGRESS)
-                                || details.getStatus().equals(TaskManager.Status.CANCEL_REQUESTED)) {
-                                return details.cancelEffectively();
-                            }
-                            return details;
-                        });
-                    });
+                requestCancellation(updateDetails, future);
+                waitUntilFutureIsCancelled(future)
+                    .subscribe(cancellationSuccessful -> effectivelyCancelled(updateDetails));
             });
+    }
+
+    private void requestCancellation(Consumer<TaskExecutionDetailsUpdater> updateDetails, CompletableFuture<Task.Result> future) {
+        updateDetails.accept(details -> {
+            if (details.getStatus().equals(TaskManager.Status.WAITING) || details.getStatus().equals(TaskManager.Status.IN_PROGRESS)) {
+                return details.cancelRequested();
+            }
+            return details;
+        });
+        future.cancel(INTERRUPT_IF_RUNNING);
+    }
+
+    private Flux<Boolean> waitUntilFutureIsCancelled(CompletableFuture<Task.Result> future) {
+        return Flux.interval(CHECK_CANCELED_PERIOD)
+            .map(ignore -> future.isCancelled())
+            .filter(FunctionalUtils.identityPredicate())
+            .take(FIRST);
+    }
+
+    private void effectivelyCancelled(Consumer<TaskExecutionDetailsUpdater> updateDetails) {
+        updateDetails.accept(details -> {
+            if (canBeCancelledEffectively(details)) {
+                return details.cancelEffectively();
+            }
+            return details;
+        });
+    }
+
+    private boolean canBeCancelledEffectively(TaskExecutionDetails details) {
+        return details.getStatus().equals(TaskManager.Status.WAITING)
+            || details.getStatus().equals(TaskManager.Status.IN_PROGRESS)
+            || details.getStatus().equals(TaskManager.Status.CANCEL_REQUESTED);
     }
 
     private void success(Consumer<TaskExecutionDetailsUpdater> updateDetails) {
