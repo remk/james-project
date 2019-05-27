@@ -68,10 +68,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.exceptions.verification.MoreThanAllowedActualInvocations;
 import org.mockito.stubbing.Answer;
 
 import com.rabbitmq.client.Connection;
-
 import reactor.core.publisher.Mono;
 import reactor.rabbitmq.BindingSpecification;
 import reactor.rabbitmq.ExchangeSpecification;
@@ -322,7 +322,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 rabbitMQExtension.getRabbitMQ().unpause();
 
                 eventBus.dispatch(EVENT, NO_KEYS).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -334,7 +334,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 rabbitMQExtension.getRabbitMQ().restart();
 
                 eventBus.dispatch(EVENT, NO_KEYS).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -347,7 +347,9 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 eventBus.register(listener, GROUP_A);
 
                 eventBus.dispatch(EVENT, NO_KEYS).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+
+                assertThatListenerReceiveOneEvent(listener);
+
             }
 
             @Test
@@ -359,7 +361,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 rabbitMQExtension.getRabbitMQ().restart();
 
                 eventBus.reDeliver(GROUP_A, EVENT).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -372,7 +374,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 eventBus.register(listener, GROUP_A);
 
                 eventBus.reDeliver(GROUP_A, EVENT).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -384,7 +386,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 rabbitMQExtension.getRabbitMQ().restart();
 
                 eventBus.dispatch(EVENT, KEY_1).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -397,7 +399,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 eventBus.register(listener, KEY_1);
 
                 eventBus.dispatch(EVENT, KEY_1).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -414,7 +416,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
 
                 eventBus.register(listener, GROUP_A);
                 eventBus.dispatch(EVENT, NO_KEYS).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -431,7 +433,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
 
                 eventBus.register(listener, GROUP_A);
                 eventBus.reDeliver(GROUP_A, EVENT).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -449,7 +451,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 rabbitMQExtension.getRabbitMQ().unpause();
 
                 eventBus.dispatch(EVENT, KEY_1).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -467,7 +469,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
 
                 eventBus.register(listener, KEY_1);
                 eventBus.dispatch(EVENT, KEY_1).block();
-                verify(listener, after(THIRTY_SECONDS.toMillis()).times(1)).event(EVENT);
+                assertThatListenerReceiveOneEvent(listener);
             }
 
             @Test
@@ -623,5 +625,11 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
             }
         }
 
+    }
+
+    private void assertThatListenerReceiveOneEvent(MailboxListener listener) {
+        assertThatThrownBy(() -> verify(listener, after(THIRTY_SECONDS.toMillis()).never()).event(EVENT))
+            .isInstanceOf(MoreThanAllowedActualInvocations.class)
+            .hasMessageContaining("Wanted at most 0 times but was 1");
     }
 }
