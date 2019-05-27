@@ -128,16 +128,18 @@ public class MemoryTaskManager implements TaskManager {
 
     @Override
     public void cancel(TaskId id) {
-        TaskExecutionDetails details = getExecutionDetails(id);
-        if (details.getStatus().equals(Status.WAITING)) {
-            updateDetails(id).accept(currentDetails -> currentDetails.cancelRequested());
-        }
-        worker.cancelTask(id, updateDetails(id));
+        Optional.ofNullable(idToExecutionDetails.get(id)).ifPresent(details -> {
+                if (details.getStatus().equals(Status.WAITING)) {
+                    updateDetails(id).accept(currentDetails -> currentDetails.cancelRequested());
+                }
+                worker.cancelTask(id, updateDetails(id));
+            }
+        );
     }
 
     @Override
     public TaskExecutionDetails await(TaskId id) {
-        if (Optional.ofNullable(getExecutionDetails(id)).isPresent()) {
+        if (Optional.ofNullable(idToExecutionDetails.get(id)).isPresent()) {
             return Flux.interval(NOW, AWAIT_POLLING_DURATION, Schedulers.elastic())
                 .filter(ignore -> tasksResult.get(id) != null)
                 .map(ignore -> {
