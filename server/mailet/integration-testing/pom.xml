@@ -32,6 +32,10 @@
 
     <name>Apache James :: Server :: Mailets Integration Testing</name>
 
+    <properties>
+        <jdkim.version>0.2</jdkim.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${james.groupId}</groupId>
@@ -146,6 +150,38 @@
             <groupId>net.javacrumbs.json-unit</groupId>
             <artifactId>json-unit-assertj</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.james.jdkim</groupId>
+            <artifactId>apache-jdkim-library</artifactId>
+            <version>${jdkim.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>${james.groupId}</groupId>
+                    <artifactId>apache-mime4j-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>${james.groupId}</groupId>
+                    <artifactId>apache-mime4j-dom</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.james.jdkim</groupId>
+            <artifactId>apache-jdkim-library</artifactId>
+            <version>${jdkim.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>${james.groupId}</groupId>
+                    <artifactId>apache-mime4j-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>${james.groupId}</groupId>
+                    <artifactId>apache-mime4j-dom</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>

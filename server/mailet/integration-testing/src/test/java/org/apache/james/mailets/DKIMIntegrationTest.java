@@ -19,11 +19,23 @@
 
 package org.apache.james.mailets;
 
+import static org.apache.james.mailets.configuration.Constants.DEFAULT_DOMAIN;
+import static org.apache.james.mailets.configuration.Constants.LOCALHOST_IP;
+import static org.apache.james.mailets.configuration.Constants.PASSWORD;
+import static org.apache.james.mailets.configuration.Constants.awaitAtMostOneMinute;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.james.MemoryJamesServerMain;
 import org.apache.james.jdkim.mailets.DKIMSign;
 import org.apache.james.jdkim.mailets.DKIMVerify;
 import org.apache.james.mailets.configuration.CommonProcessors;
 import org.apache.james.mailets.configuration.MailetConfiguration;
 import org.apache.james.mailets.configuration.MailetContainer;
+import org.apache.james.mailets.configuration.MockPublicKeyRecordRetrieverModule;
 import org.apache.james.mailets.configuration.ProcessorConfiguration;
 import org.apache.james.modules.protocols.ImapGuiceProbe;
 import org.apache.james.modules.protocols.SmtpGuiceProbe;
@@ -39,15 +51,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.apache.james.mailets.configuration.Constants.DEFAULT_DOMAIN;
-import static org.apache.james.mailets.configuration.Constants.LOCALHOST_IP;
-import static org.apache.james.mailets.configuration.Constants.PASSWORD;
-import static org.apache.james.mailets.configuration.Constants.awaitAtMostOneMinute;
-import static org.assertj.core.api.Assertions.assertThat;
+import com.google.inject.util.Modules;
 
 public class DKIMIntegrationTest {
 
@@ -57,37 +61,42 @@ public class DKIMIntegrationTest {
     private static final String RECIPIENT = RECIPIENT_LOCAL_PART + "@" + DEFAULT_DOMAIN;
 
     private static final String TESTING_PEM = "-----BEGIN RSA PRIVATE KEY-----\r\n" +
-            "MIICXAIBAAKBgQDYDaYKXzwVYwqWbLhmuJ66aTAN8wmDR+rfHE8HfnkSOax0oIoT\r\n" +
-            "M5zquZrTLo30870YMfYzxwfB6j/Nz3QdwrUD/t0YMYJiUKyWJnCKfZXHJBJ+yfRH\r\n" +
-            "r7oW+UW3cVo9CG2bBfIxsInwYe175g9UjyntJpWueqdEIo1c2bhv9Mp66QIDAQAB\r\n" +
-            "AoGBAI8XcwnZi0Sq5N89wF+gFNhnREFo3rsJDaCY8iqHdA5DDlnr3abb/yhipw0I\r\n" +
-            "/1HlgC6fIG2oexXOXFWl+USgqRt1kTt9jXhVFExg8mNko2UelAwFtsl8CRjVcYQO\r\n" +
-            "cedeH/WM/mXjg2wUqqZenBmlKlD6vNb70jFJeVaDJ/7n7j8BAkEA9NkH2D4Zgj/I\r\n" +
-            "OAVYccZYH74+VgO0e7VkUjQk9wtJ2j6cGqJ6Pfj0roVIMUWzoBb8YfErR8l6JnVQ\r\n" +
-            "bfy83gJeiQJBAOHk3ow7JjAn8XuOyZx24KcTaYWKUkAQfRWYDFFOYQF4KV9xLSEt\r\n" +
-            "ycY0kjsdxGKDudWcsATllFzXDCQF6DTNIWECQEA52ePwTjKrVnLTfCLEG4OgHKvl\r\n" +
-            "Zud4amthwDyJWoMEH2ChNB2je1N4JLrABOE+hk+OuoKnKAKEjWd8f3Jg/rkCQHj8\r\n" +
-            "mQmogHqYWikgP/FSZl518jV48Tao3iXbqvU9Mo2T6yzYNCCqIoDLFWseNVnCTZ0Q\r\n" +
-            "b+IfiEf1UeZVV5o4J+ECQDatNnS3V9qYUKjj/krNRD/U0+7eh8S2ylLqD3RlSn9K\r\n" +
-            "tYGRMgAtUXtiOEizBH6bd/orzI9V9sw8yBz+ZqIH25Q=\r\n" +
-            "-----END RSA PRIVATE KEY-----\r\n";
+        "MIICXAIBAAKBgQDYDaYKXzwVYwqWbLhmuJ66aTAN8wmDR+rfHE8HfnkSOax0oIoT\r\n" +
+        "M5zquZrTLo30870YMfYzxwfB6j/Nz3QdwrUD/t0YMYJiUKyWJnCKfZXHJBJ+yfRH\r\n" +
+        "r7oW+UW3cVo9CG2bBfIxsInwYe175g9UjyntJpWueqdEIo1c2bhv9Mp66QIDAQAB\r\n" +
+        "AoGBAI8XcwnZi0Sq5N89wF+gFNhnREFo3rsJDaCY8iqHdA5DDlnr3abb/yhipw0I\r\n" +
+        "/1HlgC6fIG2oexXOXFWl+USgqRt1kTt9jXhVFExg8mNko2UelAwFtsl8CRjVcYQO\r\n" +
+        "cedeH/WM/mXjg2wUqqZenBmlKlD6vNb70jFJeVaDJ/7n7j8BAkEA9NkH2D4Zgj/I\r\n" +
+        "OAVYccZYH74+VgO0e7VkUjQk9wtJ2j6cGqJ6Pfj0roVIMUWzoBb8YfErR8l6JnVQ\r\n" +
+        "bfy83gJeiQJBAOHk3ow7JjAn8XuOyZx24KcTaYWKUkAQfRWYDFFOYQF4KV9xLSEt\r\n" +
+        "ycY0kjsdxGKDudWcsATllFzXDCQF6DTNIWECQEA52ePwTjKrVnLTfCLEG4OgHKvl\r\n" +
+        "Zud4amthwDyJWoMEH2ChNB2je1N4JLrABOE+hk+OuoKnKAKEjWd8f3Jg/rkCQHj8\r\n" +
+        "mQmogHqYWikgP/FSZl518jV48Tao3iXbqvU9Mo2T6yzYNCCqIoDLFWseNVnCTZ0Q\r\n" +
+        "b+IfiEf1UeZVV5o4J+ECQDatNnS3V9qYUKjj/krNRD/U0+7eh8S2ylLqD3RlSn9K\r\n" +
+        "tYGRMgAtUXtiOEizBH6bd/orzI9V9sw8yBz+ZqIH25Q=\r\n" +
+        "-----END RSA PRIVATE KEY-----\r\n";
     private static final MailetConfiguration DKIMSIGN_MAILET = MailetConfiguration.builder()
-            .matcher(All.class)
-            .mailet(DKIMSign.class)
-            .addProperty(
-                    "signatureTemplate",
-                    "v=1; s=selector; d=example.com; h=from:to:received:received; a=rsa-sha256; bh=; b=;")
-            .addProperty("privateKey", TESTING_PEM)
-            .build();
+        .matcher(All.class)
+        .mailet(DKIMSign.class)
+        .addProperty(
+            "signatureTemplate",
+            "v=1; s=selector; d=example.com; h=from:to:received:received; a=rsa-sha256; bh=; b=;")
+        .addProperty("privateKey", TESTING_PEM)
+        .build();
+
     private static final MailetConfiguration DKIMVERIFY_MAILET = MailetConfiguration.builder()
-            .matcher(All.class)
-            .mailet(DKIMVerify.class)
-            .build();
+        .matcher(All.class)
+        .mailet(DKIMVerify.class)
+        .build();
+
+
     private static final MailetConfiguration STUB_MAILET = MailetConfiguration.builder()
-            .matcher(All.class)
-            .mailet(ExtractAttributeStub.class)
-            .addProperty("attributeName", DKIMVerify.DKIM_AUTH_RESULT.asString())
-            .build();
+        .matcher(All.class)
+        .mailet(ExtractAttributeStub.class)
+        .addProperty("attributeName", DKIMVerify.DKIM_AUTH_RESULT.asString())
+        .build();
+
+    private static final MockPublicKeyRecordRetrieverModule MOCK_PUBLIC_KEY_RECORD_RETRIEVER_MODULE = new MockPublicKeyRecordRetrieverModule();
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -105,16 +114,17 @@ public class DKIMIntegrationTest {
         dkimAuthResults = new ArrayList<>();
         ExtractAttributeStub.setDkimAuthResultInspector(value -> dkimAuthResults.add(value.map(result -> (String) result)));
         MailetContainer.Builder mailetContainer = TemporaryJamesServer.SIMPLE_MAILET_CONTAINER_CONFIGURATION
-                .putProcessor(ProcessorConfiguration.transport()
-                        .addMailet(DKIMSIGN_MAILET)
-                        .addMailet(DKIMVERIFY_MAILET)
-                        .addMailet(STUB_MAILET)
-                        .addMailetsFrom(CommonProcessors.transport()));
+            .putProcessor(ProcessorConfiguration.transport()
+                .addMailet(DKIMSIGN_MAILET)
+                .addMailet(DKIMVERIFY_MAILET)
+                .addMailet(STUB_MAILET)
+                .addMailetsFrom(CommonProcessors.transport()));
 
         jamesServer = TemporaryJamesServer
-                .builder()
-                .withMailetContainer(mailetContainer)
-                .build(temporaryFolder);
+            .builder()
+            .withBase(Modules.combine(MemoryJamesServerMain.IN_MEMORY_SERVER_AGGREGATE_MODULE, MOCK_PUBLIC_KEY_RECORD_RETRIEVER_MODULE))
+            .withMailetContainer(mailetContainer)
+            .build(temporaryFolder);
 
         dataProbe = jamesServer.getProbe(DataProbeImpl.class);
         dataProbe.addDomain(DEFAULT_DOMAIN);
