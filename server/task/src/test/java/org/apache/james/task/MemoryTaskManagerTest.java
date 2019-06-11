@@ -70,10 +70,10 @@ class MemoryTaskManagerTest {
 
     @Test
     void getStatusShouldReturnWaitingWhenNotYetProcessed() {
-        CountDownLatch task1Latch = new CountDownLatch(1);
+        CountDownLatch waitingForResultLatch = new CountDownLatch(1);
 
         memoryTaskManager.submit(() -> {
-            await(task1Latch);
+            await(waitingForResultLatch);
             return Task.Result.COMPLETED;
         });
 
@@ -81,6 +81,8 @@ class MemoryTaskManagerTest {
 
         assertThat(memoryTaskManager.getExecutionDetails(taskId).getStatus())
             .isEqualTo(TaskManager.Status.WAITING);
+
+        waitingForResultLatch.countDown();
     }
 
     @Test
@@ -177,30 +179,31 @@ class MemoryTaskManagerTest {
 
     @Test
     void cancelShouldBeIdempotent() {
-        CountDownLatch task1Latch = new CountDownLatch(1);
+        CountDownLatch waitingForResultLatch = new CountDownLatch(1);
 
         TaskId id = memoryTaskManager.submit(() -> {
-            await(task1Latch);
+            await(waitingForResultLatch);
             return Task.Result.COMPLETED;
         });
         awaitUntilTaskHasStatus(id, TaskManager.Status.IN_PROGRESS);
         memoryTaskManager.cancel(id);
         assertThatCode(() -> memoryTaskManager.cancel(id))
             .doesNotThrowAnyException();
+        waitingForResultLatch.countDown();
     }
 
     @Test
     void getStatusShouldReturnInProgressWhenProcessingIsInProgress() {
-        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch waitingForResultLatch = new CountDownLatch(1);
 
         TaskId taskId = memoryTaskManager.submit(() -> {
-            await(latch1);
+            await(waitingForResultLatch);
             return Task.Result.COMPLETED;
         });
         awaitUntilTaskHasStatus(taskId, TaskManager.Status.IN_PROGRESS);
         assertThat(memoryTaskManager.getExecutionDetails(taskId).getStatus())
             .isEqualTo(TaskManager.Status.IN_PROGRESS);
-        latch1.countDown();
+        waitingForResultLatch.countDown();
     }
 
     @Test
