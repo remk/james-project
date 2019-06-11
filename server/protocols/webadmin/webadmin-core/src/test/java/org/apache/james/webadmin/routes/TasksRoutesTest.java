@@ -51,6 +51,7 @@ class TasksRoutesTest {
 
     private MemoryTaskManager taskManager;
     private WebAdminServer webAdminServer;
+    private CountDownLatch waitingForResultLatch;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -66,10 +67,13 @@ class TasksRoutesTest {
         RestAssured.requestSpecification = WebAdminUtils.buildRequestSpecification(webAdminServer)
             .setBasePath(TasksRoutes.BASE)
             .build();
+
+        waitingForResultLatch = new CountDownLatch(1);
     }
 
     @AfterEach
     void tearDown() {
+        waitingForResultLatch.countDown();
         taskManager.stop();
         webAdminServer.destroy();
     }
@@ -84,11 +88,10 @@ class TasksRoutesTest {
 
     @Test
     void listShouldReturnTaskDetailsWhenTaskInProgress() throws Exception {
-        CountDownLatch waitingForResultLatch = new CountDownLatch(1);
         CountDownLatch taskInProgressLatch = new CountDownLatch(1);
         TaskId taskId = taskManager.submit(() -> {
             taskInProgressLatch.countDown();
-            await(waitingForResultLatch);
+            waitForResult();
             return Task.Result.COMPLETED;
         });
 
@@ -102,8 +105,6 @@ class TasksRoutesTest {
             .body("[0].status", is(TaskManager.Status.IN_PROGRESS.getValue()))
             .body("[0].taskId", is(taskId.asString()))
             .body("[0].class", is(not(empty())));
-
-        waitingForResultLatch.countDown();
     }
 
     private void await(CountDownLatch latch) {
@@ -114,13 +115,16 @@ class TasksRoutesTest {
         }
     }
 
+    private void waitForResult() {
+        await(waitingForResultLatch);
+    }
+
     @Test
     void listShouldListTaskWhenStatusFilter() throws Exception {
-        CountDownLatch waitingForResultLatch = new CountDownLatch(1);
         CountDownLatch inProgressLatch = new CountDownLatch(1);
         TaskId taskId = taskManager.submit(() -> {
             inProgressLatch.countDown();
-            await(waitingForResultLatch);
+            waitForResult();
             return Task.Result.COMPLETED;
         });
 
@@ -136,17 +140,14 @@ class TasksRoutesTest {
             .body("[0].status", is(TaskManager.Status.IN_PROGRESS.getValue()))
             .body("[0].taskId", is(taskId.asString()))
             .body("[0].type", is(Task.UNKNOWN));
-
-        waitingForResultLatch.countDown();
     }
 
     @Test
     void listShouldReturnEmptyWhenNonMatchingStatusFilter() throws Exception {
-        CountDownLatch waitingForResultLatch = new CountDownLatch(1);
         CountDownLatch inProgressLatch = new CountDownLatch(1);
         taskManager.submit(() -> {
             inProgressLatch.countDown();
-            await(waitingForResultLatch);
+            waitForResult();
             return Task.Result.COMPLETED;
         });
 
@@ -159,17 +160,14 @@ class TasksRoutesTest {
         .then()
             .statusCode(HttpStatus.OK_200)
             .body("", hasSize(0));
-
-        waitingForResultLatch.countDown();
     }
 
     @Test
     void getShouldReturnTaskDetails() throws Exception {
-        CountDownLatch waitingForResultLatch = new CountDownLatch(1);
         CountDownLatch inProgressLatch = new CountDownLatch(1);
         TaskId taskId = taskManager.submit(() -> {
             inProgressLatch.countDown();
-            await(waitingForResultLatch);
+            waitForResult();
             return Task.Result.COMPLETED;
         });
 
@@ -180,8 +178,6 @@ class TasksRoutesTest {
         .then()
             .statusCode(HttpStatus.OK_200)
             .body("status", is("inProgress"));
-
-        waitingForResultLatch.countDown();
     }
 
     @Test
@@ -235,9 +231,8 @@ class TasksRoutesTest {
 
     @Test
     void deleteShouldReturnOk() {
-        CountDownLatch waitingForResultLatch = new CountDownLatch(1);
         TaskId taskId = taskManager.submit(() -> {
-            await(waitingForResultLatch);
+            waitForResult();
             return Task.Result.COMPLETED;
         });
 
@@ -245,8 +240,6 @@ class TasksRoutesTest {
             .delete("/" + taskId.getValue())
         .then()
             .statusCode(HttpStatus.NO_CONTENT_204);
-
-        waitingForResultLatch.countDown();
     }
 
     @Test
