@@ -26,8 +26,8 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.james.lifecycle.api.Startable;
 import org.apache.james.mailrepository.api.MailRepositoryStore;
-import org.apache.james.mailrepository.memory.MailRepositoryStoreConfiguration;
-import org.apache.james.mailrepository.memory.MemoryMailRepositoryStore;
+import org.apache.james.mailrepository.api.MailRepositoryStoreConfiguration;
+import org.apache.james.mailrepository.api.MailRepositoryStoreImpl;
 import org.apache.james.server.core.configuration.ConfigurationProvider;
 import org.apache.james.utils.ConfigurationPerformer;
 import org.apache.james.utils.GuiceProbe;
@@ -51,8 +51,8 @@ public class MailStoreRepositoryModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(MemoryMailRepositoryStore.class).in(Scopes.SINGLETON);
-        bind(MailRepositoryStore.class).to(MemoryMailRepositoryStore.class);
+        bind(MailRepositoryStoreImpl.class).in(Scopes.SINGLETON);
+        bind(MailRepositoryStore.class).to(MailRepositoryStoreImpl.class);
 
         Multibinder.newSetBinder(binder(), ConfigurationPerformer.class).addBinding().to(MailRepositoryStoreModuleConfigurationPerformer.class);
         Multibinder.newSetBinder(binder(), GuiceProbe.class).addBinding().to(MailRepositoryProbeImpl.class);
@@ -72,10 +72,10 @@ public class MailStoreRepositoryModule extends AbstractModule {
 
     @Singleton
     public static class MailRepositoryStoreModuleConfigurationPerformer implements ConfigurationPerformer {
-        private final MemoryMailRepositoryStore javaMailRepositoryStore;
+        private final MailRepositoryStoreImpl javaMailRepositoryStore;
 
         @Inject
-        public MailRepositoryStoreModuleConfigurationPerformer(MemoryMailRepositoryStore javaMailRepositoryStore) {
+        public MailRepositoryStoreModuleConfigurationPerformer(MailRepositoryStoreImpl javaMailRepositoryStore) {
             this.javaMailRepositoryStore = javaMailRepositoryStore;
         }
 
@@ -90,7 +90,7 @@ public class MailStoreRepositoryModule extends AbstractModule {
 
         @Override
         public List<Class<? extends Startable>> forClasses() {
-            return ImmutableList.of(MemoryMailRepositoryStore.class);
+            return ImmutableList.of(MailRepositoryStoreImpl.class);
         }
     }
 

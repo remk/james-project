@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Optional;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
+import org.apache.james.mailrepository.api.MailRepositoryStoreConfiguration;
 import org.apache.james.mailrepository.api.Protocol;
 import org.junit.jupiter.api.Test;
 

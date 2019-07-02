@@ -34,10 +34,10 @@ import org.apache.james.mailrepository.api.MailRepository;
 import org.apache.james.mailrepository.api.MailRepositoryStore;
 import org.apache.james.mailrepository.api.MailRepositoryUrl;
 import org.apache.james.mailrepository.api.Protocol;
-import org.apache.james.mailrepository.memory.MailRepositoryStoreConfiguration;
+import org.apache.james.mailrepository.api.MailRepositoryStoreConfiguration;
 import org.apache.james.mailrepository.memory.MemoryMailRepository;
 import org.apache.james.mailrepository.memory.MemoryMailRepositoryProvider;
-import org.apache.james.mailrepository.memory.MemoryMailRepositoryStore;
+import org.apache.james.mailrepository.api.MailRepositoryStoreImpl;
 import org.apache.james.mailrepository.memory.MemoryMailRepositoryUrlStore;
 import org.apache.mailet.Mail;
 import org.apache.mailet.base.MailAddressFixture;
@@ -59,7 +59,7 @@ class ToSenderDomainRepositoryTest {
         .build();
 
     private ToSenderDomainRepository mailet;
-    private MemoryMailRepositoryStore mailRepositoryStore;
+    private MailRepositoryStoreImpl mailRepositoryStore;
 
     @BeforeEach
     void setup() throws Exception {
@@ -75,7 +75,7 @@ class ToSenderDomainRepositoryTest {
                 MemoryMailRepository.class.getName(),
                 new HierarchicalConfiguration()));
 
-        mailRepositoryStore = new MemoryMailRepositoryStore(urlStore, Sets.newHashSet(new MemoryMailRepositoryProvider()), configuration);
+        mailRepositoryStore = new MailRepositoryStoreImpl(urlStore, Sets.newHashSet(new MemoryMailRepositoryProvider()), configuration);
         mailRepositoryStore.init();
     }
 

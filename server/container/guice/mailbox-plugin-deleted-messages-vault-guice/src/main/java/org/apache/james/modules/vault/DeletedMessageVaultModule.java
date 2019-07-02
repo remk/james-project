@@ -27,7 +27,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.james.mailrepository.api.MailRepositoryPath;
 import org.apache.james.mailrepository.api.MailRepositoryUrl;
 import org.apache.james.mailrepository.api.Protocol;
-import org.apache.james.mailrepository.memory.MailRepositoryStoreConfiguration;
+import org.apache.james.mailrepository.api.MailRepositoryStoreConfiguration;
 import org.apache.james.utils.PropertiesProvider;
 import org.apache.james.vault.DeletedMessageVault;
 import org.apache.james.vault.MailRepositoryDeletedMessageVault;

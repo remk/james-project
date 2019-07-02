@@ -17,7 +17,7 @@
  * under the License.                                           *
  ****************************************************************/
 
-package org.apache.james.mailrepository.memory;
+package org.apache.james.mailrepository.api;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,21 +35,14 @@ import org.apache.commons.configuration.DefaultConfigurationBuilder;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.james.lifecycle.api.Configurable;
 import org.apache.james.lifecycle.api.Startable;
-import org.apache.james.mailrepository.api.MailRepository;
-import org.apache.james.mailrepository.api.MailRepositoryPath;
-import org.apache.james.mailrepository.api.MailRepositoryProvider;
-import org.apache.james.mailrepository.api.MailRepositoryStore;
-import org.apache.james.mailrepository.api.MailRepositoryUrl;
-import org.apache.james.mailrepository.api.MailRepositoryUrlStore;
-import org.apache.james.mailrepository.api.Protocol;
 import org.apache.james.repository.api.Initializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.fge.lambdas.Throwing;
 
-public class MemoryMailRepositoryStore implements MailRepositoryStore, Startable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MemoryMailRepositoryStore.class);
+public class MailRepositoryStoreImpl implements MailRepositoryStore, Startable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MailRepositoryStoreImpl.class);
 
     private final MailRepositoryUrlStore urlStore;
     private final Set<MailRepositoryProvider> mailRepositories;
@@ -59,7 +52,7 @@ public class MemoryMailRepositoryStore implements MailRepositoryStore, Startable
     private final MailRepositoryStoreConfiguration configuration;
 
     @Inject
-    public MemoryMailRepositoryStore(MailRepositoryUrlStore urlStore, Set<MailRepositoryProvider> mailRepositories, MailRepositoryStoreConfiguration configuration) {
+    public MailRepositoryStoreImpl(MailRepositoryUrlStore urlStore, Set<MailRepositoryProvider> mailRepositories, MailRepositoryStoreConfiguration configuration) {
         this.urlStore = urlStore;
         this.mailRepositories = mailRepositories;
         this.configuration = configuration;

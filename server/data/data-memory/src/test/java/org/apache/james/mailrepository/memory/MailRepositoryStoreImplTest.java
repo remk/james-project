@@ -30,7 +30,9 @@ import org.apache.james.core.builder.MimeMessageBuilder;
 import org.apache.james.mailrepository.api.MailRepository;
 import org.apache.james.mailrepository.api.MailRepositoryPath;
 import org.apache.james.mailrepository.api.MailRepositoryStore;
+import org.apache.james.mailrepository.api.MailRepositoryStoreConfiguration;
 import org.apache.james.mailrepository.api.MailRepositoryUrl;
+import org.apache.james.mailrepository.api.MailRepositoryStoreImpl;
 import org.apache.james.server.core.configuration.Configuration;
 import org.apache.james.server.core.configuration.FileConfigurationProvider;
 import org.apache.james.server.core.filesystem.FileSystemImpl;
@@ -41,7 +43,7 @@ import org.junit.Test;
 
 import com.google.common.collect.Sets;
 
-public class MemoryMailRepositoryStoreTest {
+public class MailRepositoryStoreImplTest {
     private static final MailRepositoryUrl MEMORY1_REPO = MailRepositoryUrl.from("memory1://repo");
     private static final MailRepositoryUrl UNKNOWN_PROTOCOL_REPO = MailRepositoryUrl.from("toto://repo");
     private static final MailRepositoryUrl MEMORY2_REPO = MailRepositoryUrl.from("memory2://repo");
@@ -49,7 +51,7 @@ public class MemoryMailRepositoryStoreTest {
 
     private MemoryMailRepositoryUrlStore urlStore;
 
-    private MemoryMailRepositoryStore repositoryStore;
+    private MailRepositoryStoreImpl repositoryStore;
     private FileSystemImpl fileSystem;
     private Configuration configuration;
 
@@ -65,7 +67,7 @@ public class MemoryMailRepositoryStoreTest {
         MailRepositoryStoreConfiguration storeConfiguration = MailRepositoryStoreConfiguration.parse(
             new FileConfigurationProvider(fileSystem, configuration).getConfiguration("mailrepositorystore"));
 
-        repositoryStore = new MemoryMailRepositoryStore(urlStore, Sets.newHashSet(
+        repositoryStore = new MailRepositoryStoreImpl(urlStore, Sets.newHashSet(
                 new MemoryMailRepositoryProvider(),
                 new MemoryMailRepositoryProvider()),
             storeConfiguration);
@@ -100,7 +102,7 @@ public class MemoryMailRepositoryStoreTest {
         MailRepositoryStoreConfiguration storeConfiguration = MailRepositoryStoreConfiguration.parse(
             new FileConfigurationProvider(fileSystem, configuration).getConfiguration("fakemailrepositorystore"));
 
-        repositoryStore = new MemoryMailRepositoryStore(urlStore, Sets.newHashSet(
+        repositoryStore = new MailRepositoryStoreImpl(urlStore, Sets.newHashSet(
             new MemoryMailRepositoryProvider()), storeConfiguration);
 
         assertThatThrownBy(() -> repositoryStore.init())
@@ -111,7 +113,7 @@ public class MemoryMailRepositoryStoreTest {
     public void configureShouldNotThrowOnEmptyConfiguration() throws Exception {
         MailRepositoryStoreConfiguration configuration = MailRepositoryStoreConfiguration.parse(new HierarchicalConfiguration());
 
-        repositoryStore = new MemoryMailRepositoryStore(urlStore, Sets.newHashSet(
+        repositoryStore = new MailRepositoryStoreImpl(urlStore, Sets.newHashSet(
             new MemoryMailRepositoryProvider()), configuration);
 
         repositoryStore.init();

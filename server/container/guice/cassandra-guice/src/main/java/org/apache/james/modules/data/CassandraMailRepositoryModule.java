@@ -22,6 +22,7 @@ package org.apache.james.modules.data;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.api.MailRepositoryStoreConfiguration;
 import org.apache.james.mailrepository.api.MailRepositoryUrlStore;
 import org.apache.james.mailrepository.api.Protocol;
 import org.apache.james.mailrepository.cassandra.CassandraMailRepository;
@@ -34,7 +35,6 @@ import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryProvider
 import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryUrlModule;
 import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryUrlStore;
 import org.apache.james.mailrepository.cassandra.MergingCassandraMailRepositoryMailDao;
-import org.apache.james.mailrepository.memory.MailRepositoryStoreConfiguration;
 import org.apache.james.modules.server.MailStoreRepositoryModule;
 
 import com.google.common.collect.ImmutableList;

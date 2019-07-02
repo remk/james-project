@@ -17,14 +17,13 @@
  * under the License.                                           *
  ****************************************************************/
 
-package org.apache.james.mailrepository.memory;
+package org.apache.james.mailrepository.api;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
-import org.apache.james.mailrepository.api.Protocol;
 import org.apache.james.util.OptionalUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +95,7 @@ public class MailRepositoryStoreConfiguration {
         }
     }
 
-    static Optional<Protocol> computeDefaultProtocol(List<Item> items) {
+   public static Optional<Protocol> computeDefaultProtocol(List<Item> items) {
         return items.stream()
             .flatMap(item -> item.getProtocols().stream())
             .findFirst();

@@ -24,10 +24,10 @@ import org.apache.james.mailbox.inmemory.InMemoryId;
 import org.apache.james.mailbox.inmemory.InMemoryMessageId;
 import org.apache.james.mailrepository.api.MailRepositoryUrl;
 import org.apache.james.mailrepository.api.Protocol;
-import org.apache.james.mailrepository.memory.MailRepositoryStoreConfiguration;
+import org.apache.james.mailrepository.api.MailRepositoryStoreConfiguration;
 import org.apache.james.mailrepository.memory.MemoryMailRepository;
 import org.apache.james.mailrepository.memory.MemoryMailRepositoryProvider;
-import org.apache.james.mailrepository.memory.MemoryMailRepositoryStore;
+import org.apache.james.mailrepository.api.MailRepositoryStoreImpl;
 import org.apache.james.mailrepository.memory.MemoryMailRepositoryUrlStore;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -47,7 +47,7 @@ public class MailRepositoryDeletedMessageVaultTest implements DeletedMessageVaul
                 new HierarchicalConfiguration()));
         
         MemoryMailRepositoryUrlStore urlStore = new MemoryMailRepositoryUrlStore();
-        MemoryMailRepositoryStore mailRepositoryStore = new MemoryMailRepositoryStore(urlStore,
+        MailRepositoryStoreImpl mailRepositoryStore = new MailRepositoryStoreImpl(urlStore,
             Sets.newHashSet(new MemoryMailRepositoryProvider()),
             configuration);
 
