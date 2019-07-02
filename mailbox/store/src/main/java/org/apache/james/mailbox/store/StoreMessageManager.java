@@ -395,9 +395,9 @@ public class StoreMessageManager implements MessageManager {
     private MediaType getMediaType(MaximalBodyDescriptor descriptor) {
         final String mediaTypeFromHeader = descriptor.getMediaType();
         if (mediaTypeFromHeader == null) {
-            return mediaType = new MediaType("text", "plain");
+            return new MediaType("text", "plain");
         } else {
-            return mediaType = new MediaType(mediaTypeFromHeader, descriptor.getSubType());
+            return new MediaType(mediaTypeFromHeader, descriptor.getSubType());
         }
     }
 
