@@ -30,6 +30,8 @@ import org.apache.james.mailbox.indexer.ReIndexer;
 import org.apache.james.mailbox.model.MailboxConstants;
 import org.apache.james.mailbox.model.MailboxPath;
 import org.apache.james.mailbox.store.search.ListeningMessageSearchIndex;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.file.FileMailRepositoryProvider;
 import org.apache.james.modules.server.JMXServerModule;
 import org.apache.james.task.Task;
 import org.junit.After;
@@ -37,6 +39,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 
 public class ReindexCommandIntegrationTest {
@@ -55,7 +58,13 @@ public class ReindexCommandIntegrationTest {
         guiceJamesServer = memoryJmap.jmapServer(new JMXServerModule(),
             binder -> binder.bind(ListeningMessageSearchIndex.class).toInstance(mock(ListeningMessageSearchIndex.class)))
             .overrideWith(binder -> binder.bind(ReIndexer.class)
-                .annotatedWith(Names.named("reindexer")).toInstance(reIndexer));
+                .annotatedWith(Names.named("reindexer")).toInstance(reIndexer))
+            .overrideWith(binder -> {
+                binder.bind(ListeningMessageSearchIndex.class).toInstance(mock(ListeningMessageSearchIndex.class));
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(FileMailRepositoryProvider.class);
+            });
+
         guiceJamesServer.start();
     }
 

@@ -26,6 +26,8 @@ import org.apache.james.GuiceJamesServer;
 import org.apache.james.MemoryJmapTestRule;
 import org.apache.james.cli.util.OutputCapture;
 import org.apache.james.mailbox.store.search.ListeningMessageSearchIndex;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.file.FileMailRepositoryProvider;
 import org.apache.james.modules.protocols.SieveProbeImpl;
 import org.apache.james.modules.server.JMXServerModule;
 import org.apache.james.sieverepository.api.exception.QuotaNotFoundException;
@@ -35,6 +37,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+
+import com.google.inject.multibindings.Multibinder;
 
 public class SieveQuotaCommandsIntegrationTest {
     public static final String USER = "user";
@@ -52,7 +56,11 @@ public class SieveQuotaCommandsIntegrationTest {
     @Before
     public void setUp() throws Exception {
         guiceJamesServer = memoryJmap.jmapServer(new JMXServerModule(),
-            binder -> binder.bind(ListeningMessageSearchIndex.class).toInstance(mock(ListeningMessageSearchIndex.class)));
+            binder -> {
+                binder.bind(ListeningMessageSearchIndex.class).toInstance(mock(ListeningMessageSearchIndex.class));
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(FileMailRepositoryProvider.class);
+            });
         guiceJamesServer.start();
         outputCapture = new OutputCapture();
         sieveProbe = guiceJamesServer.getProbe(SieveProbeImpl.class);
