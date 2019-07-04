@@ -25,6 +25,8 @@ import org.apache.james.mailbox.extractor.TextExtractor;
 import org.apache.james.mailbox.store.search.MessageSearchIndex;
 import org.apache.james.mailbox.store.search.PDFTextExtractor;
 import org.apache.james.mailbox.store.search.SimpleMessageSearchIndex;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.file.FileMailRepositoryProvider;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.apache.james.server.core.configuration.Configuration;
 import org.junit.rules.TemporaryFolder;
@@ -33,6 +35,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import com.google.inject.Module;
+import com.google.inject.multibindings.Multibinder;
 
 public class MemoryJmapTestRule implements TestRule {
 
@@ -50,6 +53,10 @@ public class MemoryJmapTestRule implements TestRule {
             .overrideWith(new TestJMAPServerModule(LIMIT_TO_10_MESSAGES))
             .overrideWith(binder -> binder.bind(TextExtractor.class).to(PDFTextExtractor.class))
             .overrideWith(binder -> binder.bind(MessageSearchIndex.class).to(SimpleMessageSearchIndex.class))
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(FileMailRepositoryProvider.class);
+            })
             .overrideWith(modules);
     }
 

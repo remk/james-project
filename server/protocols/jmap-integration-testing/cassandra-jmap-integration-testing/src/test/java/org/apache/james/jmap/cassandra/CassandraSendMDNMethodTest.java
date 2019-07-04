@@ -31,8 +31,12 @@ import org.apache.james.mailbox.cassandra.ids.CassandraMessageId;
 import org.apache.james.mailbox.extractor.TextExtractor;
 import org.apache.james.mailbox.model.MessageId;
 import org.apache.james.mailbox.store.search.PDFTextExtractor;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryProvider;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import com.google.inject.multibindings.Multibinder;
 
 public class CassandraSendMDNMethodTest extends SendMDNMethodTest {
 
@@ -45,7 +49,12 @@ public class CassandraSendMDNMethodTest extends SendMDNMethodTest {
         .server(configuration -> GuiceJamesServer.forConfiguration(configuration)
             .combineWith(ALL_BUT_JMX_CASSANDRA_MODULE)
             .overrideWith(binder -> binder.bind(TextExtractor.class).to(PDFTextExtractor.class))
-            .overrideWith(new TestJMAPServerModule(LIMIT_TO_10_MESSAGES)))
+            .overrideWith(new TestJMAPServerModule(LIMIT_TO_10_MESSAGES))
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(CassandraMailRepositoryProvider.class);
+            })
+        )
         .build();
 
     @Override

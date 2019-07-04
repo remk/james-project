@@ -27,7 +27,9 @@ import org.apache.james.GuiceJamesServer;
 import org.apache.james.JamesServerBuilder;
 import org.apache.james.JamesServerExtension;
 import org.apache.james.jmap.methods.integration.LinshareBlobExportMechanismIntegrationTest;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
 import org.apache.james.mailrepository.api.MailRepositoryUrl;
+import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryProvider;
 import org.apache.james.modules.LinshareGuiceExtension;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.apache.james.modules.mailbox.PreDeletionHookConfiguration;
@@ -36,6 +38,8 @@ import org.apache.james.vault.DeletedMessageVaultHook;
 import org.apache.james.vault.MailRepositoryDeletedMessageVault;
 import org.apache.james.webadmin.WebAdminConfiguration;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import com.google.inject.multibindings.Multibinder;
 
 public class CassandraLinshareBlobExportMechanismIntegrationTest extends LinshareBlobExportMechanismIntegrationTest {
 
@@ -59,6 +63,11 @@ public class CassandraLinshareBlobExportMechanismIntegrationTest extends Linshar
                         PreDeletionHookConfiguration.forClass(DeletedMessageVaultHook.class)));
                 binder.bind(MailRepositoryDeletedMessageVault.Configuration.class)
                     .toInstance(new MailRepositoryDeletedMessageVault.Configuration(MailRepositoryUrl.from("cassandra://var/deletedMessages/user")));
-            }))
+            })
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(CassandraMailRepositoryProvider.class);
+            })
+        )
         .build();
 }

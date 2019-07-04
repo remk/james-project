@@ -28,8 +28,12 @@ import org.apache.james.mailbox.extractor.TextExtractor;
 import org.apache.james.mailbox.store.search.MessageSearchIndex;
 import org.apache.james.mailbox.store.search.PDFTextExtractor;
 import org.apache.james.mailbox.store.search.SimpleMessageSearchIndex;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.file.FileMailRepositoryProvider;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import com.google.inject.multibindings.Multibinder;
 
 class MemorySpamAssassinContractTest implements SpamAssassinContract {
 
@@ -43,6 +47,10 @@ class MemorySpamAssassinContractTest implements SpamAssassinContract {
             .combineWith(MemoryJamesServerMain.IN_MEMORY_SERVER_AGGREGATE_MODULE)
             .overrideWith(new TestJMAPServerModule(LIMIT_TO_20_MESSAGES))
             .overrideWith(binder -> binder.bind(TextExtractor.class).to(PDFTextExtractor.class))
-            .overrideWith(binder -> binder.bind(MessageSearchIndex.class).to(SimpleMessageSearchIndex.class)))
+            .overrideWith(binder -> binder.bind(MessageSearchIndex.class).to(SimpleMessageSearchIndex.class))
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(FileMailRepositoryProvider.class);
+            }))
         .build();
 }

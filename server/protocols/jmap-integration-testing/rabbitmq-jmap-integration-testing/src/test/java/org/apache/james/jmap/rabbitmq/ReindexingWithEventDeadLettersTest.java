@@ -41,6 +41,8 @@ import org.apache.james.JamesServerBuilder;
 import org.apache.james.JamesServerExtension;
 import org.apache.james.JmapJamesServerContract;
 import org.apache.james.jmap.api.access.AccessToken;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryProvider;
 import org.apache.james.modules.AwsS3BlobStoreExtension;
 import org.apache.james.modules.RabbitMQExtension;
 import org.apache.james.modules.TestJMAPServerModule;
@@ -57,6 +59,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import com.google.inject.multibindings.Multibinder;
 import io.restassured.RestAssured;
 import io.restassured.parsing.Parser;
 import io.restassured.specification.RequestSpecification;
@@ -74,12 +77,16 @@ class ReindexingWithEventDeadLettersTest {
     private static final DockerElasticSearchExtension dockerElasticSearch = new DockerElasticSearchExtension().withRequestTimeout(java.time.Duration.ofSeconds(1));
 
     private static final JamesServerBuilder.ServerProvider CONFIGURATION_BUILDER = configuration -> GuiceJamesServer
-            .forConfiguration(configuration)
-            .combineWith(CassandraRabbitMQJamesServerMain.MODULES)
-            .overrideWith(new TestJMAPServerModule(LIMIT_TO_10_MESSAGES))
-            .overrideWith(JmapJamesServerContract.DOMAIN_LIST_CONFIGURATION_MODULE)
-            .overrideWith(binder -> binder.bind(WebAdminConfiguration.class)
-                .toInstance(WebAdminConfiguration.TEST_CONFIGURATION));
+        .forConfiguration(configuration)
+        .combineWith(CassandraRabbitMQJamesServerMain.MODULES)
+        .overrideWith(new TestJMAPServerModule(LIMIT_TO_10_MESSAGES))
+        .overrideWith(JmapJamesServerContract.DOMAIN_LIST_CONFIGURATION_MODULE)
+        .overrideWith(binder -> binder.bind(WebAdminConfiguration.class)
+            .toInstance(WebAdminConfiguration.TEST_CONFIGURATION))
+        .overrideWith(binder -> {
+            Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+            multibinder.addBinding().to(CassandraMailRepositoryProvider.class);
+        });
 
     @RegisterExtension
     JamesServerExtension testExtension = new JamesServerBuilder()

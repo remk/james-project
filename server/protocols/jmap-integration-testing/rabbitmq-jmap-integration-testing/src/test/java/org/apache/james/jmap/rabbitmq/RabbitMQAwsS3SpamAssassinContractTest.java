@@ -28,10 +28,14 @@ import org.apache.james.jmap.methods.integration.SpamAssassinContract;
 import org.apache.james.jmap.methods.integration.SpamAssassinModuleExtension;
 import org.apache.james.mailbox.extractor.TextExtractor;
 import org.apache.james.mailbox.store.search.PDFTextExtractor;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryProvider;
 import org.apache.james.modules.AwsS3BlobStoreExtension;
 import org.apache.james.modules.RabbitMQExtension;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import com.google.inject.multibindings.Multibinder;
 
 class RabbitMQAwsS3SpamAssassinContractTest implements SpamAssassinContract {
 
@@ -48,7 +52,11 @@ class RabbitMQAwsS3SpamAssassinContractTest implements SpamAssassinContract {
         .server(configuration -> GuiceJamesServer.forConfiguration(configuration)
             .combineWith(CassandraRabbitMQJamesServerMain.MODULES)
             .overrideWith(binder -> binder.bind(TextExtractor.class).to(PDFTextExtractor.class))
-            .overrideWith(new TestJMAPServerModule(LIMIT_TO_20_MESSAGES)))
+            .overrideWith(new TestJMAPServerModule(LIMIT_TO_20_MESSAGES))
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(CassandraMailRepositoryProvider.class);
+            }))
         .build();
 }
 

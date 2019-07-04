@@ -24,6 +24,8 @@ import java.io.IOException;
 import org.apache.james.backend.rabbitmq.DockerRabbitMQSingleton;
 import org.apache.james.mailbox.extractor.TextExtractor;
 import org.apache.james.mailbox.store.search.PDFTextExtractor;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryProvider;
 import org.apache.james.modules.TestDockerESMetricReporterModule;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.apache.james.modules.TestRabbitMQModule;
@@ -36,6 +38,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import com.google.inject.Module;
+import com.google.inject.multibindings.Multibinder;
 
 public class CassandraRabbitMQAwsS3JmapTestRule implements TestRule {
 
@@ -77,6 +80,10 @@ public class CassandraRabbitMQAwsS3JmapTestRule implements TestRule {
             .overrideWith(new TestDockerESMetricReporterModule(dockerElasticSearchRule.getDockerEs().getHttpHost()))
             .overrideWith(guiceModuleTestRule.getModule())
             .overrideWith((binder -> binder.bind(CleanupTasksPerformer.class).asEagerSingleton()))
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(CassandraMailRepositoryProvider.class);
+            })
             .overrideWith(additionals);
     }
 

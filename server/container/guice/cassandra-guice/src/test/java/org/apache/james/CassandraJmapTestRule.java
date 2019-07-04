@@ -25,6 +25,8 @@ import java.io.IOException;
 
 import org.apache.james.mailbox.extractor.TextExtractor;
 import org.apache.james.mailbox.store.search.PDFTextExtractor;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryProvider;
 import org.apache.james.modules.TestDockerESMetricReporterModule;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.apache.james.server.core.configuration.Configuration;
@@ -35,6 +37,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import com.google.inject.Module;
+import com.google.inject.multibindings.Multibinder;
 
 public class CassandraJmapTestRule implements TestRule {
 
@@ -73,6 +76,10 @@ public class CassandraJmapTestRule implements TestRule {
             .overrideWith(guiceModuleTestRule.getModule())
             .overrideWith((binder -> binder.bind(CleanupTasksPerformer.class).asEagerSingleton()))
             .overrideWith(binder -> binder.bind(WebAdminConfiguration.class).toInstance(WebAdminConfiguration.TEST_CONFIGURATION))
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(CassandraMailRepositoryProvider.class);
+            })
             .overrideWith(additionals);
     }
 

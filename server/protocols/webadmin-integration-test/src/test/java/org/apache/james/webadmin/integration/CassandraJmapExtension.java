@@ -31,6 +31,8 @@ import org.apache.james.DockerElasticSearchRule;
 import org.apache.james.GuiceJamesServer;
 import org.apache.james.mailbox.extractor.TextExtractor;
 import org.apache.james.mailbox.store.search.PDFTextExtractor;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryProvider;
 import org.apache.james.modules.TestDockerESMetricReporterModule;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.apache.james.server.core.configuration.Configuration;
@@ -48,6 +50,7 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.rules.TemporaryFolder;
 
 import com.github.fge.lambdas.Throwing;
+import com.google.inject.multibindings.Multibinder;
 
 public class CassandraJmapExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback, ParameterResolver {
     public interface JamesLifeCyclePolicy {
@@ -145,19 +148,23 @@ public class CassandraJmapExtension implements BeforeAllCallback, AfterAllCallba
 
     private GuiceJamesServer james() throws IOException {
         Configuration configuration = Configuration.builder()
-                .workingDirectory(temporaryFolder.newFolder())
-                .configurationFromClasspath()
-                .build();
+            .workingDirectory(temporaryFolder.newFolder())
+            .configurationFromClasspath()
+            .build();
 
         return GuiceJamesServer.forConfiguration(configuration)
-                .combineWith(ALL_BUT_JMX_CASSANDRA_MODULE).overrideWith(binder -> binder.bind(TextExtractor.class).to(PDFTextExtractor.class))
-                .overrideWith(new TestJMAPServerModule(LIMIT_TO_20_MESSAGES))
-                .overrideWith(new TestDockerESMetricReporterModule(elasticSearchRule.getDockerEs().getHttpHost()))
-                .overrideWith(cassandra.getModule())
-                .overrideWith(elasticSearchRule.getModule())
-                .overrideWith(binder -> binder.bind(WebAdminConfiguration.class).toInstance(WebAdminConfiguration.TEST_CONFIGURATION))
-                .overrideWith(new UnauthorizedModule())
-                .overrideWith((binder -> binder.bind(CleanupTasksPerformer.class).asEagerSingleton()));
+            .combineWith(ALL_BUT_JMX_CASSANDRA_MODULE).overrideWith(binder -> binder.bind(TextExtractor.class).to(PDFTextExtractor.class))
+            .overrideWith(new TestJMAPServerModule(LIMIT_TO_20_MESSAGES))
+            .overrideWith(new TestDockerESMetricReporterModule(elasticSearchRule.getDockerEs().getHttpHost()))
+            .overrideWith(cassandra.getModule())
+            .overrideWith(elasticSearchRule.getModule())
+            .overrideWith(binder -> binder.bind(WebAdminConfiguration.class).toInstance(WebAdminConfiguration.TEST_CONFIGURATION))
+            .overrideWith(new UnauthorizedModule())
+            .overrideWith((binder -> binder.bind(CleanupTasksPerformer.class).asEagerSingleton()))
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(CassandraMailRepositoryProvider.class);
+            });
     }
 
     private Supplier<GuiceJamesServer> jamesSupplier() {

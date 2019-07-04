@@ -30,10 +30,14 @@ import org.apache.james.mailbox.cassandra.ids.CassandraMessageId;
 import org.apache.james.mailbox.extractor.TextExtractor;
 import org.apache.james.mailbox.model.MessageId;
 import org.apache.james.mailbox.store.search.PDFTextExtractor;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.cassandra.CassandraMailRepositoryProvider;
 import org.apache.james.modules.AwsS3BlobStoreExtension;
 import org.apache.james.modules.RabbitMQExtension;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import com.google.inject.multibindings.Multibinder;
 
 public class RabbitMQAwsS3SendMDNMethodTest extends SendMDNMethodTest {
 
@@ -41,15 +45,20 @@ public class RabbitMQAwsS3SendMDNMethodTest extends SendMDNMethodTest {
 
     @RegisterExtension
     JamesServerExtension testExtension = new JamesServerBuilder()
-            .extension(new DockerElasticSearchExtension())
-            .extension(new CassandraExtension())
-            .extension(new AwsS3BlobStoreExtension())
-            .extension(new RabbitMQExtension())
-            .server(configuration -> GuiceJamesServer.forConfiguration(configuration)
-                .combineWith(CassandraRabbitMQJamesServerMain.MODULES)
-                .overrideWith(binder -> binder.bind(TextExtractor.class).to(PDFTextExtractor.class))
-                .overrideWith(new TestJMAPServerModule(LIMIT_TO_10_MESSAGES)))
-            .build();
+        .extension(new DockerElasticSearchExtension())
+        .extension(new CassandraExtension())
+        .extension(new AwsS3BlobStoreExtension())
+        .extension(new RabbitMQExtension())
+        .server(configuration -> GuiceJamesServer.forConfiguration(configuration)
+            .combineWith(CassandraRabbitMQJamesServerMain.MODULES)
+            .overrideWith(binder -> binder.bind(TextExtractor.class).to(PDFTextExtractor.class))
+            .overrideWith(new TestJMAPServerModule(LIMIT_TO_10_MESSAGES))
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(CassandraMailRepositoryProvider.class);
+            })
+        )
+        .build();
 
     @Override
     protected MessageId randomMessageId() {
