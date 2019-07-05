@@ -27,10 +27,13 @@ import org.apache.james.jmap.methods.integration.cucumber.ImapStepdefs;
 import org.apache.james.jmap.methods.integration.cucumber.MainStepdefs;
 import org.apache.james.mailbox.inmemory.InMemoryMessageId;
 import org.apache.james.mailbox.model.MessageId;
+import org.apache.james.mailrepository.api.MailRepositoryProvider;
+import org.apache.james.mailrepository.file.FileMailRepositoryProvider;
 import org.apache.james.modules.TestJMAPServerModule;
 import org.apache.james.server.core.configuration.Configuration;
 import org.junit.rules.TemporaryFolder;
 
+import com.google.inject.multibindings.Multibinder;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
 import cucumber.runtime.java.guice.ScenarioScoped;
@@ -60,9 +63,13 @@ public class MemoryStepdefs {
 
         mainStepdefs.messageIdFactory = new InMemoryMessageId.Factory();
         mainStepdefs.jmapServer = GuiceJamesServer.forConfiguration(configuration)
-                .combineWith(MemoryJamesServerMain.IN_MEMORY_SERVER_AGGREGATE_MODULE)
-                .overrideWith(new TestJMAPServerModule(LIMIT_TO_3_MESSAGES),
-                        (binder) -> binder.bind(MessageId.Factory.class).toInstance(mainStepdefs.messageIdFactory));
+            .combineWith(MemoryJamesServerMain.IN_MEMORY_SERVER_AGGREGATE_MODULE)
+            .overrideWith(new TestJMAPServerModule(LIMIT_TO_3_MESSAGES),
+                (binder) -> binder.bind(MessageId.Factory.class).toInstance(mainStepdefs.messageIdFactory))
+            .overrideWith(binder -> {
+                Multibinder<MailRepositoryProvider> multibinder = Multibinder.newSetBinder(binder, MailRepositoryProvider.class);
+                multibinder.addBinding().to(FileMailRepositoryProvider.class);
+            });
         mainStepdefs.init();
     }
 
