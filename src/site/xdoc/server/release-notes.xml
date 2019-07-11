@@ -459,7 +459,6 @@
                 <li>[<a href='https://issues.apache.org/jira/browse/JAMES-739'>JAMES-739</a>] - Remove MailetContext as dependency of SMTPServer in not backward compatible release</li>
                 <li>[<a href='https://issues.apache.org/jira/browse/JAMES-774'>JAMES-774</a>] - Add documentation for the dns ttl issue</li>
                 <li>[<a href='https://issues.apache.org/jira/browse/JAMES-839'>JAMES-839</a>] - Check LICENSE/NOTICE/HOW-TO for spring deployment generated packages.</li>
-                <li>[<a href='https://issues.apache.org/jira/browse/JAMES-845'>JAMES-845</a>] - Geronimo - JAMES Server integration</li>
                 <li>[<a href='https://issues.apache.org/jira/browse/JAMES-914'>JAMES-914</a>] - Upgrade JavaMail to 1.4.3</li>
                 <li>[<a href='https://issues.apache.org/jira/browse/JAMES-915'>JAMES-915</a>] - Replace deprecated MailAddress.getUser() and MailAddress.getHost()  with MailAddress.getLocalPart() and MailAddress.getDomain()</li>
                 <li>[<a href='https://issues.apache.org/jira/browse/JAMES-918'>JAMES-918</a>] - Build adapter to map Avalon Configuration to Commons Configuration</li>
