@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
-class ConfigurationChangedDTO implements EventDTO {
+class ConfigurationChangedDTO implements EventDTO<ConfigurationChanged> {
 
     static ConfigurationChangedDTO from(ConfigurationChanged configurationChanged, String type) {
         Preconditions.checkNotNull(configurationChanged);
@@ -76,7 +76,7 @@ class ConfigurationChangedDTO implements EventDTO {
 
     @JsonIgnore
     @Override
-    public Event toEvent() {
+    public ConfigurationChanged toEvent() {
         return new ConfigurationChanged(
             () -> aggregateKey,
             EventId.fromSerialized(eventId),

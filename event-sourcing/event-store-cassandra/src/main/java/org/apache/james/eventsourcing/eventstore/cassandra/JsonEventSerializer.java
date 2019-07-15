@@ -30,6 +30,7 @@ import javax.inject.Inject;
 import org.apache.james.eventsourcing.Event;
 import org.apache.james.eventsourcing.eventstore.cassandra.dto.EventDTO;
 import org.apache.james.eventsourcing.eventstore.cassandra.dto.EventDTOModule;
+import org.apache.james.eventsourcing.eventstore.cassandra.generic.DTOModule;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -64,12 +65,12 @@ public class JsonEventSerializer {
 
         typeToModule = modules.stream()
             .collect(Guavate.toImmutableMap(
-                EventDTOModule::getType,
+                DTOModule::getDomainObjectType,
                 Function.identity()));
 
         eventClassToModule = modules.stream()
             .collect(Guavate.toImmutableMap(
-                EventDTOModule::getEventClass,
+                DTOModule::getDomainObjectClass,
                 Function.identity()));
     }
     
