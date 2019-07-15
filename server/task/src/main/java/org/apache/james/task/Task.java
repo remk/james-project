@@ -20,6 +20,7 @@
 package org.apache.james.task;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -95,6 +96,10 @@ public interface Task {
 
     default String type() {
         return UNKNOWN;
+    }
+
+    default Map<String, String> parameters() {
+        return null;
     }
 
     default Optional<TaskExecutionDetails.AdditionalInformation> details() {
