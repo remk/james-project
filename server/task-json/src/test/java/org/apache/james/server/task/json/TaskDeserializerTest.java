@@ -68,7 +68,7 @@ class TaskDeserializerTest {
     void shouldThrowWhenNotRegisteredType() {
         assertThatThrownBy(() -> testee.deserialize(UNREGISTERED_TASK_AS_STRING)).isInstanceOf(JsonTaskSerializer.UnknownTaskException.class);
     }
-e
+
     @Test
     void shouldThrowWhenMissingType() {
         assertThatThrownBy(() -> testee.deserialize(MISSING_TASK_AS_STRING)).isInstanceOf(JsonTaskSerializer.UnknownTaskException.class);
