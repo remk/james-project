@@ -71,12 +71,12 @@ class TaskDeserializerTest {
 
     @Test
     void shouldThrowWhenMissingType() {
-        assertThatThrownBy(() -> testee.deserialize(MISSING_TASK_AS_STRING)).isInstanceOf(JsonTaskSerializer.UnknownTaskException.class);
+        assertThatThrownBy(() -> testee.deserialize(MISSING_TASK_AS_STRING)).isInstanceOf(JsonTaskSerializer.InvalidTaskException.class);
     }
 
     @Test
     void shouldThrowWhenDuplicateType() {
-        assertThatThrownBy(() -> testee.deserialize(TWO_TYPES_TASK_AS_STRING)).isInstanceOf(JsonTaskSerializer.UnknownTaskException.class);
+        assertThatThrownBy(() -> testee.deserialize(TWO_TYPES_TASK_AS_STRING)).isInstanceOf(JsonTaskSerializer.InvalidTaskException.class);
     }
 
 }
