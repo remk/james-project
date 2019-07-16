@@ -54,6 +54,8 @@
         <bundle>mvn:org.apache.james/apache-mailet-api/${mailet.version}</bundle>
         <bundle>mvn:org.apache.james/apache-mailet-base/${mailet.version}</bundle>
         <bundle>mvn:commons-io/commons-io/${commons-io.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-activation_1.1_spec/${geronimo-activation-spec.version}</bundle>
     </feature>
 
     <feature name="james-server-spring" version="${project.version}">
@@ -67,6 +69,7 @@
         <bundle>mvn:org.apache.james/apache-james-mailbox-api/${mailbox.version}</bundle>
         <bundle>mvn:org.apache.james/apache-james-mailbox-tool/${mailbox.version}</bundle>
         <bundle>mvn:org.apache.james.protocols/protocols-api/${protocols.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
         <bundle>mvn:org.apache.james/apache-mailet-api/${mailet.version}</bundle>
         <feature version="${spring.version}">spring31</feature>
     </feature>
@@ -84,6 +87,9 @@
         <bundle dependency="true">mvn:org.apache.james/james-server-dnsservice-dnsjava/${project.version}</bundle>
         <bundle dependency="true">mvn:org.apache.james/apache-mailet-api/${mailet.version}</bundle>
         <bundle dependency="true">mvn:org.apache.james/james-server-lifecycle-api/${project.version}</bundle>
+        <bundle dependency="true">
+            mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}
+        </bundle>
     </feature>
 
     <feature name="james-server-dnsservice-library" version="${project.version}">
@@ -91,11 +97,15 @@
         <bundle dependency="true">mvn:org.apache.james/james-server-dnsservice-library/${project.version}</bundle>
         <bundle dependency="true">mvn:org.apache.james/james-server-dnsservice-api/${project.version}</bundle>
         <bundle dependency="true">mvn:org.apache.james/apache-mailet-api/${mailet.version}</bundle>
+        <bundle dependency="true">
+            mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}
+        </bundle>
     </feature>
 
     <feature name="james-server-queue-api" version="${project.version}">
         <bundle>mvn:org.apache.james/james-server-queue-api/${project.version}</bundle>
         <bundle>mvn:org.apache.james/apache-mailet-api/${mailet.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
     </feature>
 
     <feature name="james-server-fetchmail" version="${project.version}">
@@ -107,6 +117,12 @@
         <feature version="${project.version}">james-server-core</feature>
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
         <bundle dependency="true">mvn:org.apache.james/apache-mailet-api/${mailet.version}</bundle>
+        <bundle dependency="true">
+            mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}
+        </bundle>
+        <bundle dependency="true">
+            mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}
+        </bundle>
         <bundle dependency="true">mvn:org.apache.james/james-server-dnsservice-api/${project.version}</bundle>
         <bundle dependency="true">
             mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.javax-inject/${javax-inject-osgi.version}
@@ -120,6 +136,7 @@
         <feature version="${project.version}">james-server-filesystem-api</feature>
         <bundle>mvn:org.apache.james/apache-mailet-api/${mailet.version}</bundle>
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
     </feature>
 
     <feature name="james-server-data-jpa" version="${project.version}">
@@ -129,6 +146,9 @@
         <feature version="${project.version}">james-server-data-library</feature>
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
         <bundle dependency="true">mvn:commons-codec/commons-codec/${commons-codec.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}
+        </bundle>
     </feature>
 
     <feature name="james-server-data-jdbc" version="${project.version}">
@@ -141,6 +161,8 @@
         <feature version="${project.version}">james-server-core</feature>
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
         <bundle>mvn:commons-codec/commons-codec/${commons-codec.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}</bundle>
         <bundle>
             mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.commons-dbcp/${commons-dbcp-bundle.version}
         </bundle>
@@ -157,6 +179,8 @@
         <feature version="${project.version}">james-server-core</feature>
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
         <bundle>mvn:org.apache.james/apache-mailet-api/${mailet.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}</bundle>
     </feature>
 
     <feature name="james-server-data-ldap" version="${project.version}">
@@ -165,6 +189,7 @@
         <feature version="${project.version}">james-server-data-api</feature>
         <feature version="${project.version}">james-server-util</feature>
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}</bundle>
     </feature>
 
     <feature name="james-server-mailbox-adapter" version="${project.version}">
@@ -194,6 +219,12 @@
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
         <bundle dependency="true">mvn:org.apache.camel/camel-core/${camel.version}</bundle>
         <bundle dependency="true">
+            mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}
+        </bundle>
+        <bundle dependency="true">
+            mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}
+        </bundle>
+        <bundle dependency="true">
             mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.javax-inject/${javax-inject-osgi.version}
         </bundle>
     </feature>
@@ -215,12 +246,15 @@
         <bundle>mvn:org.apache.james.protocols/protocols-smtp/${protocols.version}</bundle>
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
         <bundle>mvn:org.apache.camel/camel-core/${camel.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}</bundle>
     </feature>
 
     <feature name="james-protocols-imap" version="${protocols.version}">
         <bundle>mvn:org.apache.james.protocols/protocols-imap/${protocols.version}</bundle>
         <bundle>mvn:org.apache.james/apache-james-mailbox-api/${mailbox.version}</bundle>
         <feature version="${mime4j.version}">apache-james-mime4j</feature>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
         <bundle>mvn:commons-codec/commons-codec/${commons-codec.version}</bundle>
         <bundle>mvn:commons-lang/commons-lang/${commons-lang.version}</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jutf7/1.0.0_0-SNAPSHOT</bundle>
@@ -235,6 +269,7 @@
         <bundle>mvn:commons-io/commons-io/${commons-io.version}</bundle>
         <bundle>mvn:org.apache.james.protocols/protocols-netty/${protocols.version}</bundle>
         <bundle>mvn:io.netty/netty/${netty.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jutf7/1.0.0_0-SNAPSHOT</bundle>
     </feature>
 
@@ -256,6 +291,9 @@
         <bundle>mvn:org.apache.james.jspf/apache-jspf-resolver/${apache-jspf-resolver.version}</bundle>
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
 
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-activation_1.1_spec/${geronimo-activation-spec.version}</bundle>
         <bundle>mvn:io.netty/netty/${netty.version}</bundle>
     </feature>
 
@@ -272,6 +310,8 @@
         <bundle>mvn:org.apache.james.protocols/protocols-netty/${protocols.version}</bundle>
         <bundle>mvn:org.apache.james/apache-james-mailbox-api/${mailbox.version}</bundle>
         <feature version="${commons-configuration-osgi.version}">commons-configuration</feature>
+        <bundle>mvn:org.apache.geronimo.javamail/geronimo-javamail_1.4_mail/${geronimo-javamail.version}</bundle>
+        <bundle>mvn:org.apache.geronimo.specs/geronimo-annotation_1.1_spec/${geronimo-annotation-spec.version}</bundle>
         <bundle>mvn:io.netty/netty/${netty.version}</bundle>
     </feature>
 
