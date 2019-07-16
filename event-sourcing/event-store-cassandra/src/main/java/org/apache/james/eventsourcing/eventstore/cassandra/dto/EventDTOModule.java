@@ -22,7 +22,7 @@ package org.apache.james.eventsourcing.eventstore.cassandra.dto;
 import org.apache.james.eventsourcing.Event;
 import org.apache.james.json.DTOModule;
 
-public class EventDTOModule<T extends Event, U extends EventDTO<T>> extends DTOModule<T, U> {
+public class EventDTOModule<T extends Event, U extends EventDTO> extends DTOModule<T, U> {
 
     public static <EventType extends Event> DTOModule.Builder<EventType> forEvent(Class<EventType> eventType) {
         return new DTOModule.Builder<>(eventType);

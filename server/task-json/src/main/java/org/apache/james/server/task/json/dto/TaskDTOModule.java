@@ -21,7 +21,7 @@ package org.apache.james.server.task.json.dto;
 import org.apache.james.json.DTOModule;
 import org.apache.james.task.Task;
 
-public class TaskDTOModule<T extends Task, U extends TaskDTO<T>> extends DTOModule<T, U> {
+public class TaskDTOModule<T extends Task, U extends TaskDTO> extends DTOModule<T, U> {
 
     public static <TaskType extends Task> Builder<TaskType> forTask(Class<TaskType> taskType) {
         return new Builder<>(taskType);

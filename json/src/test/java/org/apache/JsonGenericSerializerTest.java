@@ -76,7 +76,7 @@ class JsonGenericSerializerTest {
 
     @Test
     void serializeShouldHandleAllKnownEvents() throws Exception {
-        JsonGenericSerializer<BaseType, DTO<BaseType>> serializer = JsonGenericSerializer.of(
+        JsonGenericSerializer<BaseType, DTO> serializer = JsonGenericSerializer.of(
                 TestModules.FIRST_TYPE,
                 TestModules.SECOND_TYPE);
 

@@ -26,6 +26,7 @@ public interface TestTaskDTOModules {
     TaskDTOModule TEST_TYPE = TaskDTOModule
         .forTask(TestTask.class)
         .convertToDTO(TestTaskDTO.class)
+        .toDomainObjectConverter(TestTaskDTO::toTask)
         .toDTOConverter((task, typeName) -> new TestTaskDTO(
             typeName,
             task.getParameter()))

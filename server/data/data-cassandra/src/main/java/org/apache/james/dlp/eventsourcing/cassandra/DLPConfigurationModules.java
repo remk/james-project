@@ -29,6 +29,7 @@ public interface DLPConfigurationModules {
         EventDTOModule
             .forEvent(ConfigurationItemsAdded.class)
             .convertToDTO(DLPConfigurationItemAddedDTO.class)
+            .toDomainObjectConverter(DLPConfigurationItemAddedDTO::toEvent)
             .toDTOConverter(DLPConfigurationItemAddedDTO::from)
             .typeName("dlp-configuration-store")
             .withFactory(EventDTOModule::new);
@@ -37,6 +38,7 @@ public interface DLPConfigurationModules {
         EventDTOModule
             .forEvent(ConfigurationItemsRemoved.class)
             .convertToDTO(DLPConfigurationItemsRemovedDTO.class)
+            .toDomainObjectConverter(DLPConfigurationItemsRemovedDTO::toEvent)
             .toDTOConverter(DLPConfigurationItemsRemovedDTO::from)
             .typeName("dlp-configuration-clear")
             .withFactory(EventDTOModule::new);

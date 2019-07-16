@@ -22,7 +22,6 @@ package org.apache.james.queue.rabbitmq.view.cassandra.configuration;
 import java.time.Duration;
 import java.util.Objects;
 
-import org.apache.james.eventsourcing.Event;
 import org.apache.james.eventsourcing.EventId;
 import org.apache.james.eventsourcing.eventstore.cassandra.dto.EventDTO;
 
@@ -31,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
-class ConfigurationChangedDTO implements EventDTO<ConfigurationChanged> {
+class ConfigurationChangedDTO implements EventDTO {
 
     static ConfigurationChangedDTO from(ConfigurationChanged configurationChanged, String type) {
         Preconditions.checkNotNull(configurationChanged);
@@ -75,7 +74,6 @@ class ConfigurationChangedDTO implements EventDTO<ConfigurationChanged> {
     }
 
     @JsonIgnore
-    @Override
     public ConfigurationChanged toEvent() {
         return new ConfigurationChanged(
             () -> aggregateKey,

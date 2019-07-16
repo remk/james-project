@@ -19,17 +19,17 @@
 
 package org.apache.james.json;
 
-public class DTOModule<T, U extends DTO<T>> {
+public class DTOModule<T, U extends DTO> {
 
-    public interface DTOConverter<T, U extends DTO<T>> {
+    public interface DTOConverter<T, U extends DTO> {
         U convert(T domainObject, String typeName);
     }
 
-    public interface DomainObjectConverter<T, U extends DTO<T>> {
+    public interface DomainObjectConverter<T, U extends DTO> {
         T convert(U dto);
     }
 
-    public interface ModuleFactory<T, U extends DTO<T>, ModuleType extends DTOModule<T, U>> {
+    public interface ModuleFactory<T, U extends DTO, ModuleType extends DTOModule<T, U>> {
         ModuleType create(DTOConverter<T, U> converter, DomainObjectConverter<T, U> toDomainObjectConverter, Class<T> domainObjectType, Class<U> dtoType, String typeName);
     }
 
@@ -45,54 +45,61 @@ public class DTOModule<T, U extends DTO<T>> {
             this.type = type;
         }
 
-        public <U extends DTO<T>> RequireConversionFunctionBuilder<U> convertToDTO(Class<U> dtoType) {
-            return new RequireConversionFunctionBuilder<>(dtoType);
+        public <U extends DTO> RequireToDomainObjectConverterBuilder<U> convertToDTO(Class<U> dtoType) {
+            return new RequireToDomainObjectConverterBuilder<>(dtoType);
         }
 
-        public class RequireConversionFunctionBuilder<U extends DTO<T>> {
+        public class RequireToDomainObjectConverterBuilder<U extends DTO> {
 
             private final Class<U> dtoType;
-            private DomainObjectConverter<T, U> toDomainObjectConverter;
 
-            private RequireConversionFunctionBuilder(Class<U> dtoType) {
+            RequireToDomainObjectConverterBuilder(Class<U> dtoType) {
                 this.dtoType = dtoType;
-                this.toDomainObjectConverter = DTO::toDomainObject;
             }
 
-            public RequireConversionFunctionBuilder<U> toDomainObjectConverter(DomainObjectConverter<T, U> converter) {
-                this.toDomainObjectConverter = converter;
-                return this;
+            public RequireToDTOConverterBuilder toDomainObjectConverter(DomainObjectConverter<T, U> converter) {
+                return new RequireToDTOConverterBuilder(converter);
             }
 
-            public RequireTypeNameBuilder toDTOConverter(DTOConverter<T, U> converter) {
-                return new RequireTypeNameBuilder(converter);
-            }
+            public class RequireToDTOConverterBuilder {
+                private DomainObjectConverter<T, U> toDomainObjectConverter;
 
-            public class RequireTypeNameBuilder {
-                private final DTOConverter<T, U> converter;
-
-                private RequireTypeNameBuilder(DTOConverter<T, U> converter) {
-                    this.converter = converter;
+                private RequireToDTOConverterBuilder(DomainObjectConverter<T, U> toDomainObjectConverter) {
+                    this.toDomainObjectConverter = toDomainObjectConverter;
                 }
 
-                public RequireModuleFactory typeName(String typeName) {
-                    return new RequireModuleFactory(typeName);
+                public RequireTypeNameBuilder toDTOConverter(DTOConverter<T, U> converter) {
+                    return new RequireTypeNameBuilder(converter);
                 }
 
-                public class RequireModuleFactory {
+                public class RequireTypeNameBuilder {
+                    private final DTOConverter<T, U> converter;
 
-                    private final String typeName;
-
-                    private RequireModuleFactory(String typeName) {
-                        this.typeName = typeName;
+                    private RequireTypeNameBuilder(DTOConverter<T, U> converter) {
+                        this.converter = converter;
                     }
 
-                    public <ModuleType extends DTOModule<T, U>> ModuleType withFactory(ModuleFactory<T, U, ModuleType> factory) {
-                        return factory.create(converter, toDomainObjectConverter, type, dtoType, typeName);
+                    public RequireModuleFactory typeName(String typeName) {
+                        return new RequireModuleFactory(typeName);
+                    }
+
+                    public class RequireModuleFactory {
+
+                        private final String typeName;
+
+                        private RequireModuleFactory(String typeName) {
+                            this.typeName = typeName;
+                        }
+
+                        public <ModuleType extends DTOModule<T, U>> ModuleType withFactory(ModuleFactory<T, U, ModuleType> factory) {
+                            return factory.create(converter, toDomainObjectConverter, type, dtoType, typeName);
+                        }
                     }
                 }
             }
         }
+
+
     }
 
     private final DTOConverter<T, U> converter;

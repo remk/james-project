@@ -37,7 +37,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.steveash.guavate.Guavate;
 import com.google.common.collect.ImmutableSet;
 
-public class JsonGenericSerializer<T, U extends DTO<T>> {
+public class JsonGenericSerializer<T, U extends DTO> {
 
     public static class InvalidTypeException extends RuntimeException {
         public InvalidTypeException(String message) {
@@ -60,7 +60,7 @@ public class JsonGenericSerializer<T, U extends DTO<T>> {
     private final ObjectMapper objectMapper;
 
     @SafeVarargs
-    public static <T, U extends DTO<T>> JsonGenericSerializer of(DTOModule<T, U>... modules) {
+    public static <T, U extends DTO> JsonGenericSerializer of(DTOModule<T, U>... modules) {
         return new JsonGenericSerializer<>(ImmutableSet.copyOf(modules));
     }
 
