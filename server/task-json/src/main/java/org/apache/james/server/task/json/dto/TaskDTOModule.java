@@ -30,9 +30,4 @@ public class TaskDTOModule<T extends Task, U extends TaskDTO<T>> extends DTOModu
     public TaskDTOModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
         super(converter, domainObjectType, dtoType, typeName);
     }
-
-    @Override
-    public U toDTO(T domainObject) {
-        return super.toDTO(domainObject);
-    }
 }

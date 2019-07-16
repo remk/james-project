@@ -25,7 +25,6 @@ import java.util.Optional;
 import javax.inject.Inject;
 
 import org.apache.james.mailbox.model.MailboxId;
-import org.apache.james.server.task.json.TaskDeserializer;
 import org.apache.james.task.Task;
 import org.apache.james.task.TaskExecutionDetails;
 
