@@ -20,70 +20,63 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 
+import org.apache.james.server.task.json.dto.TestTaskDTOModules;
 import org.apache.james.task.Task;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import com.google.common.collect.ImmutableMap;
 
 class TaskDeserializerTest {
 
 
     static final String TASK_AS_STRING = "{" +
         "\"type\": \"testTask\"," +
-        "\"parameters\": {\"parameter\": \"1\"}" +
+        "\"parameter\": 1" +
         "}";
 
     static final String UNREGISTERED_TASK_AS_STRING = "{" +
         "\"type\": \"unknown\"," +
-        "\"parameters\": {\"parameter\": \"1\"}" +
+        "\"parameter\": 1" +
         "}";
 
     static final String TWO_TYPES_TASK_AS_STRING = "{" +
         "\"type\": \"testTask\"," +
         "\"type\": \"unknown\"," +
-        "\"parameters\": {\"parameter\": \"1\"}" +
+        "\"parameter\": 1" +
         "}";
 
     static final String MISSING_TASK_AS_STRING = "{" +
-        "\"parameters\": {\"parameter\": \"1\"}" +
+        "\"parameter\": 1" +
         "}";
 
-    private TaskDeserializer testee;
+    private JsonTaskSerializer testee;
 
     @BeforeEach
     void setUp() {
-        TestTask.Factory factory = new TestTask.Factory();
-        ImmutableMap<String, TaskDeserializer.Factory> registry = ImmutableMap.of("testTask", factory);
-        testee = new TaskDeserializer(registry);
+        testee = new JsonTaskSerializer(TestTaskDTOModules.TEST_TYPE);
     }
 
     @Test
     void shouldDeserializeTaskWithRegisteredType() throws IOException {
         Task task = testee.deserialize(TASK_AS_STRING);
         Assertions.assertThat(task).isInstanceOf(TestTask.class);
-        Assertions.assertThat(task.parameters()).isEqualTo(ImmutableMap.of("parameter", "1"));
+        TestTask testTask = (TestTask) task;
+        Assertions.assertThat(testTask.getParameter()).isEqualTo(1L);
     }
 
     @Test
     void shouldThrowWhenNotRegisteredType() {
-        assertThatThrownBy(() -> testee.deserialize(UNREGISTERED_TASK_AS_STRING)).isInstanceOf(UnsupportedTypeException.class);
+        assertThatThrownBy(() -> testee.deserialize(UNREGISTERED_TASK_AS_STRING)).isInstanceOf(JsonTaskSerializer.UnknownTaskException.class);
     }
-
-
+e
     @Test
     void shouldThrowWhenMissingType() {
-        assertThatThrownBy(() -> testee.deserialize(MISSING_TASK_AS_STRING)).isInstanceOf(InvalidTaskException.class);
+        assertThatThrownBy(() -> testee.deserialize(MISSING_TASK_AS_STRING)).isInstanceOf(JsonTaskSerializer.UnknownTaskException.class);
     }
 
-
-
-    @Disabled
     @Test
     void shouldThrowWhenDuplicateType() {
-        assertThatThrownBy(() -> testee.deserialize(TWO_TYPES_TASK_AS_STRING)).isInstanceOf(InvalidTaskException.class);
+        assertThatThrownBy(() -> testee.deserialize(TWO_TYPES_TASK_AS_STRING)).isInstanceOf(JsonTaskSerializer.UnknownTaskException.class);
     }
 
 }

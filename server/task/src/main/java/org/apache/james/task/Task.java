@@ -98,10 +98,6 @@ public interface Task {
         return UNKNOWN;
     }
 
-    default Map<String, String> parameters() {
-        return null;
-    }
-
     default Optional<TaskExecutionDetails.AdditionalInformation> details() {
         return Optional.empty();
     }

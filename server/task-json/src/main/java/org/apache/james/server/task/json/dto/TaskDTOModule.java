@@ -16,26 +16,23 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-package org.apache.james.server.task.json;
+package org.apache.james.server.task.json.dto;
 
+import org.apache.james.json.DTOModule;
 import org.apache.james.task.Task;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+public class TaskDTOModule<T extends Task, U extends TaskDTO<T>> extends DTOModule<T, U> {
 
-public class TaskSerializer {
-
-    private ObjectMapper objectMapper;
-
-    public TaskSerializer() {
-        this.objectMapper = new ObjectMapper();
+    public static <TaskType extends Task> Builder<TaskType> forTask(Class<TaskType> taskType) {
+        return new Builder<>(taskType);
     }
 
-    public JsonNode serialize(Task task) {
-        return JsonNodeFactory.instance.objectNode()
-            .put("type", task.type())
-            .set("parameters", objectMapper.valueToTree(task.parameters()));
+    public TaskDTOModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
+        super(converter, domainObjectType, dtoType, typeName);
+    }
 
+    @Override
+    public U toDTO(T domainObject) {
+        return super.toDTO(domainObject);
     }
 }

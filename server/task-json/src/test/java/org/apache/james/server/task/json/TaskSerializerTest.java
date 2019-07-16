@@ -16,6 +16,7 @@
  * ***************************************************************/
 package org.apache.james.server.task.json;
 
+import org.apache.james.server.task.json.dto.TestTaskDTOModules;
 import org.junit.jupiter.api.Test;
 
 import net.javacrumbs.jsonunit.assertj.JsonAssertions;
@@ -24,16 +25,16 @@ import net.javacrumbs.jsonunit.assertj.JsonAssertions;
 class TaskSerializerTest {
 
     public static final String TASK_AS_STRING = "{" +
-            "\"type\": \"testTask\"," +
-            "\"parameters\": {\"parameter\": \"1\"}" +
-            "}";
+        "\"type\": \"testTask\"," +
+        "\"parameter\": 1" +
+        "}";
 
     @Test
-    void shouldSerializeTaskWithItsType() {
-        TaskSerializer testee = new TaskSerializer();
+    void shouldSerializeTaskWithItsType() throws Exception {
+        JsonTaskSerializer testee = new JsonTaskSerializer(TestTaskDTOModules.TEST_TYPE);
         long parameter = 1L;
         TestTask task = new TestTask(parameter);
-        JsonAssertions.assertThatJson(testee.serialize(task).toString()).isEqualTo(TASK_AS_STRING);
+        JsonAssertions.assertThatJson(testee.serialize(task)).isEqualTo(TASK_AS_STRING);
     }
 
 }
