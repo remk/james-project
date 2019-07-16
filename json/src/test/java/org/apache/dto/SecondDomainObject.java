@@ -17,23 +17,39 @@
  * under the License.                                           *
  ****************************************************************/
 
-package org.apache.james.eventsourcing.eventstore.cassandra.dto;
+package org.apache.dto;
 
-import org.apache.james.eventsourcing.Event;
-import org.apache.james.json.DTOModule;
+import java.util.Objects;
+import java.util.UUID;
 
-public class EventDTOModule<T extends Event, U extends EventDTO<T>> extends DTOModule<T, U> {
+public class SecondDomainObject implements BaseType {
+    private final UUID id;
+    private final String payload;
 
-    public static <EventType extends Event> DTOModule.Builder<EventType> forEvent(Class<EventType> eventType) {
-        return new DTOModule.Builder<>(eventType);
+    public SecondDomainObject(UUID id, String payload) {
+        this.id = id;
+        this.payload = payload;
     }
 
-    public EventDTOModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
-        super(converter, domainObjectType, dtoType, typeName);
+    public UUID getId() {
+        return id;
+    }
+
+    public String getPayload() {
+        return payload;
     }
 
     @Override
-    public U toDTO(T domainObject) {
-        return super.toDTO(domainObject);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SecondDomainObject that = (SecondDomainObject) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(payload, that.payload);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, payload);
     }
 }

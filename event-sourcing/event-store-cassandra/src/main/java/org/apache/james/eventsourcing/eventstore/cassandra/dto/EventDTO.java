@@ -20,7 +20,7 @@
 package org.apache.james.eventsourcing.eventstore.cassandra.dto;
 
 import org.apache.james.eventsourcing.Event;
-import org.apache.james.eventsourcing.eventstore.cassandra.generic.DTO;
+import org.apache.james.json.DTO;
 
 public interface EventDTO<T extends Event> extends DTO<T> {
     T toEvent();

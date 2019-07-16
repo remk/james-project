@@ -17,23 +17,46 @@
  * under the License.                                           *
  ****************************************************************/
 
-package org.apache.james.eventsourcing.eventstore.cassandra.dto;
+package org.apache.dto;
 
-import org.apache.james.eventsourcing.Event;
-import org.apache.james.json.DTOModule;
+import java.util.UUID;
 
-public class EventDTOModule<T extends Event, U extends EventDTO<T>> extends DTOModule<T, U> {
+import org.apache.james.json.DTO;
 
-    public static <EventType extends Event> DTOModule.Builder<EventType> forEvent(Class<EventType> eventType) {
-        return new DTOModule.Builder<>(eventType);
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class SecondDTO implements DTO<SecondDomainObject> {
+    private final String type;
+    private final String id;
+    private final String payload;
+
+    @JsonCreator
+    public SecondDTO(
+            @JsonProperty("type") String type,
+            @JsonProperty("id") String id,
+            @JsonProperty("payload") String payload) {
+        this.type = type;
+        this.id = id;
+        this.payload = payload;
     }
 
-    public EventDTOModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
-        super(converter, domainObjectType, dtoType, typeName);
+    public String getType() {
+        return type;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public String getPayload() {
+        return payload;
+    }
+
+    @JsonIgnore
     @Override
-    public U toDTO(T domainObject) {
-        return super.toDTO(domainObject);
+    public SecondDomainObject toDomainObject() {
+        return new SecondDomainObject(UUID.fromString(id), payload);
     }
 }

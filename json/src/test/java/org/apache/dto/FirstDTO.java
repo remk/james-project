@@ -17,23 +17,54 @@
  * under the License.                                           *
  ****************************************************************/
 
-package org.apache.james.eventsourcing.eventstore.cassandra.dto;
+package org.apache.dto;
 
-import org.apache.james.eventsourcing.Event;
-import org.apache.james.json.DTOModule;
+import java.time.ZonedDateTime;
+import java.util.Optional;
 
-public class EventDTOModule<T extends Event, U extends EventDTO<T>> extends DTOModule<T, U> {
+import org.apache.james.json.DTO;
 
-    public static <EventType extends Event> DTOModule.Builder<EventType> forEvent(Class<EventType> eventType) {
-        return new DTOModule.Builder<>(eventType);
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class FirstDTO implements DTO<FirstDomainObject> {
+    private final String type;
+    private final Optional<Long> id;
+    private final String time;
+    private final String payload;
+
+    @JsonCreator
+    public FirstDTO(
+            @JsonProperty("type") String type,
+            @JsonProperty("id") Optional<Long> id,
+            @JsonProperty("time") String time,
+            @JsonProperty("payload") String payload) {
+        this.type = type;
+        this.id = id;
+        this.time = time;
+        this.payload = payload;
     }
 
-    public EventDTOModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
-        super(converter, domainObjectType, dtoType, typeName);
+    public String getType() {
+        return type;
     }
 
+    public Optional<Long> getId() {
+        return id;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public String getPayload() {
+        return payload;
+    }
+
+    @JsonIgnore
     @Override
-    public U toDTO(T domainObject) {
-        return super.toDTO(domainObject);
+    public FirstDomainObject toDomainObject() {
+        return new FirstDomainObject(id, ZonedDateTime.parse(time), payload);
     }
 }

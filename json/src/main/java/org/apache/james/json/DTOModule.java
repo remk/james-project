@@ -17,7 +17,7 @@
  * under the License.                                           *
  ****************************************************************/
 
-package org.apache.james.eventsourcing.eventstore.cassandra.generic;
+package org.apache.james.json;
 
 public class DTOModule<T, U extends DTO<T>> {
 

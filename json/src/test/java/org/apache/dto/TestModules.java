@@ -17,23 +17,32 @@
  * under the License.                                           *
  ****************************************************************/
 
-package org.apache.james.eventsourcing.eventstore.cassandra.dto;
+package org.apache.dto;
 
-import org.apache.james.eventsourcing.Event;
 import org.apache.james.json.DTOModule;
 
-public class EventDTOModule<T extends Event, U extends EventDTO<T>> extends DTOModule<T, U> {
+public interface TestModules {
 
-    public static <EventType extends Event> DTOModule.Builder<EventType> forEvent(Class<EventType> eventType) {
-        return new DTOModule.Builder<>(eventType);
-    }
 
-    public EventDTOModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
-        super(converter, domainObjectType, dtoType, typeName);
-    }
+    TestModule FIRST_TYPE = DTOModule
+            .forDomainObject(FirstDomainObject.class)
+            .convertToDTO(FirstDTO.class)
+            .convertWith((domainObject, typeName) -> new FirstDTO(
+                typeName,
+                    domainObject.getId(),
+                    domainObject.getTime().toString(),
+                    domainObject.getPayload()))
+            .typeName("first")
+            .withFactory(TestModule::new);
 
-    @Override
-    public U toDTO(T domainObject) {
-        return super.toDTO(domainObject);
-    }
+    TestModule SECOND_TYPE = DTOModule
+            .forDomainObject(SecondDomainObject.class)
+            .convertToDTO(SecondDTO.class)
+            .convertWith((domainObject, typeName) -> new SecondDTO(
+                    typeName,
+                    domainObject.getId().toString(),
+                    domainObject.getPayload()))
+            .typeName("second")
+            .withFactory(TestModule::new);
+
 }

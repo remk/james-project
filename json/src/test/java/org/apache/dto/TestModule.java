@@ -1,0 +1,11 @@
+package org.apache.dto;
+
+import org.apache.james.json.DTO;
+import org.apache.james.json.DTOModule;
+
+public class TestModule<T extends BaseType, U extends DTO<T>> extends DTOModule<T, U> {
+
+    protected TestModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
+        super(converter, domainObjectType, dtoType, typeName);
+    }
+}

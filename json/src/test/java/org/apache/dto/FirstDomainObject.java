@@ -17,23 +17,47 @@
  * under the License.                                           *
  ****************************************************************/
 
-package org.apache.james.eventsourcing.eventstore.cassandra.dto;
+package org.apache.dto;
 
-import org.apache.james.eventsourcing.Event;
-import org.apache.james.json.DTOModule;
+import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.Optional;
 
-public class EventDTOModule<T extends Event, U extends EventDTO<T>> extends DTOModule<T, U> {
+public class FirstDomainObject implements BaseType {
+    private final Optional<Long> id;
+    private final ZonedDateTime time;
+    private final String payload;
 
-    public static <EventType extends Event> DTOModule.Builder<EventType> forEvent(Class<EventType> eventType) {
-        return new DTOModule.Builder<>(eventType);
+    public FirstDomainObject(Optional<Long> id, ZonedDateTime time, String payload) {
+        this.id = id;
+        this.time = time;
+        this.payload = payload;
     }
 
-    public EventDTOModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
-        super(converter, domainObjectType, dtoType, typeName);
+    public Optional<Long> getId() {
+        return id;
+    }
+
+    public ZonedDateTime getTime() {
+        return time;
+    }
+
+    public String getPayload() {
+        return payload;
     }
 
     @Override
-    public U toDTO(T domainObject) {
-        return super.toDTO(domainObject);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FirstDomainObject that = (FirstDomainObject) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(time, that.time) &&
+                Objects.equals(payload, that.payload);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, time, payload);
     }
 }
