@@ -27,7 +27,7 @@ public interface TestModules {
     TestModule FIRST_TYPE = DTOModule
             .forDomainObject(FirstDomainObject.class)
             .convertToDTO(FirstDTO.class)
-            .convertWith((domainObject, typeName) -> new FirstDTO(
+            .toDTOConverter((domainObject, typeName) -> new FirstDTO(
                 typeName,
                     domainObject.getId(),
                     domainObject.getTime().toString(),
@@ -38,7 +38,7 @@ public interface TestModules {
     TestModule SECOND_TYPE = DTOModule
             .forDomainObject(SecondDomainObject.class)
             .convertToDTO(SecondDTO.class)
-            .convertWith((domainObject, typeName) -> new SecondDTO(
+            .toDTOConverter((domainObject, typeName) -> new SecondDTO(
                     typeName,
                     domainObject.getId().toString(),
                     domainObject.getPayload()))

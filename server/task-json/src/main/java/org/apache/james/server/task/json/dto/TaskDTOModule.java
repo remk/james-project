@@ -27,7 +27,7 @@ public class TaskDTOModule<T extends Task, U extends TaskDTO<T>> extends DTOModu
         return new Builder<>(taskType);
     }
 
-    public TaskDTOModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
-        super(converter, domainObjectType, dtoType, typeName);
+    public TaskDTOModule(DTOConverter<T, U> converter, DomainObjectConverter<T, U> toDomainObjectConverter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
+        super(converter, toDomainObjectConverter, domainObjectType, dtoType, typeName);
     }
 }

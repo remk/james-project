@@ -29,7 +29,7 @@ public interface CassandraMailQueueViewConfigurationModule {
         EventDTOModule
             .forEvent(ConfigurationChanged.class)
             .convertToDTO(ConfigurationChangedDTO.class)
-            .convertWith(ConfigurationChangedDTO::from)
+            .toDTOConverter(ConfigurationChangedDTO::from)
             .typeName(TYPE_NAME)
             .withFactory(EventDTOModule::new);
 }

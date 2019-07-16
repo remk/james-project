@@ -27,7 +27,7 @@ public interface TestEventDTOModules {
     EventDTOModule TEST_TYPE = EventDTOModule
             .forEvent(TestEvent.class)
             .convertToDTO(TestEventDTO.class)
-            .convertWith((event, typeName) -> new TestEventDTO(
+            .toDTOConverter((event, typeName) -> new TestEventDTO(
                 typeName,
                 event.getData(),
                 event.eventId().serialize(),
@@ -39,7 +39,7 @@ public interface TestEventDTOModules {
         EventDTOModule
             .forEvent(OtherEvent.class)
             .convertToDTO(OtherTestEventDTO.class)
-            .convertWith((event, typeName) -> new OtherTestEventDTO(
+            .toDTOConverter((event, typeName) -> new OtherTestEventDTO(
                 typeName,
                 event.getPayload(),
                 event.eventId().serialize(),

@@ -28,8 +28,8 @@ public class EventDTOModule<T extends Event, U extends EventDTO<T>> extends DTOM
         return new DTOModule.Builder<>(eventType);
     }
 
-    public EventDTOModule(DTOConverter<T, U> converter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
-        super(converter, domainObjectType, dtoType, typeName);
+    public EventDTOModule(DTOConverter<T, U> converter, DomainObjectConverter<T, U> toDomainObjectConverter, Class<T> domainObjectType, Class<U> dtoType, String typeName) {
+        super(converter, toDomainObjectConverter, domainObjectType, dtoType, typeName);
     }
 
     @Override
