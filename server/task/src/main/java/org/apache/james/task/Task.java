@@ -20,7 +20,6 @@
 package org.apache.james.task;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 

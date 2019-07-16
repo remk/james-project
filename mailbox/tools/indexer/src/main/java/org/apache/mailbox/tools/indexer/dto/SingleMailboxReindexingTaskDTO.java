@@ -1,7 +1,6 @@
 package org.apache.mailbox.tools.indexer.dto;
 
 import org.apache.james.server.task.json.dto.TaskDTO;
-import org.apache.mailbox.tools.indexer.SingleMailboxReindexingTask;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
