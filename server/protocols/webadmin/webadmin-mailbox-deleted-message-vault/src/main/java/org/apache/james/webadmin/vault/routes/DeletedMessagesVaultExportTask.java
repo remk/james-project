@@ -69,7 +69,6 @@ class DeletedMessagesVaultExportTask implements Task {
         private final QueryDTO exportQuery;
         private final String exportTo;
 
-
         public DeletedMessagesVaultExportTaskDTO(@JsonProperty("type") String type,
                                                  @JsonProperty("userExportFrom") String userExportFrom,
                                                  @JsonProperty("exportQuery") QueryDTO exportQuery,
