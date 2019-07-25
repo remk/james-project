@@ -69,5 +69,4 @@ class DeletedMessagesVaultDeleteTaskSerializationTest {
             .isEqualToComparingOnlyGivenFields(task, "user", "messageId");
     }
 
-
 }
