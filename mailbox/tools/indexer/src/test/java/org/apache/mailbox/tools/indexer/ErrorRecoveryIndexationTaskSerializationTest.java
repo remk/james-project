@@ -29,7 +29,6 @@ import org.apache.james.mailbox.MessageUid;
 import org.apache.james.mailbox.indexer.ReIndexingExecutionFailures;
 import org.apache.james.mailbox.model.TestId;
 import org.apache.james.server.task.json.JsonTaskSerializer;
-import org.apache.james.server.task.json.dto.TaskDTOModule;
 import org.apache.james.task.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,8 +40,19 @@ class ErrorRecoveryIndexationTaskSerializationTest {
 
     private ReIndexerPerformer reIndexerPerformer;
     private JsonTaskSerializer taskSerializer;
-    private final String serializedErrorRecoveryReindexingTask = "{\"type\": \"PREVIOUS_FAILURES_INDEXING\"," +
+    private final String serializedErrorRecoveryReindexingTask = "{\"type\": \"ErrorRecoveryIndexation\"," +
         " \"previousFailures\" : [{\"mailboxId\":\"1\",\"uids\":[10]},{\"mailboxId\":\"2\",\"uids\":[20]}]}";
+
+    private final TestId mailboxId = TestId.of(1L);
+    private final MessageUid messageUid = MessageUid.of(10L);
+    private final ReIndexingExecutionFailures.ReIndexingFailure indexingFailure = new ReIndexingExecutionFailures.ReIndexingFailure(mailboxId, messageUid);
+
+    private final TestId mailboxId2 = TestId.of(2L);
+    private final MessageUid messageUid2 = MessageUid.of(20L);
+
+    private final ReIndexingExecutionFailures.ReIndexingFailure indexingFailure2 = new ReIndexingExecutionFailures.ReIndexingFailure(mailboxId2, messageUid2);
+    private final List<ReIndexingExecutionFailures.ReIndexingFailure> failures = ImmutableList.of(indexingFailure, indexingFailure2);
+    private final ReIndexingExecutionFailures executionFailures = new ReIndexingExecutionFailures(failures);
 
     @BeforeEach
     void setUp() {
@@ -53,16 +63,6 @@ class ErrorRecoveryIndexationTaskSerializationTest {
 
     @Test
     void errorRecoveryReindexingShouldBeSerializable() throws JsonProcessingException {
-        TestId mailboxId = TestId.of(1L);
-        MessageUid messageUid = MessageUid.of(10L);
-        ReIndexingExecutionFailures.ReIndexingFailure indexingFailure = new ReIndexingExecutionFailures.ReIndexingFailure(mailboxId, messageUid);
-
-        TestId mailboxId2 = TestId.of(2L);
-        MessageUid messageUid2 = MessageUid.of(20L);
-        ReIndexingExecutionFailures.ReIndexingFailure indexingFailure2 = new ReIndexingExecutionFailures.ReIndexingFailure(mailboxId2, messageUid2);
-
-        List<ReIndexingExecutionFailures.ReIndexingFailure> failures = ImmutableList.of(indexingFailure, indexingFailure2);
-        ReIndexingExecutionFailures executionFailures = new ReIndexingExecutionFailures(failures);
         ErrorRecoveryIndexationTask task = new ErrorRecoveryIndexationTask(reIndexerPerformer, executionFailures);
 
         assertThatJson(taskSerializer.serialize(task))
@@ -71,16 +71,6 @@ class ErrorRecoveryIndexationTaskSerializationTest {
 
     @Test
     void errorRecoveryReindexingShouldBeDeserializable() throws IOException {
-        TestId mailboxId = TestId.of(1L);
-        MessageUid messageUid = MessageUid.of(10L);
-        ReIndexingExecutionFailures.ReIndexingFailure indexingFailure = new ReIndexingExecutionFailures.ReIndexingFailure(mailboxId, messageUid);
-
-        TestId mailboxId2 = TestId.of(2L);
-        MessageUid messageUid2 = MessageUid.of(20L);
-        ReIndexingExecutionFailures.ReIndexingFailure indexingFailure2 = new ReIndexingExecutionFailures.ReIndexingFailure(mailboxId2, messageUid2);
-
-        List<ReIndexingExecutionFailures.ReIndexingFailure> failures = ImmutableList.of(indexingFailure, indexingFailure2);
-        ReIndexingExecutionFailures executionFailures = new ReIndexingExecutionFailures(failures);
         ErrorRecoveryIndexationTask task = new ErrorRecoveryIndexationTask(reIndexerPerformer, executionFailures);
 
         Task deserializedTask = taskSerializer.deserialize(serializedErrorRecoveryReindexingTask);

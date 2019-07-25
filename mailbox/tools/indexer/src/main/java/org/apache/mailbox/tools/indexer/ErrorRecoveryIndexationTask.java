@@ -70,8 +70,7 @@ public class ErrorRecoveryIndexationTask implements Task {
             Collection<ReIndexingExecutionFailures.ReIndexingFailure>> entry) {
             List<Long> uids = entry.getValue().stream()
                 .map(ReIndexingExecutionFailures.ReIndexingFailure::getUid)
-                .mapToLong(MessageUid::asLong)
-                .boxed()
+                .map(MessageUid::asLong)
                 .collect(Guavate.toImmutableList());
             return new ReindexingFailureDTO(entry.getKey().serialize(), uids);
         }
@@ -114,7 +113,6 @@ public class ErrorRecoveryIndexationTask implements Task {
 
     }
 
-
     public static class Factory {
 
         private final ReIndexerPerformer reIndexerPerformer;
@@ -139,7 +137,6 @@ public class ErrorRecoveryIndexationTask implements Task {
             return new ErrorRecoveryIndexationTask(reIndexerPerformer, new ReIndexingExecutionFailures(failuresFromDTO(dto.getPreviousFailures())));
         }
     }
-
 
     private final ReIndexerPerformer reIndexerPerformer;
     private final ReprocessingContextInformation additionalInformation;
