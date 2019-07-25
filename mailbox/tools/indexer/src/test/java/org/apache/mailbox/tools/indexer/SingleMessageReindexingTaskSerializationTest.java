@@ -61,7 +61,6 @@ class SingleMessageReindexingTaskSerializationTest {
         MessageUid messageUid = MessageUid.of(10L);
         SingleMessageReindexingTask task = new SingleMessageReindexingTask(reIndexerPerformer, mailboxId, messageUid);
 
-
         assertThat(taskSerializer.deserialize(serializedMessageReindexingTask))
             .isEqualToComparingOnlyGivenFields(task, "reIndexerPerformer", "mailboxId", "uid");
     }
