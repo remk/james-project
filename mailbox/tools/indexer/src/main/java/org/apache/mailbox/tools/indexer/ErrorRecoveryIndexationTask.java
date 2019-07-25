@@ -19,7 +19,9 @@
 
 package org.apache.mailbox.tools.indexer;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -60,15 +62,18 @@ public class ErrorRecoveryIndexationTask implements Task {
 
             List<ReindexingFailureDTO> failureDTOs = failuresByMailboxId.asMap()
                 .entrySet().stream()
-                .map(entry -> {
-                    List<Long> uids = entry.getValue().stream()
-                        .map(ReIndexingExecutionFailures.ReIndexingFailure::getUid)
-                        .mapToLong(MessageUid::asLong)
-                        .boxed()
-                        .collect(Guavate.toImmutableList());
-                    return new ReindexingFailureDTO(entry.getKey().serialize(), uids);
-                }).collect(Guavate.toImmutableList());
+                .map(ErrorRecoveryIndexationTaskDTO::failuresByMailboxToReindexingFailureDTO).collect(Guavate.toImmutableList());
             return new ErrorRecoveryIndexationTaskDTO(type, failureDTOs);
+        }
+
+        private static ReindexingFailureDTO failuresByMailboxToReindexingFailureDTO(Map.Entry<MailboxId,
+            Collection<ReIndexingExecutionFailures.ReIndexingFailure>> entry) {
+            List<Long> uids = entry.getValue().stream()
+                .map(ReIndexingExecutionFailures.ReIndexingFailure::getUid)
+                .mapToLong(MessageUid::asLong)
+                .boxed()
+                .collect(Guavate.toImmutableList());
+            return new ReindexingFailureDTO(entry.getKey().serialize(), uids);
         }
 
         public static class ReindexingFailureDTO {
