@@ -33,20 +33,20 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-class TasksSerializationTest {
+class VaultGarbageCollectionTaskSerializationTest {
 
     private DeletedMessageVault vault;
     private JsonTaskSerializer taskSerializer;
     private final ZonedDateTime beginningOfRetentionPeriod = ZonedDateTime.now();
-    private final String serializedMailboxReindexingTask = "{\"type\": \"vault-garbage-collection\", \"beginningOfRetentionPeriod\": \"" + beginningOfRetentionPeriod.toString() + "\"}";
+    private final String serializedVaultGarbageCollectionTask = "{\"type\": \"vault-garbage-collection\", \"beginningOfRetentionPeriod\": \"" + beginningOfRetentionPeriod.toString() + "\"}";
 
     @BeforeEach
     void setUp() {
         vault = mock(DeletedMessageVault.class);
-        taskSerializer = new JsonTaskSerializer(moduleSingleMailboxReindexing());
+        taskSerializer = new JsonTaskSerializer(moduleVaultGarbageCollection());
     }
 
-    private TaskDTOModule moduleSingleMailboxReindexing() {
+    private TaskDTOModule moduleVaultGarbageCollection() {
         VaultGarbageCollectionTask.Factory factory = new VaultGarbageCollectionTask.Factory(vault);
         return TaskDTOModule
             .forTask(VaultGarbageCollectionTask.class)
@@ -60,18 +60,18 @@ class TasksSerializationTest {
     }
 
     @Test
-    void singleMailboxReindexingShouldBeSerializable() throws JsonProcessingException {
+    void vaultGarbageCollectionShouldBeSerializable() throws JsonProcessingException {
         VaultGarbageCollectionTask task = new VaultGarbageCollectionTask(vault, beginningOfRetentionPeriod);
 
         assertThatJson(taskSerializer.serialize(task))
-            .isEqualTo(serializedMailboxReindexingTask);
+            .isEqualTo(serializedVaultGarbageCollectionTask);
     }
 
     @Test
-    void singleMailboxReindexingShouldBeDeserializable() throws IOException {
+    void vaultGarbageCollectionShouldBeDeserializable() throws IOException {
         VaultGarbageCollectionTask task = new VaultGarbageCollectionTask(vault, beginningOfRetentionPeriod);
 
-        assertThat(taskSerializer.deserialize(serializedMailboxReindexingTask))
+        assertThat(taskSerializer.deserialize(serializedVaultGarbageCollectionTask))
             .isEqualToComparingOnlyGivenFields(task, "beginningOfRetentionPeriod");
     }
 
