@@ -2955,7 +2955,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.10.4</version>
+                    <version>3.1.1</version>
                     <configuration>
                         <linksource>true</linksource>
                         <maxmemory>1g</maxmemory>
@@ -3461,6 +3461,15 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>doclint-java8-disable</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <doclint>none</doclint>
+            </properties>
+        </profile>
         <!--
             Switches between generating the documentation site (without using this profile) and
             generating the technical reports site (using this profile)
