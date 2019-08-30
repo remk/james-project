@@ -16,80 +16,65 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-
-package org.apache.james.webadmin.vault.routes;
+package org.apache.mailbox.tools.indexer;
 
 import java.util.Optional;
 
 import javax.inject.Inject;
 
-import org.apache.james.core.User;
 import org.apache.james.mailbox.model.MessageId;
 import org.apache.james.task.Task;
 import org.apache.james.task.TaskExecutionDetails;
 import org.apache.james.task.TaskType;
-import org.apache.james.vault.DeletedMessageVault;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import reactor.core.publisher.Mono;
+public class MessageIdReIndexingTask implements Task {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MessageIdReIndexingTask.class);
 
-public class DeletedMessagesVaultDeleteTask implements Task {
-
-    static final TaskType TYPE = TaskType.of("deletedMessages/delete");
+    public static final TaskType TYPE = TaskType.of("MessageIdReIndexingTask");
 
     public static class Factory {
-
-        private final DeletedMessageVault deletedMessageVault;
+        private ReIndexerPerformer reIndexerPerformer;
         private final MessageId.Factory messageIdFactory;
 
         @Inject
-        public Factory(DeletedMessageVault deletedMessageVault, MessageId.Factory messageIdFactory) {
-            this.deletedMessageVault = deletedMessageVault;
+        public Factory(ReIndexerPerformer reIndexerPerformer, MessageId.Factory messageIdFactory) {
             this.messageIdFactory = messageIdFactory;
         }
 
-        public DeletedMessagesVaultDeleteTask create(DeletedMessagesVaultDeleteTaskDTO dto) {
+        public MessageIdReIndexingTask create(MessageIdReindexingTaskDTO dto) {
             MessageId messageId = messageIdFactory.fromString(dto.getMessageId());
-            User user = User.fromUsername(dto.getUserName());
-            return new DeletedMessagesVaultDeleteTask(deletedMessageVault, user, messageId);
+            return new MessageIdReIndexingTask(reIndexerPerformer, messageId);
         }
     }
 
-    public static class AdditionalInformation implements TaskExecutionDetails.AdditionalInformation {
+    public static final class AdditionalInformation implements TaskExecutionDetails.AdditionalInformation {
+        private final MessageId messageId;
 
-        private final User user;
-        private final MessageId deleteMessageId;
-
-        AdditionalInformation(User user, MessageId deleteMessageId) {
-            this.user = user;
-            this.deleteMessageId = deleteMessageId;
+        AdditionalInformation(MessageId messageId) {
+            this.messageId = messageId;
         }
 
-        public String getUser() {
-            return user.asString();
-        }
-
-        public String getDeleteMessageId() {
-            return deleteMessageId.serialize();
+        public String getMessageId() {
+            return messageId.serialize();
         }
     }
 
-    private final DeletedMessageVault vault;
-    private final User user;
+
+    private ReIndexerPerformer reIndexerPerformer;
     private final MessageId messageId;
+    private final AdditionalInformation additionalInformation;
 
-    DeletedMessagesVaultDeleteTask(DeletedMessageVault vault, User user, MessageId messageId) {
-        this.vault = vault;
-        this.user = user;
+    MessageIdReIndexingTask(ReIndexerPerformer reIndexerPerformer, MessageId messageId) {
+        this.reIndexerPerformer = reIndexerPerformer;
         this.messageId = messageId;
+        this.additionalInformation = new AdditionalInformation(messageId);
     }
 
     @Override
     public Result run() {
-        return Mono.from(vault.delete(user, messageId))
-            .doOnError(e -> LOGGER.error("Error while deleting message {} for user {} in DeletedMessageVault: {}", messageId, user, e))
-            .thenReturn(Result.COMPLETED)
-            .blockOptional()
-            .orElse(Result.PARTIAL);
+        return reIndexerPerformer.handleMessageIdReindexing(messageId);
     }
 
     @Override
@@ -101,13 +86,8 @@ public class DeletedMessagesVaultDeleteTask implements Task {
         return messageId;
     }
 
-    User getUser() {
-        return user;
-    }
-
     @Override
     public Optional<TaskExecutionDetails.AdditionalInformation> details() {
-        return Optional.of(new AdditionalInformation(user, messageId));
+        return Optional.of(additionalInformation);
     }
-
 }

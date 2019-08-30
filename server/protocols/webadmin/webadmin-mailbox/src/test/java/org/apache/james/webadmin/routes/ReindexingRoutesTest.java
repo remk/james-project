@@ -55,6 +55,7 @@ import org.apache.james.webadmin.utils.ErrorResponder;
 import org.apache.james.webadmin.utils.JsonTransformer;
 import org.apache.mailbox.tools.indexer.FullReindexingTask;
 import org.apache.mailbox.tools.indexer.MessageIdReIndexerImpl;
+import org.apache.mailbox.tools.indexer.MessageIdReIndexingTask;
 import org.apache.mailbox.tools.indexer.ReIndexerImpl;
 import org.apache.mailbox.tools.indexer.ReIndexerPerformer;
 import org.apache.mailbox.tools.indexer.SingleMailboxReindexingTask;
@@ -83,11 +84,12 @@ class ReindexingRoutesTest {
         MemoryTaskManager taskManager = new MemoryTaskManager(new Hostname("foo"));
         InMemoryId.Factory mailboxIdFactory = new InMemoryId.Factory();
         searchIndex = mock(ListeningMessageSearchIndex.class);
+        ReIndexerPerformer reIndexerPerformer = new ReIndexerPerformer(
+            mailboxManager,
+            searchIndex,
+            mailboxManager.getMapperFactory());
         ReIndexer reIndexer = new ReIndexerImpl(
-            new ReIndexerPerformer(
-                mailboxManager,
-                searchIndex,
-                mailboxManager.getMapperFactory()),
+            reIndexerPerformer,
             mailboxManager,
             mailboxManager.getMapperFactory());
         JsonTransformer jsonTransformer = new JsonTransformer();
@@ -102,7 +104,7 @@ class ReindexingRoutesTest {
                     jsonTransformer),
                 new MessageIdReindexingRoutes(taskManager,
                     new InMemoryMessageId.Factory(),
-                    new MessageIdReIndexerImpl(mailboxManager, mailboxManager.getMapperFactory(), searchIndex),
+                    new MessageIdReIndexerImpl(reIndexerPerformer),
                     jsonTransformer))
             .start();
 
@@ -158,7 +160,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(FullReindexingTask.FULL_RE_INDEXING))
+                    .body("type", is(FullReindexingTask.FULL_RE_INDEXING.asString()))
                     .body("additionalInformation.successfullyReprocessedMailCount", is(0))
                     .body("additionalInformation.failedReprocessedMailCount", is(0))
                     .body("startedDate", is(notNullValue()))
@@ -187,7 +189,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(FullReindexingTask.FULL_RE_INDEXING))
+                    .body("type", is(FullReindexingTask.FULL_RE_INDEXING.asString()))
                     .body("additionalInformation.successfullyReprocessedMailCount", is(1))
                     .body("additionalInformation.failedReprocessedMailCount", is(0))
                     .body("startedDate", is(notNullValue()))
@@ -221,7 +223,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("failed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(FullReindexingTask.FULL_RE_INDEXING))
+                    .body("type", is(FullReindexingTask.FULL_RE_INDEXING.asString()))
                     .body("additionalInformation.successfullyReprocessedMailCount", is(0))
                     .body("additionalInformation.failedReprocessedMailCount", is(1))
                     .body("additionalInformation.failures.\"" + mailboxId.serialize() + "\"[0].uid", is(Long.valueOf(uidAsLong).intValue()))
@@ -334,7 +336,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(UserReindexingTask.USER_RE_INDEXING))
+                    .body("type", is(UserReindexingTask.USER_RE_INDEXING.asString()))
                     .body("additionalInformation.user", is("benwa@apache.org"))
                     .body("additionalInformation.successfullyReprocessedMailCount", is(0))
                     .body("additionalInformation.failedReprocessedMailCount", is(0))
@@ -367,7 +369,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(UserReindexingTask.USER_RE_INDEXING))
+                    .body("type", is(UserReindexingTask.USER_RE_INDEXING.asString()))
                     .body("additionalInformation.user", is("benwa@apache.org"))
                     .body("additionalInformation.successfullyReprocessedMailCount", is(1))
                     .body("additionalInformation.failedReprocessedMailCount", is(0))
@@ -404,7 +406,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("failed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(UserReindexingTask.USER_RE_INDEXING))
+                    .body("type", is(UserReindexingTask.USER_RE_INDEXING.asString()))
                     .body("additionalInformation.successfullyReprocessedMailCount", is(0))
                     .body("additionalInformation.failedReprocessedMailCount", is(1))
                     .body("additionalInformation.failures.\"" + mailboxId.serialize() + "\"[0].uid", is(Long.valueOf(uidAsLong).intValue()))
@@ -530,7 +532,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(SingleMailboxReindexingTask.MAILBOX_RE_INDEXING))
+                    .body("type", is(SingleMailboxReindexingTask.MAILBOX_RE_INDEXING.asString()))
                     .body("additionalInformation.mailboxId", is(mailboxId.serialize()))
                     .body("additionalInformation.successfullyReprocessedMailCount", is(0))
                     .body("additionalInformation.failedReprocessedMailCount", is(0))
@@ -560,7 +562,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(SingleMailboxReindexingTask.MAILBOX_RE_INDEXING))
+                    .body("type", is(SingleMailboxReindexingTask.MAILBOX_RE_INDEXING.asString()))
                     .body("additionalInformation.mailboxId", is(mailboxId.serialize()))
                     .body("additionalInformation.successfullyReprocessedMailCount", is(1))
                     .body("additionalInformation.failedReprocessedMailCount", is(0))
@@ -595,7 +597,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("failed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(SingleMailboxReindexingTask.MAILBOX_RE_INDEXING))
+                    .body("type", is(SingleMailboxReindexingTask.MAILBOX_RE_INDEXING.asString()))
                     .body("additionalInformation.successfullyReprocessedMailCount", is(0))
                     .body("additionalInformation.failedReprocessedMailCount", is(1))
                     .body("additionalInformation.failures.\"" + mailboxId.serialize() + "\"[0].uid", is(Long.valueOf(uidAsLong).intValue()))
@@ -729,7 +731,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(SingleMessageReindexingTask.MESSAGE_RE_INDEXING))
+                    .body("type", is(SingleMessageReindexingTask.MESSAGE_RE_INDEXING.asString()))
                     .body("additionalInformation.mailboxId", is(mailboxId.serialize()))
                     .body("additionalInformation.uid", is(1))
                     .body("startedDate", is(notNullValue()))
@@ -759,7 +761,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(SingleMessageReindexingTask.MESSAGE_RE_INDEXING))
+                    .body("type", is(SingleMessageReindexingTask.MESSAGE_RE_INDEXING.asString()))
                     .body("additionalInformation.mailboxId", is(mailboxId.serialize()))
                     .body("additionalInformation.uid", is((int) composedMessageId.getUid().asLong()))
                     .body("startedDate", is(notNullValue()))
@@ -860,7 +862,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(MessageIdReIndexerImpl.MessageIdReIndexingTask.TYPE))
+                    .body("type", is(MessageIdReIndexingTask.TYPE.asString()))
                     .body("additionalInformation.messageId", is("1"))
                     .body("startedDate", is(notNullValue()))
                     .body("submitDate", is(notNullValue()))
@@ -888,7 +890,7 @@ class ReindexingRoutesTest {
                 .then()
                     .body("status", is("completed"))
                     .body("taskId", is(notNullValue()))
-                    .body("type", is(MessageIdReIndexerImpl.MessageIdReIndexingTask.TYPE))
+                    .body("type", is(MessageIdReIndexingTask.TYPE.asString()))
                     .body("additionalInformation.messageId", is(composedMessageId.getMessageId().serialize()))
                     .body("startedDate", is(notNullValue()))
                     .body("submitDate", is(notNullValue()))

@@ -24,8 +24,8 @@ import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 
-import org.apache.james.mailbox.MessageUid;
-import org.apache.james.mailbox.model.TestId;
+import org.apache.james.mailbox.model.MessageId;
+import org.apache.james.mailbox.model.TestMessageId;
 import org.apache.james.server.task.json.JsonTaskAdditionalInformationsSerializer;
 import org.apache.james.server.task.json.JsonTaskSerializer;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,53 +33,58 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-class SingleMessageReindexingTaskSerializationTest {
+class MessageIdReindexingTaskSerializationTest {
 
-    private final TestId.Factory mailboxIdFactory = new TestId.Factory();
     private ReIndexerPerformer reIndexerPerformer;
+    private MessageId.Factory messageIdFactory;
     private JsonTaskSerializer taskSerializer;
-    private final String serializedMessageReindexingTask = "{\"type\": \"messageReIndexing\", \"mailboxId\": \"1\", \"uid\": 10}";
-    private final String SERIALIZED_ADDITIONAL_INFORMATION = "{\"mailboxId\": \"1\", \"uid\": 10}";
-    private final TestId mailboxId = TestId.of(1L);
-    private final MessageUid messageUid = MessageUid.of(10L);
-    private JsonTaskAdditionalInformationsSerializer jsonAdditionalInformationSerializer = new JsonTaskAdditionalInformationsSerializer(
-        SingleMessageReindexingTaskAdditionalInformationDTO
-            .SERIALIZATION_MODULE
-            .apply(mailboxIdFactory));
+    private final String serializedMessageIdReIndexingTask = "{\"type\": \"MessageIdReIndexingTask\", \"messageId\": \"1\"}";
+    private final String SERIALIZED_ADDITIONAL_INFORMATION = "{\"messageId\": \"1\"}";
+
+    private JsonTaskAdditionalInformationsSerializer jsonAdditionalInformationSerializer;
 
     @BeforeEach
     void setUp() {
+        messageIdFactory = new TestMessageId.Factory();
+        jsonAdditionalInformationSerializer = new JsonTaskAdditionalInformationsSerializer(
+            MessageIdReindexingTaskAdditionalInformationDTO
+                .SERIALIZATION_MODULE
+                .apply(messageIdFactory));
         reIndexerPerformer = mock(ReIndexerPerformer.class);
-        SingleMessageReindexingTask.Factory factory = new SingleMessageReindexingTask.Factory(reIndexerPerformer, mailboxIdFactory);
-        taskSerializer = new JsonTaskSerializer(SingleMessageReindexingTaskDTO.MODULE.apply(factory));
+        MessageIdReIndexingTask.Factory factory = new MessageIdReIndexingTask.Factory(reIndexerPerformer, messageIdFactory);
+        taskSerializer = new JsonTaskSerializer(MessageIdReindexingTaskDTO.MODULE.apply(factory));
     }
 
     @Test
-    void singleMessageReindexingShouldBeSerializable() throws JsonProcessingException {
-        SingleMessageReindexingTask task = new SingleMessageReindexingTask(reIndexerPerformer, mailboxId, messageUid);
+    void messageIdReindexingShouldBeSerializable() throws JsonProcessingException {
+        MessageId messageId = messageIdFactory.fromString("1");
+        MessageIdReIndexingTask task = new MessageIdReIndexingTask(reIndexerPerformer, messageId);
 
         assertThatJson(taskSerializer.serialize(task))
-            .isEqualTo(serializedMessageReindexingTask);
+            .isEqualTo(serializedMessageIdReIndexingTask);
     }
 
     @Test
-    void singleMessageReindexingShouldBeDeserializable() throws IOException {
-        SingleMessageReindexingTask task = new SingleMessageReindexingTask(reIndexerPerformer, mailboxId, messageUid);
+    void messageIdReindexingShouldBeDeserializable() throws IOException {
+        MessageId messageId = messageIdFactory.fromString("1");
+        MessageIdReIndexingTask task = new MessageIdReIndexingTask(reIndexerPerformer, messageId);
 
-        assertThat(taskSerializer.deserialize(serializedMessageReindexingTask))
-            .isEqualToComparingOnlyGivenFields(task, "reIndexerPerformer", "mailboxId", "uid");
+        assertThat(taskSerializer.deserialize(serializedMessageIdReIndexingTask))
+            .isEqualToComparingOnlyGivenFields(task, "messageId");
     }
 
     @Test
     void additionalInformationShouldBeSerializable() throws JsonProcessingException {
-        SingleMessageReindexingTask.AdditionalInformation details = new SingleMessageReindexingTask.AdditionalInformation(mailboxId, messageUid);
+        MessageId messageId = messageIdFactory.fromString("1");
+        MessageIdReIndexingTask.AdditionalInformation details = new MessageIdReIndexingTask.AdditionalInformation(messageId);
         assertThatJson(jsonAdditionalInformationSerializer.serialize(details)).isEqualTo(SERIALIZED_ADDITIONAL_INFORMATION);
     }
 
     @Test
     void additonalInformationShouldBeDeserializable() throws IOException {
-        SingleMessageReindexingTask.AdditionalInformation details = new SingleMessageReindexingTask.AdditionalInformation(mailboxId, messageUid);
-        assertThat(jsonAdditionalInformationSerializer.deserialize("messageReIndexing", SERIALIZED_ADDITIONAL_INFORMATION))
+        MessageId messageId = messageIdFactory.fromString("1");
+        MessageIdReIndexingTask.AdditionalInformation details = new MessageIdReIndexingTask.AdditionalInformation(messageId);
+        assertThat(jsonAdditionalInformationSerializer.deserialize("MessageIdReIndexingTask", SERIALIZED_ADDITIONAL_INFORMATION))
             .isEqualToComparingFieldByField(details);
     }
 }
