@@ -29,7 +29,7 @@ import org.apache.james.core.Domain;
 import org.apache.james.rrt.lib.Mapping;
 import org.apache.james.rrt.lib.MappingSource;
 import org.apache.james.rrt.lib.MappingsImpl;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -44,10 +44,10 @@ class CassandraRecipientRewriteTableDAOTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraRRTModule.MODULE);
 
-    private CassandraRecipientRewriteTableDAO dao;
+    private static CassandraRecipientRewriteTableDAO dao;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         dao = new CassandraRecipientRewriteTableDAO(cassandra.getConf(), CassandraUtils.WITH_DEFAULT_CONFIGURATION);
     }
 

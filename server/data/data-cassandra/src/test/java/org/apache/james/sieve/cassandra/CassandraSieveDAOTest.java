@@ -28,7 +28,7 @@ import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.core.User;
 import org.apache.james.sieve.cassandra.model.Script;
 import org.apache.james.sieverepository.api.ScriptName;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -59,10 +59,10 @@ class CassandraSieveDAOTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraSieveRepositoryModule.MODULE);
 
-    private CassandraSieveDAO sieveDAO;
+    private static CassandraSieveDAO sieveDAO;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         sieveDAO = new CassandraSieveDAO(cassandra.getConf());
     }
     

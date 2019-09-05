@@ -25,7 +25,7 @@ import org.apache.james.backends.cassandra.CassandraCluster;
 import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.core.User;
 import org.apache.james.core.quota.QuotaSize;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -36,10 +36,10 @@ class CassandraSieveQuotaDAOTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraSieveRepositoryModule.MODULE);
 
-    private CassandraSieveQuotaDAO sieveQuotaDAO;
+    private static CassandraSieveQuotaDAO sieveQuotaDAO;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         sieveQuotaDAO = new CassandraSieveQuotaDAO(cassandra.getConf());
     }
 

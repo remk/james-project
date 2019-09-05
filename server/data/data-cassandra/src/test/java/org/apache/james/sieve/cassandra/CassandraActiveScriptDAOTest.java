@@ -28,7 +28,7 @@ import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.core.User;
 import org.apache.james.sieve.cassandra.model.ActiveScriptInfo;
 import org.apache.james.sieverepository.api.ScriptName;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -40,10 +40,10 @@ class CassandraActiveScriptDAOTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraSieveRepositoryModule.MODULE);
 
-    private CassandraActiveScriptDAO activeScriptDAO;
+    private static CassandraActiveScriptDAO activeScriptDAO;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         activeScriptDAO = new CassandraActiveScriptDAO(cassandra.getConf());
     }
 

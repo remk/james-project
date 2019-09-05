@@ -40,6 +40,7 @@ import org.apache.james.rrt.lib.Mapping;
 import org.apache.james.rrt.lib.MappingSource;
 import org.apache.james.task.Task;
 import org.apache.james.util.concurrency.ConcurrentTestRunner;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -60,16 +61,19 @@ class MappingsSourcesMigrationTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraRRTModule.MODULE);
 
-    private CassandraRecipientRewriteTableDAO cassandraRecipientRewriteTableDAO;
-    private CassandraMappingsSourcesDAO cassandraMappingsSourcesDAO;
+    private static CassandraRecipientRewriteTableDAO cassandraRecipientRewriteTableDAO;
+    private static CassandraMappingsSourcesDAO cassandraMappingsSourcesDAO;
+
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
+        cassandraRecipientRewriteTableDAO = new CassandraRecipientRewriteTableDAO(cassandra.getConf(), CassandraUtils.WITH_DEFAULT_CONFIGURATION);
+        cassandraMappingsSourcesDAO = new CassandraMappingsSourcesDAO(cassandra.getConf());
+    }
 
     private MappingsSourcesMigration migration;
 
     @BeforeEach
-    void setUp(CassandraCluster cassandra) {
-        cassandraRecipientRewriteTableDAO = new CassandraRecipientRewriteTableDAO(cassandra.getConf(), CassandraUtils.WITH_DEFAULT_CONFIGURATION);
-        cassandraMappingsSourcesDAO = new CassandraMappingsSourcesDAO(cassandra.getConf());
-
+    void beforeEach() {
         migration = new MappingsSourcesMigration(cassandraRecipientRewriteTableDAO, cassandraMappingsSourcesDAO);
     }
 

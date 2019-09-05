@@ -27,7 +27,7 @@ import org.apache.james.backends.cassandra.CassandraRestartExtension;
 import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.backends.cassandra.versions.CassandraSchemaVersionModule;
 import org.apache.james.mailrepository.api.MailRepositoryUrl;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -41,10 +41,10 @@ class CassandraMailRepositoryCountDAOTest {
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(
             CassandraModule.aggregateModules(CassandraSchemaVersionModule.MODULE,CassandraMailRepositoryModule.MODULE));
 
-    CassandraMailRepositoryCountDAO testee;
+    static CassandraMailRepositoryCountDAO testee;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         testee = new CassandraMailRepositoryCountDAO(cassandra.getConf());
     }
 
