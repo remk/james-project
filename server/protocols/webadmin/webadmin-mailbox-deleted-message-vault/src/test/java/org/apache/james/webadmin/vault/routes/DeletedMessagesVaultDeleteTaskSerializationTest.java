@@ -84,7 +84,7 @@ class DeletedMessagesVaultDeleteTaskSerializationTest {
     @Test
     void additonalInformationShouldBeDeserializable() throws IOException {
         DeletedMessagesVaultDeleteTask.AdditionalInformation details = new DeletedMessagesVaultDeleteTask.AdditionalInformation(user, messageId);
-        assertThat(jsonAdditionalInformationSerializer.deserialize("DeletedMessagesVaultDeleteTask", serializedAdditionalInformation))
+        assertThat(jsonAdditionalInformationSerializer.deserialize("deletedMessages/delete", serializedAdditionalInformation))
             .isEqualToComparingFieldByField(details);
     }
 }
