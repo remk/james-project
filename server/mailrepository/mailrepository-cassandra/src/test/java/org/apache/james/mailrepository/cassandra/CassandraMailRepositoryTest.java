@@ -32,7 +32,7 @@ import org.apache.james.blob.mail.MimeMessageStore;
 import org.apache.james.mailrepository.MailRepositoryContract;
 import org.apache.james.mailrepository.api.MailRepository;
 import org.apache.james.mailrepository.api.MailRepositoryUrl;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,11 +51,11 @@ class CassandraMailRepositoryTest implements MailRepositoryContract {
             CassandraMailRepositoryModule.MODULE,
             CassandraBlobModule.MODULE));
 
-    CassandraMailRepository cassandraMailRepository;
+    static CassandraMailRepository cassandraMailRepository;
 
 
-    @BeforeEach
-    void setup(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setup(CassandraCluster cassandra) {
         CassandraMailRepositoryMailDAO v1 = new CassandraMailRepositoryMailDAO(cassandra.getConf(), BLOB_ID_FACTORY, cassandra.getTypesProvider());
         CassandraMailRepositoryMailDaoV2 v2 = new CassandraMailRepositoryMailDaoV2(cassandra.getConf(), BLOB_ID_FACTORY);
         CassandraMailRepositoryMailDaoAPI mailDAO = new MergingCassandraMailRepositoryMailDao(v1, v2);

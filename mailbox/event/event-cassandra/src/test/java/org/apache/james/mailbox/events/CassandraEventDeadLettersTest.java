@@ -30,7 +30,7 @@ import org.apache.james.mailbox.events.EventDeadLettersContract.StoreContract;
 import org.apache.james.mailbox.model.TestId;
 import org.apache.james.mailbox.model.TestMessageId;
 import org.apache.james.mailbox.store.quota.DefaultUserQuotaRootResolver;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 class CassandraEventDeadLettersTest implements StoreContract, RemoveContract, FailedEventContract, FailedEventsContract,
@@ -39,10 +39,10 @@ class CassandraEventDeadLettersTest implements StoreContract, RemoveContract, Fa
     @RegisterExtension
     static CassandraClusterExtension cassandraClusterExtension = new CassandraClusterExtension(CassandraEventDeadLettersModule.MODULE);
 
-    private CassandraEventDeadLetters eventDeadLetters;
+    private static CassandraEventDeadLetters eventDeadLetters;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandraCluster) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandraCluster) {
         EventSerializer eventSerializer = new EventSerializer(new TestId.Factory(), new TestMessageId.Factory(), new DefaultUserQuotaRootResolver.DefaultQuotaRootDeserializer());
         eventDeadLetters = new CassandraEventDeadLetters(new CassandraEventDeadLettersDAO(cassandraCluster.getConf(), eventSerializer),
                                                          new CassandraEventDeadLettersGroupDAO(cassandraCluster.getConf()));

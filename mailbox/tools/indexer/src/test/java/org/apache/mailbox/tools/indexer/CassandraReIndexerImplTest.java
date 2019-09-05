@@ -43,7 +43,7 @@ import org.apache.james.mailbox.store.PreDeletionHooks;
 import org.apache.james.mailbox.store.mail.model.MailboxMessage;
 import org.apache.james.mailbox.store.search.ListeningMessageSearchIndex;
 import org.apache.james.util.concurrency.ConcurrentTestRunner;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -52,16 +52,16 @@ import com.google.common.base.Strings;
 public class CassandraReIndexerImplTest {
     private static final String USERNAME = "benwa@apache.org";
     public static final MailboxPath INBOX = MailboxPath.forUser(USERNAME, "INBOX");
-    private CassandraMailboxManager mailboxManager;
-    private ListeningMessageSearchIndex messageSearchIndex;
+    private static CassandraMailboxManager mailboxManager;
+    private static ListeningMessageSearchIndex messageSearchIndex;
 
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(MailboxAggregateModule.MODULE_WITH_QUOTA);
 
-    private ReIndexer reIndexer;
+    private static ReIndexer reIndexer;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         mailboxManager = CassandraMailboxManagerProvider.provideMailboxManager(cassandra.getConf(), cassandra.getTypesProvider(),
             PreDeletionHooks.NO_PRE_DELETION_HOOK);
         MailboxSessionMapperFactory mailboxSessionMapperFactory = mailboxManager.getMapperFactory();

@@ -37,13 +37,12 @@ import org.apache.james.mailbox.cassandra.ids.CassandraMessageId;
 import org.apache.james.mailbox.cassandra.modules.CassandraMessageModule;
 import org.apache.james.mailbox.model.ComposedMessageId;
 import org.apache.james.mailbox.model.ComposedMessageIdWithMetaData;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import com.datastax.driver.core.utils.UUIDs;
-
 import reactor.core.publisher.Flux;
 
 @ExtendWith(CassandraRestartExtension.class)
@@ -55,12 +54,12 @@ class CassandraMessageIdToImapUidDAOTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(MODULE);
 
-    private CassandraMessageId.Factory messageIdFactory;
+    private static CassandraMessageId.Factory messageIdFactory;
 
-    private CassandraMessageIdToImapUidDAO testee;
+    private static CassandraMessageIdToImapUidDAO testee;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         messageIdFactory = new CassandraMessageId.Factory();
         testee = new CassandraMessageIdToImapUidDAO(cassandra.getConf(), messageIdFactory);
     }

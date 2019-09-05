@@ -39,7 +39,7 @@ import org.apache.james.mailbox.cassandra.modules.CassandraAttachmentModule;
 import org.apache.james.mailbox.exception.AttachmentNotFoundException;
 import org.apache.james.mailbox.model.Attachment;
 import org.apache.james.mailbox.model.AttachmentId;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -58,15 +58,15 @@ class CassandraAttachmentFallbackTest {
             CassandraAttachmentModule.MODULE,
             CassandraBlobModule.MODULE));
 
-    private CassandraAttachmentDAOV2 attachmentDAOV2;
-    private CassandraAttachmentDAO attachmentDAO;
-    private CassandraAttachmentMapper attachmentMapper;
-    private CassandraBlobStore blobStore;
-    private CassandraAttachmentMessageIdDAO attachmentMessageIdDAO;
+    private static CassandraAttachmentDAOV2 attachmentDAOV2;
+    private static CassandraAttachmentDAO attachmentDAO;
+    private static CassandraAttachmentMapper attachmentMapper;
+    private static CassandraBlobStore blobStore;
+    private static CassandraAttachmentMessageIdDAO attachmentMessageIdDAO;
 
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         attachmentDAOV2 = new CassandraAttachmentDAOV2(BLOB_ID_FACTORY, cassandra.getConf());
         attachmentDAO = new CassandraAttachmentDAO(cassandra.getConf(),
             CassandraConfiguration.DEFAULT_CONFIGURATION);

@@ -34,7 +34,7 @@ import org.apache.james.mailbox.cassandra.modules.CassandraAclModule;
 import org.apache.james.mailbox.cassandra.modules.CassandraMailboxModule;
 import org.apache.james.mailbox.model.Mailbox;
 import org.apache.james.mailbox.model.MailboxPath;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -55,12 +55,12 @@ class CassandraMailboxDAOTest {
             CassandraAclModule.MODULE));
 
 
-    private CassandraMailboxDAO testee;
-    private Mailbox mailbox1;
-    private Mailbox mailbox2;
+    private static CassandraMailboxDAO testee;
+    private static Mailbox mailbox1;
+    private static Mailbox mailbox2;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         testee = new CassandraMailboxDAO(cassandra.getConf(), cassandra.getTypesProvider());
 
         mailbox1 = new Mailbox(MailboxPath.forUser("user", "abcd"),

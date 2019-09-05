@@ -29,7 +29,7 @@ import org.apache.james.mailbox.cassandra.modules.CassandraMailboxCounterModule;
 import org.apache.james.mailbox.model.Mailbox;
 import org.apache.james.mailbox.model.MailboxCounters;
 import org.apache.james.mailbox.model.MailboxPath;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -42,11 +42,11 @@ class CassandraMailboxCounterDAOTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraMailboxCounterModule.MODULE);
 
-    private CassandraMailboxCounterDAO testee;
-    private Mailbox mailbox;
+    private static CassandraMailboxCounterDAO testee;
+    private static Mailbox mailbox;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         testee = new CassandraMailboxCounterDAO(cassandra.getConf());
 
         mailbox = new Mailbox(MailboxPath.forUser("user", "name"), UID_VALIDITY, MAILBOX_ID);

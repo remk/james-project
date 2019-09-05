@@ -43,8 +43,8 @@ import org.apache.james.mailbox.cassandra.table.CassandraACLTable;
 import org.apache.james.mailbox.exception.MailboxException;
 import org.apache.james.mailbox.model.MailboxACL;
 import org.apache.james.util.concurrent.NamedThreadFactory;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -57,19 +57,19 @@ class CassandraACLMapperTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraAclModule.MODULE);
 
-    private CassandraACLMapper cassandraACLMapper;
-    private ExecutorService executor;
+    private static CassandraACLMapper cassandraACLMapper;
+    private static ExecutorService executor;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         cassandraACLMapper = GuiceUtils.testInjector(cassandra)
             .getInstance(CassandraACLMapper.class);
-        ThreadFactory threadFactory = NamedThreadFactory.withClassName(getClass());
+        ThreadFactory threadFactory = NamedThreadFactory.withClassName(CassandraACLMapperTest.class);
         executor = Executors.newFixedThreadPool(2, threadFactory);
     }
 
-    @AfterEach
-    void tearDown() {
+    @AfterAll
+    static void tearDown() {
         executor.shutdownNow();
     }
 

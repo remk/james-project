@@ -29,7 +29,7 @@ import org.apache.james.backends.cassandra.CassandraRestartExtension;
 import org.apache.james.mailbox.MessageUid;
 import org.apache.james.mailbox.cassandra.ids.CassandraId;
 import org.apache.james.mailbox.cassandra.modules.CassandraMailboxRecentsModule;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -43,10 +43,10 @@ class CassandraMailboxRecentDAOTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraMailboxRecentsModule.MODULE);
 
-    private CassandraMailboxRecentsDAO testee;
+    private static CassandraMailboxRecentsDAO testee;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         testee = new CassandraMailboxRecentsDAO(cassandra.getConf());
     }
 

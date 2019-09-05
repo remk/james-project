@@ -29,7 +29,7 @@ import java.util.UUID;
 import org.apache.james.backends.cassandra.CassandraCluster;
 import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.backends.cassandra.components.CassandraModule;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -38,7 +38,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import reactor.core.publisher.Flux;
 
 class PaggingTest {
-    
+
     private static final String TABLE_NAME = "test";
     private static final String ID = "id";
     private static final String CLUSTERING = "clustering";
@@ -52,10 +52,10 @@ class PaggingTest {
             .addClusteringColumn(CLUSTERING, DataType.bigint()))
         .build());
 
-    private CassandraAsyncExecutor executor;
+    private static CassandraAsyncExecutor executor;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         executor = new CassandraAsyncExecutor(cassandra.getConf());
     }
 
@@ -73,9 +73,9 @@ class PaggingTest {
 
         assertThat(
             executor.execute(select()
-                    .from(TABLE_NAME)
-                    .where(eq(ID, UUID))
-                    .setFetchSize(fetchSize))
+                .from(TABLE_NAME)
+                .where(eq(ID, UUID))
+                .setFetchSize(fetchSize))
                 .block())
             .hasSize(size);
     }

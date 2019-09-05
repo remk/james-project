@@ -26,7 +26,7 @@ import org.apache.james.backends.cassandra.CassandraCluster;
 import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.backends.cassandra.components.CassandraType;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -41,12 +41,12 @@ class CassandraTypeProviderTest {
         .build();
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(MODULE);
-    
-    private CassandraCluster cassandra;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
-        this.cassandra = cassandra;
+    private static CassandraCluster cassandra;
+
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
+        CassandraTypeProviderTest.cassandra = cassandra;
         cassandra.getTypesProvider();
     }
 

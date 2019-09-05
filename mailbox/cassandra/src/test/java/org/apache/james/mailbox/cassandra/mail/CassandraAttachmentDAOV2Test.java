@@ -33,7 +33,7 @@ import org.apache.james.mailbox.cassandra.mail.CassandraAttachmentDAOV2.DAOAttac
 import org.apache.james.mailbox.cassandra.modules.CassandraAttachmentModule;
 import org.apache.james.mailbox.model.Attachment;
 import org.apache.james.mailbox.model.AttachmentId;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -46,10 +46,10 @@ class CassandraAttachmentDAOV2Test {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraAttachmentModule.MODULE);
 
-    private CassandraAttachmentDAOV2 testee;
+    private static CassandraAttachmentDAOV2 testee;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         testee = new CassandraAttachmentDAOV2(BLOB_ID_FACTORY, cassandra.getConf());
     }
 

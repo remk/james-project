@@ -55,7 +55,7 @@ import org.apache.james.mailbox.store.mail.MessageMapper;
 import org.apache.james.mailbox.store.mail.model.impl.PropertyBuilder;
 import org.apache.james.mailbox.store.mail.model.impl.SimpleMailboxMessage;
 import org.apache.james.util.streams.Limit;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -63,7 +63,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Bytes;
-
 import nl.jqno.equalsverifier.EqualsVerifier;
 import reactor.core.publisher.Flux;
 
@@ -84,15 +83,13 @@ class CassandraMessageDAOTest {
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(
             MODULES);
 
-    private CassandraMessageDAO testee;
-    private CassandraMessageId.Factory messageIdFactory;
+    private static CassandraMessageDAO testee;
+    private static CassandraMessageId.Factory messageIdFactory;
+    private static List<ComposedMessageIdWithMetaData> messageIds;
+    private static CassandraMessageId messageId;
 
-    private SimpleMailboxMessage message;
-    private CassandraMessageId messageId;
-    private List<ComposedMessageIdWithMetaData> messageIds;
-
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         messageIdFactory = new CassandraMessageId.Factory();
         messageId = messageIdFactory.generate();
         CassandraBlobStore blobStore = new CassandraBlobStore(cassandra.getConf());
@@ -101,11 +98,14 @@ class CassandraMessageDAOTest {
             new CassandraMessageId.Factory());
 
         messageIds = ImmutableList.of(ComposedMessageIdWithMetaData.builder()
-                .composedMessageId(new ComposedMessageId(MAILBOX_ID, messageId, messageUid))
-                .flags(new Flags())
-                .modSeq(1)
-                .build());
+            .composedMessageId(new ComposedMessageId(MAILBOX_ID, messageId, messageUid))
+            .flags(new Flags())
+            .modSeq(1)
+            .build());
     }
+
+
+    private SimpleMailboxMessage message;
 
     @Test
     void saveShouldSaveNullValueForTextualLineCountAsZero() throws Exception {

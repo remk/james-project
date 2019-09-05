@@ -45,7 +45,7 @@ import org.apache.james.mailbox.model.MailboxPath;
 import org.apache.james.mailbox.model.MessageRange;
 import org.apache.james.mailbox.model.UpdatedFlags;
 import org.apache.james.mailbox.store.mail.model.MailboxMessage;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -68,16 +68,16 @@ class CassandraIndexTableHandlerTest {
             CassandraApplicableFlagsModule.MODULE,
             CassandraDeletedMessageModule.MODULE));
 
-    private CassandraMailboxCounterDAO mailboxCounterDAO;
-    private CassandraMailboxRecentsDAO mailboxRecentsDAO;
-    private CassandraApplicableFlagDAO applicableFlagDAO;
-    private CassandraFirstUnseenDAO firstUnseenDAO;
-    private CassandraIndexTableHandler testee;
-    private CassandraDeletedMessageDAO deletedMessageDAO;
-    private Mailbox mailbox;
+    private static CassandraMailboxCounterDAO mailboxCounterDAO;
+    private static CassandraMailboxRecentsDAO mailboxRecentsDAO;
+    private static CassandraApplicableFlagDAO applicableFlagDAO;
+    private static CassandraFirstUnseenDAO firstUnseenDAO;
+    private static CassandraIndexTableHandler testee;
+    private static CassandraDeletedMessageDAO deletedMessageDAO;
+    private static Mailbox mailbox;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         mailboxCounterDAO = new CassandraMailboxCounterDAO(cassandra.getConf());
         mailboxRecentsDAO = new CassandraMailboxRecentsDAO(cassandra.getConf());
         firstUnseenDAO = new CassandraFirstUnseenDAO(cassandra.getConf());

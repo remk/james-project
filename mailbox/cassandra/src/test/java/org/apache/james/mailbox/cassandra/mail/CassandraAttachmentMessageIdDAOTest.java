@@ -45,7 +45,7 @@ class CassandraAttachmentMessageIdDAOTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(MODULE);
 
-    private CassandraAttachmentMessageIdDAO testee;
+    private static CassandraAttachmentMessageIdDAO testee;
 
     @BeforeEach
     void setUp(CassandraCluster cassandra) {

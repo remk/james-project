@@ -42,7 +42,6 @@ import org.apache.james.mailbox.model.Mailbox;
 import org.apache.james.mailbox.model.MailboxPath;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -56,25 +55,25 @@ class MailboxPathV2MigrationTest {
     private static final CassandraId MAILBOX_ID_1 = CassandraId.timeBased();
 
     public static final CassandraModule MODULES = CassandraModule.aggregateModules(
-            CassandraMailboxModule.MODULE,
-            CassandraAclModule.MODULE,
-            CassandraSchemaVersionModule.MODULE);
+        CassandraMailboxModule.MODULE,
+        CassandraAclModule.MODULE,
+        CassandraSchemaVersionModule.MODULE);
 
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(MODULES);
 
-    private CassandraMailboxPathDAOImpl daoV1;
-    private CassandraMailboxPathV2DAO daoV2;
-    private CassandraMailboxMapper mailboxMapper;
-    private CassandraMailboxDAO mailboxDAO;
+    static private CassandraMailboxPathDAOImpl daoV1;
+    static private CassandraMailboxPathV2DAO daoV2;
+    static private CassandraMailboxMapper mailboxMapper;
+    static private CassandraMailboxDAO mailboxDAO;
 
     @BeforeAll
     static void setUpClass() {
         MAILBOX_1.setMailboxId(MAILBOX_ID_1);
     }
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         daoV1 = new CassandraMailboxPathDAOImpl(
             cassandra.getConf(),
             cassandra.getTypesProvider(),

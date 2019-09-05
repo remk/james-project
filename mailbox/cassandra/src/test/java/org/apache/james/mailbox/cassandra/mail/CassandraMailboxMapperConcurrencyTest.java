@@ -35,7 +35,7 @@ import org.apache.james.mailbox.cassandra.modules.CassandraMailboxModule;
 import org.apache.james.mailbox.model.Mailbox;
 import org.apache.james.mailbox.model.MailboxPath;
 import org.apache.james.util.concurrency.ConcurrentTestRunner;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -55,10 +55,10 @@ class CassandraMailboxMapperConcurrencyTest {
             CassandraMailboxModule.MODULE,
             CassandraAclModule.MODULE));
 
-    private CassandraMailboxMapper testee;
+    private static CassandraMailboxMapper testee;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         testee = GuiceUtils.testInjector(cassandra)
             .getInstance(CassandraMailboxMapper.class);
     }
