@@ -54,6 +54,7 @@ import org.apache.james.mailbox.model.MessageId;
 import org.apache.james.mailbox.store.mail.model.impl.PropertyBuilder;
 import org.apache.james.mailbox.store.mail.model.impl.SimpleMailboxMessage;
 import org.apache.james.task.Task;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,19 +75,14 @@ class AttachmentMessageIdCreationTest {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(
             MODULES);
+    private static CassandraMessageId.Factory messageIdFactory = new CassandraMessageId.Factory();
+    private static CassandraBlobStore blobStore;
+    private static CassandraMessageDAO cassandraMessageDAO;
+    private static CassandraAttachmentMessageIdDAO attachmentMessageIdDAO;
 
-    private CassandraBlobStore blobStore;
-    private CassandraMessageDAO cassandraMessageDAO;
-    private CassandraAttachmentMessageIdDAO attachmentMessageIdDAO;
+    @BeforeAll
+   static void setUp(CassandraCluster cassandra) {
 
-    private AttachmentMessageIdCreation migration;
-
-    private SimpleMailboxMessage message;
-    private CassandraMessageId messageId;
-
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
-        CassandraMessageId.Factory messageIdFactory = new CassandraMessageId.Factory();
 
         blobStore = new CassandraBlobStore(cassandra.getConf());
         cassandraMessageDAO = new CassandraMessageDAO(cassandra.getConf(), cassandra.getTypesProvider(),
@@ -95,6 +91,16 @@ class AttachmentMessageIdCreationTest {
         attachmentMessageIdDAO = new CassandraAttachmentMessageIdDAO(cassandra.getConf(),
             new CassandraMessageId.Factory());
 
+
+    }
+
+    private AttachmentMessageIdCreation migration;
+
+    private SimpleMailboxMessage message;
+    private CassandraMessageId messageId;
+
+    @BeforeEach
+    void beforeEach() {
         migration = new AttachmentMessageIdCreation(cassandraMessageDAO, attachmentMessageIdDAO);
 
         messageId = messageIdFactory.generate();

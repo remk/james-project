@@ -41,6 +41,7 @@ import org.apache.james.mailbox.cassandra.modules.CassandraAttachmentModule;
 import org.apache.james.mailbox.model.Attachment;
 import org.apache.james.mailbox.model.AttachmentId;
 import org.apache.james.task.Task;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,19 +62,24 @@ class AttachmentV2MigrationTest {
             CassandraAttachmentModule.MODULE,
             CassandraBlobModule.MODULE));
 
-    private CassandraAttachmentDAO attachmentDAO;
-    private CassandraAttachmentDAOV2 attachmentDAOV2;
-    private CassandraBlobStore blobsStore;
+    private static CassandraAttachmentDAO attachmentDAO;
+    private static CassandraAttachmentDAOV2 attachmentDAOV2;
+    private static CassandraBlobStore blobsStore;
+
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
+        attachmentDAO = new CassandraAttachmentDAO(cassandra.getConf(),
+            CassandraConfiguration.DEFAULT_CONFIGURATION);
+        attachmentDAOV2 = new CassandraAttachmentDAOV2(BLOB_ID_FACTORY, cassandra.getConf());
+        blobsStore = new CassandraBlobStore(cassandra.getConf());
+    }
+
     private AttachmentV2Migration migration;
     private Attachment attachment1;
     private Attachment attachment2;
 
     @BeforeEach
-    void setUp(CassandraCluster cassandra) {
-        attachmentDAO = new CassandraAttachmentDAO(cassandra.getConf(),
-            CassandraConfiguration.DEFAULT_CONFIGURATION);
-        attachmentDAOV2 = new CassandraAttachmentDAOV2(BLOB_ID_FACTORY, cassandra.getConf());
-        blobsStore = new CassandraBlobStore(cassandra.getConf());
+    void beforeEach() {
         migration = new AttachmentV2Migration(attachmentDAO, attachmentDAOV2, blobsStore);
 
         attachment1 = Attachment.builder()
@@ -87,6 +93,7 @@ class AttachmentV2MigrationTest {
             .bytes("{\"property\":`\"value2\"}".getBytes(StandardCharsets.UTF_8))
             .build();
     }
+
 
     @Test
     void emptyMigrationShouldSucceed() throws InterruptedException {
