@@ -40,10 +40,12 @@ import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.mailbox.inmemory.InMemoryId;
 import org.apache.james.mailbox.inmemory.InMemoryMessageId;
 import org.apache.james.vault.dto.DeletedMessageWithStorageInformationConverter;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mockito;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -52,21 +54,28 @@ public class CassandraDeletedMessageMetadataVaultTest implements DeletedMessageM
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(MODULE);
 
-    private DeletedMessageMetadataVault testee;
-    private MetadataDAO metadataDAO;
-    private StorageInformationDAO storageInformationDAO;
-    private UserPerBucketDAO userPerBucketDAO;
+    private static StorageInformationDAO storageInformationDAO;
+    private static UserPerBucketDAO userPerBucketDAO;
+    private static MetadataDAO metadataDAO;
+    private static HashBlobId.Factory blobIdFactory = new HashBlobId.Factory();
+    private static InMemoryMessageId.Factory messageIdFactory = new InMemoryMessageId.Factory();
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
-        HashBlobId.Factory blobIdFactory = new HashBlobId.Factory();
-        InMemoryMessageId.Factory messageIdFactory = new InMemoryMessageId.Factory();
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         DeletedMessageWithStorageInformationConverter dtoConverter = new DeletedMessageWithStorageInformationConverter(blobIdFactory, messageIdFactory, new InMemoryId.Factory());
 
         metadataDAO = spy(new MetadataDAO(cassandra.getConf(), messageIdFactory, new MetadataSerializer(dtoConverter)));
         storageInformationDAO = spy(new StorageInformationDAO(cassandra.getConf(), blobIdFactory));
         userPerBucketDAO = spy(new UserPerBucketDAO(cassandra.getConf()));
+    }
 
+    private DeletedMessageMetadataVault testee;
+
+    @BeforeEach
+    void setUp() {
+        Mockito.reset(metadataDAO);
+        Mockito.reset(storageInformationDAO);
+        Mockito.reset(userPerBucketDAO);
         testee = new CassandraDeletedMessageMetadataVault(metadataDAO, storageInformationDAO, userPerBucketDAO);
     }
 

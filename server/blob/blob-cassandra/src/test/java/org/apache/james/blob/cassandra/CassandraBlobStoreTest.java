@@ -39,14 +39,15 @@ import org.apache.james.blob.api.MetricableBlobStore;
 import org.apache.james.blob.api.MetricableBlobStoreContract;
 import org.apache.james.blob.api.ObjectStoreException;
 import org.apache.james.util.ZeroedInputStream;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mockito;
 
 import com.google.common.base.Strings;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingInputStream;
-
 import reactor.core.publisher.Mono;
 
 public class CassandraBlobStoreTest implements MetricableBlobStoreContract {
@@ -56,14 +57,21 @@ public class CassandraBlobStoreTest implements MetricableBlobStoreContract {
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraBlobModule.MODULE);
 
+    private static HashBlobId.Factory blobIdFactory = new HashBlobId.Factory();
+    private static CassandraBucketDAO bucketDAO;
+    private static CassandraDefaultBucketDAO defaultBucketDAO;
+
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
+        bucketDAO = new CassandraBucketDAO(blobIdFactory, cassandra.getConf());
+        defaultBucketDAO = spy(new CassandraDefaultBucketDAO(cassandra.getConf()));
+    }
+
     private BlobStore testee;
-    private CassandraDefaultBucketDAO defaultBucketDAO;
 
     @BeforeEach
-    void setUp(CassandraCluster cassandra) {
-        HashBlobId.Factory blobIdFactory = new HashBlobId.Factory();
-        CassandraBucketDAO bucketDAO = new CassandraBucketDAO(blobIdFactory, cassandra.getConf());
-        defaultBucketDAO = spy(new CassandraDefaultBucketDAO(cassandra.getConf()));
+    void setUp() {
+        Mockito.reset(defaultBucketDAO);
         testee = new MetricableBlobStore(
             metricsTestExtension.getMetricFactory(),
             new CassandraBlobStore(defaultBucketDAO,
