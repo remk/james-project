@@ -22,22 +22,30 @@ package org.apache.james.mailbox.cassandra.mail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.james.backends.cassandra.CassandraCluster;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class CassandraMailboxPathDAOImplTest extends CassandraMailboxPathDAOTest {
 
+    private static CassandraMailboxPathDAO testee;
+
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
+        testee = new CassandraMailboxPathDAOImpl(cassandra.getConf(), cassandra.getTypesProvider());
+    }
+
     @Override
-    CassandraMailboxPathDAO testee(CassandraCluster cassandra) {
-        return new CassandraMailboxPathDAOImpl(cassandra.getConf(), cassandra.getTypesProvider());
+    protected CassandraMailboxPathDAO testee() {
+        return testee;
     }
 
     @Test
     void countAllShouldReturnEntryCount() {
-        testee.save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
-        testee.save(USER_OUTBOX_MAILBOXPATH, OUTBOX_ID).block();
-        testee.save(OTHER_USER_MAILBOXPATH, otherMailboxId).block();
+        testee().save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
+        testee().save(USER_OUTBOX_MAILBOXPATH, OUTBOX_ID).block();
+        testee().save(OTHER_USER_MAILBOXPATH, otherMailboxId).block();
 
-        CassandraMailboxPathDAOImpl daoV1 = (CassandraMailboxPathDAOImpl) testee;
+        CassandraMailboxPathDAOImpl daoV1 = (CassandraMailboxPathDAOImpl) testee();
 
         assertThat(daoV1.countAll().block())
             .isEqualTo(3);
@@ -45,7 +53,7 @@ class CassandraMailboxPathDAOImplTest extends CassandraMailboxPathDAOTest {
 
     @Test
     void countAllShouldReturnZeroByDefault() {
-        CassandraMailboxPathDAOImpl daoV1 = (CassandraMailboxPathDAOImpl) testee;
+        CassandraMailboxPathDAOImpl daoV1 = (CassandraMailboxPathDAOImpl) testee();
 
         assertThat(daoV1.countAll().block())
             .isEqualTo(0);
@@ -53,11 +61,11 @@ class CassandraMailboxPathDAOImplTest extends CassandraMailboxPathDAOTest {
 
     @Test
     void readAllShouldReturnAllStoredData() {
-        testee.save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
-        testee.save(USER_OUTBOX_MAILBOXPATH, OUTBOX_ID).block();
-        testee.save(OTHER_USER_MAILBOXPATH, otherMailboxId).block();
+        testee().save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
+        testee().save(USER_OUTBOX_MAILBOXPATH, OUTBOX_ID).block();
+        testee().save(OTHER_USER_MAILBOXPATH, otherMailboxId).block();
 
-        CassandraMailboxPathDAOImpl daoV1 = (CassandraMailboxPathDAOImpl) testee;
+        CassandraMailboxPathDAOImpl daoV1 = (CassandraMailboxPathDAOImpl) testee();
 
         assertThat(daoV1.readAll().toIterable())
             .containsOnly(
@@ -68,7 +76,7 @@ class CassandraMailboxPathDAOImplTest extends CassandraMailboxPathDAOTest {
 
     @Test
     void readAllShouldReturnEmptyByDefault() {
-        CassandraMailboxPathDAOImpl daoV1 = (CassandraMailboxPathDAOImpl) testee;
+        CassandraMailboxPathDAOImpl daoV1 = (CassandraMailboxPathDAOImpl) testee();
 
         assertThat(daoV1.readAll().toIterable())
             .isEmpty();

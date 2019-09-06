@@ -21,10 +21,19 @@ package org.apache.james.mailbox.cassandra.mail;
 
 import org.apache.james.backends.cassandra.CassandraCluster;
 import org.apache.james.backends.cassandra.utils.CassandraUtils;
+import org.junit.jupiter.api.BeforeAll;
 
 public class CassandraMailboxPathV2DAOTest extends CassandraMailboxPathDAOTest {
+
+    private static CassandraMailboxPathDAO testee;
+
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
+        testee = new CassandraMailboxPathV2DAO(cassandra.getConf(), CassandraUtils.WITH_DEFAULT_CONFIGURATION);
+    }
+
     @Override
-    CassandraMailboxPathDAO testee(CassandraCluster cassandra) {
-        return new CassandraMailboxPathV2DAO(cassandra.getConf(), CassandraUtils.WITH_DEFAULT_CONFIGURATION);
+    protected CassandraMailboxPathDAO testee() {
+        return testee;
     }
 }

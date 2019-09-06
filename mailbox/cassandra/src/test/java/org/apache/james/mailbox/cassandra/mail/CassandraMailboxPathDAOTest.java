@@ -31,6 +31,7 @@ import org.apache.james.backends.cassandra.versions.CassandraSchemaVersionModule
 import org.apache.james.mailbox.cassandra.ids.CassandraId;
 import org.apache.james.mailbox.cassandra.modules.CassandraMailboxModule;
 import org.apache.james.mailbox.model.MailboxPath;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,14 +56,7 @@ public abstract class CassandraMailboxPathDAOTest {
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraModule.aggregateModules(
         CassandraMailboxModule.MODULE, CassandraSchemaVersionModule.MODULE));
 
-    protected CassandraMailboxPathDAO testee;
-
-    abstract CassandraMailboxPathDAO testee(CassandraCluster cassandra);
-
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
-        testee = testee(cassandra);
-    }
+    abstract protected CassandraMailboxPathDAO testee();
 
     @Test
     void cassandraIdAndPathShouldRespectBeanContract() {
@@ -71,39 +65,39 @@ public abstract class CassandraMailboxPathDAOTest {
 
     @Test
     void saveShouldInsertNewEntry() {
-        assertThat(testee.save(USER_INBOX_MAILBOXPATH, INBOX_ID).block()).isTrue();
+        assertThat(testee().save(USER_INBOX_MAILBOXPATH, INBOX_ID).block()).isTrue();
 
-        assertThat(testee.retrieveId(USER_INBOX_MAILBOXPATH).blockOptional())
+        assertThat(testee().retrieveId(USER_INBOX_MAILBOXPATH).blockOptional())
             .contains(INBOX_ID_AND_PATH);
     }
 
     @Test
     void saveOnSecondShouldBeFalse() {
-        assertThat(testee.save(USER_INBOX_MAILBOXPATH, INBOX_ID).block()).isTrue();
-        assertThat(testee.save(USER_INBOX_MAILBOXPATH, INBOX_ID).block()).isFalse();
+        assertThat(testee().save(USER_INBOX_MAILBOXPATH, INBOX_ID).block()).isTrue();
+        assertThat(testee().save(USER_INBOX_MAILBOXPATH, INBOX_ID).block()).isFalse();
     }
 
     @Test
     void retrieveIdShouldReturnEmptyWhenEmptyData() {
-        assertThat(testee.retrieveId(USER_INBOX_MAILBOXPATH).blockOptional())
+        assertThat(testee().retrieveId(USER_INBOX_MAILBOXPATH).blockOptional())
             .isEmpty();
     }
 
     @Test
     void retrieveIdShouldReturnStoredData() {
-        testee.save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
+        testee().save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
 
-        assertThat(testee.retrieveId(USER_INBOX_MAILBOXPATH).blockOptional())
+        assertThat(testee().retrieveId(USER_INBOX_MAILBOXPATH).blockOptional())
             .contains(INBOX_ID_AND_PATH);
     }
 
     @Test
     void getUserMailboxesShouldReturnAllMailboxesOfUser() {
-        testee.save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
-        testee.save(USER_OUTBOX_MAILBOXPATH, OUTBOX_ID).block();
-        testee.save(OTHER_USER_MAILBOXPATH, otherMailboxId).block();
+        testee().save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
+        testee().save(USER_OUTBOX_MAILBOXPATH, OUTBOX_ID).block();
+        testee().save(OTHER_USER_MAILBOXPATH, otherMailboxId).block();
 
-        List<CassandraIdAndPath> cassandraIds = testee
+        List<CassandraIdAndPath> cassandraIds = testee()
             .listUserMailboxes(USER_INBOX_MAILBOXPATH.getNamespace(), USER_INBOX_MAILBOXPATH.getUser())
             .collectList()
             .block();
@@ -115,16 +109,16 @@ public abstract class CassandraMailboxPathDAOTest {
 
     @Test
     void deleteShouldNotThrowWhenEmpty() {
-        testee.delete(USER_INBOX_MAILBOXPATH).block();
+        testee().delete(USER_INBOX_MAILBOXPATH).block();
     }
 
     @Test
     void deleteShouldDeleteTheExistingMailboxId() {
-        testee.save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
+        testee().save(USER_INBOX_MAILBOXPATH, INBOX_ID).block();
 
-        testee.delete(USER_INBOX_MAILBOXPATH).block();
+        testee().delete(USER_INBOX_MAILBOXPATH).block();
 
-        assertThat(testee.retrieveId(USER_INBOX_MAILBOXPATH).blockOptional())
+        assertThat(testee().retrieveId(USER_INBOX_MAILBOXPATH).blockOptional())
             .isEmpty();
     }
 }
