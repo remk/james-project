@@ -27,7 +27,7 @@ import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.backends.cassandra.versions.CassandraSchemaVersionModule;
 import org.apache.james.queue.rabbitmq.EnqueueId;
 import org.apache.james.queue.rabbitmq.MailQueueName;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -44,10 +44,10 @@ class DeletedMailsDAOTest {
             CassandraSchemaVersionModule.MODULE,
             CassandraMailQueueViewModule.MODULE));
 
-    private DeletedMailsDAO testee;
+    private static DeletedMailsDAO testee;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         testee = new DeletedMailsDAO(cassandra.getConf());
     }
 

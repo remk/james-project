@@ -28,10 +28,7 @@ import org.apache.james.backends.cassandra.init.CassandraZonedDateTimeModule;
 import org.apache.james.backends.cassandra.versions.CassandraSchemaVersionModule;
 import org.apache.james.task.eventsourcing.TaskExecutionDetailsProjection;
 import org.apache.james.task.eventsourcing.TaskExecutionDetailsProjectionContract;
-
-import org.apache.james.task.eventsourcing.cassandra.CassandraTaskExecutionDetailsProjection;
-import org.apache.james.task.eventsourcing.cassandra.CassandraTaskExecutionDetailsProjectionDAO;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -42,10 +39,10 @@ class CassandraTaskExecutionDetailsProjectionTest implements TaskExecutionDetail
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(
             CassandraModule.aggregateModules(CassandraSchemaVersionModule.MODULE, CassandraZonedDateTimeModule.MODULE, CassandraTaskExecutionDetailsProjectionModule.MODULE()));
 
-    private Supplier<CassandraTaskExecutionDetailsProjection> testeeSupplier;
+    private static Supplier<CassandraTaskExecutionDetailsProjection> testeeSupplier;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         CassandraTaskExecutionDetailsProjectionDAO cassandraTaskExecutionDetailsProjectionDAO = new CassandraTaskExecutionDetailsProjectionDAO(cassandra.getConf(), cassandra.getTypesProvider());
         testeeSupplier = () -> new CassandraTaskExecutionDetailsProjection(cassandraTaskExecutionDetailsProjectionDAO);
     }

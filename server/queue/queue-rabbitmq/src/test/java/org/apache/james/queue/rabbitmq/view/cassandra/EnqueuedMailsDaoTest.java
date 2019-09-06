@@ -40,7 +40,7 @@ import org.apache.james.queue.rabbitmq.view.cassandra.model.BucketedSlices.Bucke
 import org.apache.james.queue.rabbitmq.view.cassandra.model.BucketedSlices.Slice;
 import org.apache.james.queue.rabbitmq.view.cassandra.model.EnqueuedItemWithSlicingContext;
 import org.apache.mailet.base.test.FakeMail;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -66,10 +66,10 @@ class EnqueuedMailsDaoTest {
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(
             CassandraModule.aggregateModules(CassandraSchemaVersionModule.MODULE, CassandraMailQueueViewModule.MODULE));
 
-    private EnqueuedMailsDAO testee;
+    private static EnqueuedMailsDAO testee;
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         BlobId.Factory blobFactory = new HashBlobId.Factory();
         testee = new EnqueuedMailsDAO(
             cassandra.getConf(),

@@ -46,6 +46,7 @@ import org.apache.james.webadmin.utils.ErrorResponder;
 import org.apache.james.webadmin.utils.JsonTransformer;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -58,20 +59,24 @@ class CassandraMappingsRoutesTest {
     private static final MappingSource SOURCE_2 = MappingSource.fromUser("alice", Domain.LOCALHOST);
     private static final Mapping MAPPING = Mapping.alias("bob-alias@domain");
 
-    private WebAdminServer webAdminServer;
-
-    private MappingsSourcesMigration mappingsSourcesMigration;
-    private CassandraRecipientRewriteTableDAO cassandraRecipientRewriteTableDAO;
-    private CassandraMappingsSourcesDAO cassandraMappingsSourcesDAO;
-    private MemoryTaskManager taskManager;
+    private static MappingsSourcesMigration mappingsSourcesMigration;
+    private static CassandraRecipientRewriteTableDAO cassandraRecipientRewriteTableDAO;
+    private static CassandraMappingsSourcesDAO cassandraMappingsSourcesDAO;
 
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraRRTModule.MODULE);
 
-    @BeforeEach
-    void setUp(CassandraCluster cassandra) {
+    @BeforeAll
+    static void setUp(CassandraCluster cassandra) {
         cassandraRecipientRewriteTableDAO = new CassandraRecipientRewriteTableDAO(cassandra.getConf(), CassandraUtils.WITH_DEFAULT_CONFIGURATION);
         cassandraMappingsSourcesDAO = new CassandraMappingsSourcesDAO(cassandra.getConf());
+    }
+
+    private WebAdminServer webAdminServer;
+    private MemoryTaskManager taskManager;
+
+    @BeforeEach
+    void beforeEach() {
         mappingsSourcesMigration = new MappingsSourcesMigration(cassandraRecipientRewriteTableDAO, cassandraMappingsSourcesDAO);
 
         CassandraMappingsService cassandraMappingsService = new CassandraMappingsService(mappingsSourcesMigration, cassandraMappingsSourcesDAO);
