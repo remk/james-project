@@ -106,7 +106,7 @@ public class ReprocessingContextInformationDTO implements AdditionalInformationD
         return failureByMailbox
             .getValue()
             .stream()
-            .map(f -> f.getUid().asLong())
+            .map(failure -> failure.getUid().asLong())
             .collect(Guavate.toImmutableList());
     }
 
