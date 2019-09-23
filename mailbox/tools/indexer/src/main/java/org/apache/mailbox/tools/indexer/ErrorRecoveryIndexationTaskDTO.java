@@ -52,14 +52,18 @@ public class ErrorRecoveryIndexationTaskDTO implements TaskDTO {
             .collect(Guavate.toImmutableListMultimap(ReIndexingExecutionFailures.ReIndexingFailure::getMailboxId, Function.identity()));
 
         List<ReindexingFailureDTO> failureDTOs = failuresByMailboxId.asMap()
-            .entrySet().stream()
-            .map(ErrorRecoveryIndexationTaskDTO::failuresByMailboxToReindexingFailureDTO).collect(Guavate.toImmutableList());
+            .entrySet()
+            .stream()
+            .map(ErrorRecoveryIndexationTaskDTO::failuresByMailboxToReindexingFailureDTO)
+            .collect(Guavate.toImmutableList());
         return new ErrorRecoveryIndexationTaskDTO(type, failureDTOs);
     }
 
     private static ReindexingFailureDTO failuresByMailboxToReindexingFailureDTO(Map.Entry<MailboxId,
         Collection<ReIndexingExecutionFailures.ReIndexingFailure>> entry) {
-        List<Long> uids = entry.getValue().stream()
+        List<Long> uids = entry
+            .getValue()
+            .stream()
             .map(ReIndexingExecutionFailures.ReIndexingFailure::getUid)
             .map(MessageUid::asLong)
             .collect(Guavate.toImmutableList());
