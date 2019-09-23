@@ -68,7 +68,7 @@ public class ReprocessingContextInformationDTO implements AdditionalInformationD
                 .withFactory(AdditionalInformationDTOModule::new);
 
     static ReIndexingExecutionFailures deserializeFailures(MailboxId.Factory mailboxIdFactory,
-                                                                   List<ReindexingFailureDTO> failures) {
+                                                           List<ReindexingFailureDTO> failures) {
         List<ReIndexingExecutionFailures.ReIndexingFailure> reIndexingFailures = failures
             .stream()
             .flatMap(failuresForMailbox ->
@@ -98,8 +98,8 @@ public class ReprocessingContextInformationDTO implements AdditionalInformationD
             .map(failureByMailbox ->
                 new ReindexingFailureDTO(
                     failureByMailbox.getKey().serialize(),
-                    extractMessageUidsFromFailure(failureByMailbox))
-            ).collect(Guavate.toImmutableList());
+                    extractMessageUidsFromFailure(failureByMailbox)))
+            .collect(Guavate.toImmutableList());
     }
 
     private static ImmutableList<Long> extractMessageUidsFromFailure(Map.Entry<MailboxId, Collection<ReIndexingExecutionFailures.ReIndexingFailure>> failureByMailbox) {
@@ -116,8 +116,8 @@ public class ReprocessingContextInformationDTO implements AdditionalInformationD
 
 
     ReprocessingContextInformationDTO(@JsonProperty("successfullyReprocessedMailCount") int successfullyReprocessedMailCount,
-                                              @JsonProperty("failedReprocessedMailCount") int failedReprocessedMailCount,
-                                              @JsonProperty("failures") List<ReindexingFailureDTO> failures) {
+                                      @JsonProperty("failedReprocessedMailCount") int failedReprocessedMailCount,
+                                      @JsonProperty("failures") List<ReindexingFailureDTO> failures) {
         this.successfullyReprocessedMailCount = successfullyReprocessedMailCount;
         this.failedReprocessedMailCount = failedReprocessedMailCount;
         this.failures = failures;
