@@ -20,15 +20,12 @@
 package org.apache.mailbox.tools.indexer;
 
 import java.util.Optional;
-import java.util.function.Function;
 
 import javax.inject.Inject;
 
 import org.apache.james.core.User;
-import org.apache.james.json.DTOModule;
 import org.apache.james.mailbox.exception.MailboxException;
 import org.apache.james.mailbox.indexer.ReIndexingExecutionFailures;
-import org.apache.james.server.task.json.dto.TaskDTOModule;
 import org.apache.james.task.Task;
 import org.apache.james.task.TaskExecutionDetails;
 import org.apache.james.task.TaskType;
