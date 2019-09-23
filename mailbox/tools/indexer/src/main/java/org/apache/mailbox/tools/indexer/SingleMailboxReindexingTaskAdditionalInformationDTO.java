@@ -18,21 +18,16 @@
  ****************************************************************/
 package org.apache.mailbox.tools.indexer;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 import org.apache.james.json.DTOModule;
-import org.apache.james.mailbox.indexer.ReIndexingExecutionFailures;
 import org.apache.james.mailbox.model.MailboxId;
 import org.apache.james.server.task.json.dto.AdditionalInformationDTO;
 import org.apache.james.server.task.json.dto.AdditionalInformationDTOModule;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.steveash.guavate.Guavate;
-import com.google.common.collect.ImmutableList;
 
 public class SingleMailboxReindexingTaskAdditionalInformationDTO implements AdditionalInformationDTO {
 
