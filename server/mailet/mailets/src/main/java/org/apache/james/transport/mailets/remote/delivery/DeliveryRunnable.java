@@ -84,7 +84,7 @@ public class DeliveryRunnable implements Disposable {
         Scheduler remoteDeliveryScheduler = Schedulers.newElastic("RemoteDelivery");
         disposable = Flux.from(queue.deQueue())
             .publishOn(remoteDeliveryScheduler)
-            .flatMap(this::runStep)
+            .concatMap(this::runStep)
             .onErrorContinue(((throwable, nothing) -> LOGGER.error("Exception caught in RemoteDelivery", throwable)))
             .subscribeOn(remoteDeliveryScheduler)
             .subscribe();
