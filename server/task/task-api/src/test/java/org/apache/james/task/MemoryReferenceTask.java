@@ -24,7 +24,7 @@ import org.junit.jupiter.api.function.ThrowingSupplier;
 
 public class MemoryReferenceTask implements Task {
     public static final TaskType TYPE = TaskType.of("memory-reference-task");
-    private final ThrowingSupplier<Result>  task;
+    private final ThrowingSupplier<Result> task;
 
     public MemoryReferenceTask(ThrowingSupplier<Result> task) {
         this.task = task;
@@ -34,11 +34,9 @@ public class MemoryReferenceTask implements Task {
     public Result run() throws InterruptedException {
         try {
             return task.get();
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             throw e;
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
             throw new RuntimeException(throwable);
         }
     }
