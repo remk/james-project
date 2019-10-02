@@ -35,7 +35,7 @@ public interface Migration {
 
             @Override
             public TaskType type() {
-                return Task.UNKNOWN;
+                return TaskType.of("migration_sub_task");
             }
         };
     }
