@@ -16,30 +16,26 @@
  * specific language governing permissions and limitations      *
  * under the License.                                           *
  ****************************************************************/
-package org.apache.james.task;
+package org.apache.james.server.task.json.dto;
 
-import java.io.Closeable;
-import java.util.Optional;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import reactor.core.publisher.Mono;
+public class MemoryReferenceWithCounterTaskDTO implements TaskDTO {
 
-public interface TaskManagerWorker extends Closeable {
+    private final String type;
+    private final int reference;
 
-    interface Listener {
-        void started(TaskId taskId);
-
-        void completed(TaskId taskId, Task.Result result, TaskType taskType, Optional<TaskExecutionDetails.AdditionalInformation> additionalInformation);
-
-        void failed(TaskId taskId, TaskType taskType, Optional<TaskExecutionDetails.AdditionalInformation> additionalInformation, Throwable t);
-
-        void failed(TaskId taskId, TaskType taskType, Optional<TaskExecutionDetails.AdditionalInformation> additionalInformation);
-
-        void cancelled(TaskId taskId, TaskType taskType, Optional<TaskExecutionDetails.AdditionalInformation> additionalInformation);
+    public MemoryReferenceWithCounterTaskDTO(@JsonProperty("type") String type, @JsonProperty("reference") int reference) {
+        this.type = type;
+        this.reference = reference;
     }
 
-    Mono<Task.Result> executeTask(TaskWithId taskWithId);
+    @Override
+    public String getType() {
+        return type;
+    }
 
-    void cancelTask(TaskId taskId);
-
-    void fail(TaskId taskId, TaskType taskType, Optional<TaskExecutionDetails.AdditionalInformation> additionalInformation, Throwable reason);
+    public int getReference() {
+        return reference;
+    }
 }

@@ -23,6 +23,7 @@ import java.time.ZonedDateTime
 import java.util.{Objects, Optional}
 
 import com.google.common.base.MoreObjects
+import org.apache.james.task.TaskExecutionDetails.AdditionalInformation
 import org.apache.james.task.TaskManager.Status._
 
 object TaskExecutionDetails {
@@ -73,16 +74,16 @@ class TaskExecutionDetails(val taskId: TaskId,
     case _ => this
   }
 
-  def completed: TaskExecutionDetails = status match {
-    case IN_PROGRESS => complete
-    case CANCEL_REQUESTED => complete
-    case WAITING => complete
+  def completed(updatedAdditionalInformation: Optional[AdditionalInformation]): TaskExecutionDetails = status match {
+    case IN_PROGRESS => complete(updatedAdditionalInformation)
+    case CANCEL_REQUESTED => complete(updatedAdditionalInformation)
+    case WAITING => complete(updatedAdditionalInformation)
     case _ => this
   }
 
-  def failed: TaskExecutionDetails = status match {
-    case IN_PROGRESS => fail
-    case CANCEL_REQUESTED => fail
+  def failed(updatedAdditionalInformation: Optional[AdditionalInformation]): TaskExecutionDetails = status match {
+    case IN_PROGRESS => fail(updatedAdditionalInformation)
+    case CANCEL_REQUESTED => fail(updatedAdditionalInformation)
     case _ => this
   }
 
@@ -92,10 +93,10 @@ class TaskExecutionDetails(val taskId: TaskId,
     case _ => this
   }
 
-  def cancelEffectively: TaskExecutionDetails = status match {
-    case CANCEL_REQUESTED => cancel
-    case IN_PROGRESS => cancel
-    case WAITING => cancel
+  def cancelEffectively(updatedAdditionalInformation: Optional[AdditionalInformation]): TaskExecutionDetails = status match {
+    case CANCEL_REQUESTED => cancel(updatedAdditionalInformation)
+    case IN_PROGRESS => cancel(updatedAdditionalInformation)
+    case WAITING => cancel(updatedAdditionalInformation)
     case _ => this
   }
 
@@ -144,18 +145,18 @@ class TaskExecutionDetails(val taskId: TaskId,
     additionalInformation = additionalInformation,
     startedDate = Optional.of(ZonedDateTime.now),
     ranNode = Optional.of(hostname))
-  private def complete = new TaskExecutionDetails(taskId, `type`, TaskManager.Status.COMPLETED,
+  private def complete(updatedAdditionalInformation: Optional[AdditionalInformation]) = new TaskExecutionDetails(taskId, `type`, TaskManager.Status.COMPLETED,
     submittedDate = submittedDate,
     submittedNode = submittedNode,
-    additionalInformation = additionalInformation,
+    additionalInformation = () => updatedAdditionalInformation,
     startedDate = startedDate,
     ranNode = ranNode,
     cancelRequestedNode = cancelRequestedNode,
     completedDate = Optional.of(ZonedDateTime.now))
-  private def fail = new TaskExecutionDetails(taskId, `type`, TaskManager.Status.FAILED,
+  private def fail(updatedAdditionalInformation: Optional[AdditionalInformation]) = new TaskExecutionDetails(taskId, `type`, TaskManager.Status.FAILED,
     submittedDate = submittedDate,
     submittedNode = submittedNode,
-    additionalInformation = additionalInformation,
+    additionalInformation = () => updatedAdditionalInformation,
     startedDate = startedDate,
     ranNode = ranNode,
     cancelRequestedNode = cancelRequestedNode,
@@ -168,10 +169,10 @@ class TaskExecutionDetails(val taskId: TaskId,
     ranNode = ranNode,
     cancelRequestedNode = Optional.of(hostname),
     canceledDate = Optional.of(ZonedDateTime.now))
-  private def cancel = new TaskExecutionDetails(taskId, `type`, TaskManager.Status.CANCELLED,
+  private def cancel(updatedAdditionalInformation: Optional[AdditionalInformation]) = new TaskExecutionDetails(taskId, `type`, TaskManager.Status.CANCELLED,
     submittedDate = submittedDate,
     submittedNode = submittedNode,
-    additionalInformation = additionalInformation,
+    additionalInformation = () => updatedAdditionalInformation,
     startedDate = startedDate,
     ranNode = ranNode,
     cancelRequestedNode = cancelRequestedNode,

@@ -19,20 +19,28 @@
 
 package org.apache.james.task.eventsourcing
 
+import java.util.Optional
+
 import org.apache.james.eventsourcing.EventSourcingSystem
 import org.apache.james.task.Task.Result
 import org.apache.james.task.eventsourcing.TaskCommand._
-import org.apache.james.task.{TaskId, TaskManagerWorker}
+import org.apache.james.task.{TaskExecutionDetails, TaskId, TaskManagerWorker, TaskType}
+
+import scala.compat.java8.OptionConverters._
 
 case class WorkerStatusListener(eventSourcingSystem: EventSourcingSystem) extends TaskManagerWorker.Listener {
 
   override def started(taskId: TaskId): Unit = eventSourcingSystem.dispatch(Start(taskId))
 
-  override def completed(taskId: TaskId, result: Result): Unit = eventSourcingSystem.dispatch(Complete(taskId, result))
+  override def completed(taskId: TaskId, result: Result, taskType: TaskType, additionalInformation: Optional[TaskExecutionDetails.AdditionalInformation]): Unit =
+    eventSourcingSystem.dispatch(Complete(taskId, result, taskType, additionalInformation.asScala))
 
-  override def failed(taskId: TaskId, t: Throwable): Unit = eventSourcingSystem.dispatch(Fail(taskId))
+  override def failed(taskId: TaskId, taskType: TaskType, additionalInformation: Optional[TaskExecutionDetails.AdditionalInformation], t: Throwable): Unit =
+    eventSourcingSystem.dispatch(Fail(taskId, taskType, additionalInformation.asScala))
 
-  override def failed(taskId: TaskId): Unit = eventSourcingSystem.dispatch(Fail(taskId))
+  override def failed(taskId: TaskId, taskType: TaskType, additionalInformation: Optional[TaskExecutionDetails.AdditionalInformation]): Unit =
+    eventSourcingSystem.dispatch(Fail(taskId, taskType, additionalInformation.asScala))
 
-  override def cancelled(taskId: TaskId): Unit = eventSourcingSystem.dispatch(Cancel(taskId))
+  override def cancelled(taskId: TaskId, taskType: TaskType,additionalInformation: Optional[TaskExecutionDetails.AdditionalInformation]): Unit =
+    eventSourcingSystem.dispatch(Cancel(taskId, taskType, additionalInformation.asScala ))
 }

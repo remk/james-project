@@ -20,10 +20,11 @@
 package org.apache.james.task.eventsourcing.distributed;
 
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import org.apache.james.eventsourcing.eventstore.cassandra.dto.EventDTOModule;
+import org.apache.james.server.task.json.JsonTaskAdditionalInformationsSerializer;
 import org.apache.james.server.task.json.JsonTaskSerializer;
 import org.apache.james.task.eventsourcing.CancelRequested;
 import org.apache.james.task.eventsourcing.Cancelled;
@@ -35,7 +36,7 @@ import org.apache.james.task.eventsourcing.Started;
 import com.github.steveash.guavate.Guavate;
 
 public interface TasksSerializationModule {
-    Function<JsonTaskSerializer, EventDTOModule<Created, CreatedDTO>> CREATED = jsonTaskSerializer -> EventDTOModule
+    BiFunction<JsonTaskSerializer, JsonTaskAdditionalInformationsSerializer, EventDTOModule<Created, CreatedDTO>> CREATED = (jsonTaskSerializer, jsonTaskAdditionalInformationsSerializer) -> EventDTOModule
         .forEvent(Created.class)
         .convertToDTO(CreatedDTO.class)
         .toDomainObjectConverter(dto -> dto.toDomainObject(jsonTaskSerializer))
@@ -43,7 +44,7 @@ public interface TasksSerializationModule {
         .typeName("task-manager-created")
         .withFactory(EventDTOModule::new);
 
-    Function<JsonTaskSerializer, EventDTOModule<Started, StartedDTO>> STARTED = jsonTaskSerializer -> EventDTOModule
+    BiFunction<JsonTaskSerializer, JsonTaskAdditionalInformationsSerializer, EventDTOModule<Started, StartedDTO>> STARTED = (jsonTaskSerializer, jsonTaskAdditionalInformationsSerializer) -> EventDTOModule
         .forEvent(Started.class)
         .convertToDTO(StartedDTO.class)
         .toDomainObjectConverter(StartedDTO::toDomainObject)
@@ -51,7 +52,7 @@ public interface TasksSerializationModule {
         .typeName("task-manager-started")
         .withFactory(EventDTOModule::new);
 
-    Function<JsonTaskSerializer, EventDTOModule<CancelRequested, CancelRequestedDTO>> CANCEL_REQUESTED = jsonTaskSerializer -> EventDTOModule
+    BiFunction<JsonTaskSerializer, JsonTaskAdditionalInformationsSerializer, EventDTOModule<CancelRequested, CancelRequestedDTO>> CANCEL_REQUESTED = (jsonTaskSerializer, jsonTaskAdditionalInformationsSerializer) -> EventDTOModule
         .forEvent(CancelRequested.class)
         .convertToDTO(CancelRequestedDTO.class)
         .toDomainObjectConverter(CancelRequestedDTO::toDomainObject)
@@ -59,32 +60,32 @@ public interface TasksSerializationModule {
         .typeName("task-manager-cancel-requested")
         .withFactory(EventDTOModule::new);
 
-    Function<JsonTaskSerializer, EventDTOModule<Completed, CompletedDTO>> COMPLETED = jsonTaskSerializer -> EventDTOModule
+    BiFunction<JsonTaskSerializer, JsonTaskAdditionalInformationsSerializer,  EventDTOModule<Completed, CompletedDTO>> COMPLETED = (jsonTaskSerializer, jsonTaskAdditionalInformationsSerializer) -> EventDTOModule
         .forEvent(Completed.class)
         .convertToDTO(CompletedDTO.class)
-        .toDomainObjectConverter(CompletedDTO::toDomainObject)
-        .toDTOConverter(CompletedDTO::fromDomainObject)
+        .toDomainObjectConverter(dto -> dto.toDomainObject(jsonTaskAdditionalInformationsSerializer))
+        .toDTOConverter((event, typeName) -> CompletedDTO.fromDomainObject(jsonTaskAdditionalInformationsSerializer, event, typeName))
         .typeName("task-manager-completed")
         .withFactory(EventDTOModule::new);
 
-    Function<JsonTaskSerializer, EventDTOModule<Failed, FailedDTO>> FAILED = jsonTaskSerializer -> EventDTOModule
+    BiFunction<JsonTaskSerializer, JsonTaskAdditionalInformationsSerializer,  EventDTOModule<Failed, FailedDTO>> FAILED = (jsonTaskSerializer, jsonTaskAdditionalInformationsSerializer) -> EventDTOModule
         .forEvent(Failed.class)
         .convertToDTO(FailedDTO.class)
-        .toDomainObjectConverter(FailedDTO::toDomainObject)
-        .toDTOConverter(FailedDTO::fromDomainObject)
+        .toDomainObjectConverter(dto -> dto.toDomainObject(jsonTaskAdditionalInformationsSerializer))
+        .toDTOConverter((event, typeName) -> FailedDTO.fromDomainObject(jsonTaskAdditionalInformationsSerializer, event, typeName))
         .typeName("task-manager-failed")
         .withFactory(EventDTOModule::new);
 
-    Function<JsonTaskSerializer, EventDTOModule<Cancelled, CancelledDTO>> CANCELLED = jsonTaskSerializer -> EventDTOModule
+    BiFunction<JsonTaskSerializer, JsonTaskAdditionalInformationsSerializer,  EventDTOModule<Cancelled, CancelledDTO>> CANCELLED = (jsonTaskSerializer, jsonTaskAdditionalInformationsSerializer) -> EventDTOModule
         .forEvent(Cancelled.class)
         .convertToDTO(CancelledDTO.class)
-        .toDomainObjectConverter(CancelledDTO::toDomainObject)
-        .toDTOConverter(CancelledDTO::fromDomainObject)
+        .toDomainObjectConverter(dto -> dto.toDomainObject(jsonTaskAdditionalInformationsSerializer))
+        .toDTOConverter((event, typeName) -> CancelledDTO.fromDomainObject(jsonTaskAdditionalInformationsSerializer, event, typeName))
         .typeName("task-manager-cancelled")
         .withFactory(EventDTOModule::new);
 
-    Function<JsonTaskSerializer, List<EventDTOModule<?, ?>>> MODULES = jsonTaskSerializer -> Stream
+    BiFunction<JsonTaskSerializer, JsonTaskAdditionalInformationsSerializer, List<EventDTOModule<?, ?>>> MODULES = (jsonTaskSerializer, jsonTaskAdditionalInformationsSerializer) -> Stream
         .of(CREATED, STARTED, CANCEL_REQUESTED, CANCELLED, COMPLETED, FAILED)
-        .map(module -> module.apply(jsonTaskSerializer))
+        .map(module -> module.apply(jsonTaskSerializer, jsonTaskAdditionalInformationsSerializer))
         .collect(Guavate.toImmutableList());
 }
