@@ -117,15 +117,22 @@ public class RabbitMQWorkQueue implements WorkQueue, Startable {
         String json = new String(delivery.getBody(), StandardCharsets.UTF_8);
 
         TaskId taskId = TaskId.fromString(delivery.getProperties().getHeaders().get(TASK_ID).toString());
+        Task task;
+        try {
+            task = taskSerializer.deserialize(json);
+        } catch (Exception e) {
+            LOGGER.warn("Unable to deserialize submitted Task  {}", taskId.asString(), e);
+            worker.fail(taskId, Optional.empty(), e);
+            return Mono.empty();
+        } finally {
+            delivery.ack();
+        }
 
         try {
-            Task task = taskSerializer.deserialize(json);
-            delivery.ack();
             return worker.executeTask(new TaskWithId(taskId, task));
         } catch (Exception e) {
-            LOGGER.error("Unable to run submitted Task " + taskId.asString(), e);
-            delivery.ack();
-            worker.fail(taskId, e);
+            LOGGER.warn("Unable to run submitted Task {}", taskId.asString(), e);
+            worker.fail(taskId, task.details(), e);
             return Mono.empty();
         }
     }
