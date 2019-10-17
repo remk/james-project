@@ -111,7 +111,7 @@ class RabbitMQWorkQueueTest {
     }
 
     @Test
-    void workqueueShouldConsumeSubmittedTask() {
+    void workQueueShouldConsumeSubmittedTask() {
         testee.submit(TASK_WITH_ID);
         await().atMost(FIVE_HUNDRED_MILLISECONDS).until(() -> !worker.results.isEmpty());
         assertThat(worker.tasks).containsExactly(TASK_WITH_ID);
@@ -119,7 +119,7 @@ class RabbitMQWorkQueueTest {
     }
 
     @Test
-    void workqueueShouldConsumeTwoSubmittedTask() {
+    void workQueueShouldConsumeTwoSubmittedTasks() {
         testee.submit(TASK_WITH_ID);
         testee.submit(TASK_WITH_ID_2);
         await().atMost(FIVE_HUNDRED_MILLISECONDS).until(() -> worker.results.size() == 2);
