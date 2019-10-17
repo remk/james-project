@@ -20,6 +20,8 @@
 
 package org.apache.james.rrt.cassandra.migration;
 
+import java.time.Instant;
+
 import org.apache.james.json.DTOModule;
 import org.apache.james.server.task.json.dto.AdditionalInformationDTO;
 import org.apache.james.server.task.json.dto.AdditionalInformationDTOModule;
@@ -33,7 +35,8 @@ public class MappingsSourcesMigrationTaskAdditionalInformationDTO implements Add
         return new MappingsSourcesMigrationTaskAdditionalInformationDTO(
             type,
             additionalInformation.getSuccessfulMappingsCount(),
-            additionalInformation.getErrorMappingsCount()
+            additionalInformation.getErrorMappingsCount(),
+            additionalInformation.timestamp()
         );
     }
 
@@ -50,13 +53,16 @@ public class MappingsSourcesMigrationTaskAdditionalInformationDTO implements Add
     private final String type;
     private final long successfulMappingsCount;
     private final long errorMappinsCount;
+    private final Instant timestamp;
 
     public MappingsSourcesMigrationTaskAdditionalInformationDTO(@JsonProperty("type") String type,
                                                                 @JsonProperty("successfulMappingsCount") long successfulMappingsCount,
-                                                                @JsonProperty("errorMappinsCount") long errorMappinsCount) {
+                                                                @JsonProperty("errorMappinsCount") long errorMappinsCount,
+                                                                @JsonProperty("timestamp") Instant timestamp) {
         this.type = type;
         this.successfulMappingsCount = successfulMappingsCount;
         this.errorMappinsCount = errorMappinsCount;
+        this.timestamp = timestamp;
     }
 
     public long getSuccessfulMappingsCount() {
@@ -72,10 +78,15 @@ public class MappingsSourcesMigrationTaskAdditionalInformationDTO implements Add
         return type;
     }
 
+    public Instant getTimestamp() {
+        return timestamp;
+    }
+
     private MappingsSourcesMigration.AdditionalInformation toDomainObject() {
         return new MappingsSourcesMigration.AdditionalInformation(
             successfulMappingsCount,
-            errorMappinsCount
+            errorMappinsCount,
+            timestamp
         );
     }
 }
