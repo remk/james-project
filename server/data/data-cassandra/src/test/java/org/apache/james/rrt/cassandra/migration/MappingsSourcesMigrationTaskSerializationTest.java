@@ -39,7 +39,7 @@ class MappingsSourcesMigrationTaskSerializationTest {
     private static final MappingsSourcesMigration.MappingsSourcesMigrationTask TASK = new MappingsSourcesMigration.MappingsSourcesMigrationTask(MIGRATION);
     private static final String SERIALIZED_TASK = "{\"type\": \"mappingsSourcesMigration\"}";
     private static final MappingsSourcesMigration.AdditionalInformation DETAILS = new MappingsSourcesMigration.AdditionalInformation(42L, 10, TIMESTAMP);
-    private static final String SERIALIZED_ADDITIONAL_INFORMATION = "{\"type\": \"mappingsSourcesMigration\", \"successfulMappingsCount\":42,\"errorMappinsCount\":10}";
+    private static final String SERIALIZED_ADDITIONAL_INFORMATION = "{\"type\": \"mappingsSourcesMigration\", \"successfulMappingsCount\":42,\"errorMappingsCount\":10,\"timestamp\":\"2018-11-13T12:00:55Z\"}";
 
     private static final JsonTaskSerializer TASK_SERIALIZER = new JsonTaskSerializer(MappingsSourcesMigrationTaskDTO.MODULE.apply(MIGRATION));
     private static final JsonTaskAdditionalInformationsSerializer JSON_TASK_ADDITIONAL_INFORMATIONS_SERIALIZER = new JsonTaskAdditionalInformationsSerializer(MappingsSourcesMigrationTaskAdditionalInformationDTO.serializationModule(MappingsSourcesMigration.TYPE));

@@ -52,16 +52,16 @@ public class MappingsSourcesMigrationTaskAdditionalInformationDTO implements Add
 
     private final String type;
     private final long successfulMappingsCount;
-    private final long errorMappinsCount;
+    private final long errorMappingsCount;
     private final Instant timestamp;
 
     public MappingsSourcesMigrationTaskAdditionalInformationDTO(@JsonProperty("type") String type,
                                                                 @JsonProperty("successfulMappingsCount") long successfulMappingsCount,
-                                                                @JsonProperty("errorMappinsCount") long errorMappinsCount,
+                                                                @JsonProperty("errorMappingsCount") long errorMappingsCount,
                                                                 @JsonProperty("timestamp") Instant timestamp) {
         this.type = type;
         this.successfulMappingsCount = successfulMappingsCount;
-        this.errorMappinsCount = errorMappinsCount;
+        this.errorMappingsCount = errorMappingsCount;
         this.timestamp = timestamp;
     }
 
@@ -69,8 +69,8 @@ public class MappingsSourcesMigrationTaskAdditionalInformationDTO implements Add
         return successfulMappingsCount;
     }
 
-    public long getErrorMappinsCount() {
-        return errorMappinsCount;
+    public long getErrorMappingsCount() {
+        return errorMappingsCount;
     }
 
     @Override
@@ -85,7 +85,7 @@ public class MappingsSourcesMigrationTaskAdditionalInformationDTO implements Add
     private MappingsSourcesMigration.AdditionalInformation toDomainObject() {
         return new MappingsSourcesMigration.AdditionalInformation(
             successfulMappingsCount,
-            errorMappinsCount,
+            errorMappingsCount,
             timestamp
         );
     }
