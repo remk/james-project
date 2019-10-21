@@ -22,14 +22,16 @@ import java.util.Optional
 
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.datastax.driver.core.querybuilder.QueryBuilder.{bindMarker, insertInto, select}
-import com.datastax.driver.core.{Row, Session}
+import com.datastax.driver.core.{BoundStatement, Row, Session, UDTValue}
 import javax.inject.Inject
 import org.apache.james.backends.cassandra.init.{CassandraTypesProvider, CassandraZonedDateTimeModule}
 import org.apache.james.backends.cassandra.utils.CassandraAsyncExecutor
 import org.apache.james.server.task.json.JsonTaskAdditionalInformationSerializer
+import org.apache.james.task._
 import org.apache.james.task.eventsourcing.cassandra.CassandraTaskExecutionDetailsProjectionTable._
-import org.apache.james.task.{Hostname, TaskExecutionDetails, TaskId, TaskManager, TaskType}
 import reactor.core.publisher.{Flux, Mono}
+
+import scala.compat.java8.OptionConverters._
 
 class CassandraTaskExecutionDetailsProjectionDAO @Inject()(session: Session, typesProvider: CassandraTypesProvider, jsonTaskAdditionalInformationSerializer: JsonTaskAdditionalInformationSerializer) {
   private val cassandraAsyncExecutor = new CassandraAsyncExecutor(session)
@@ -55,20 +57,43 @@ class CassandraTaskExecutionDetailsProjectionDAO @Inject()(session: Session, typ
 
   private val listStatement = session.prepare(select().from(TABLE_NAME))
 
-  def saveDetails(details: TaskExecutionDetails): Mono[Void] = cassandraAsyncExecutor.executeVoid(
-    insertStatement.bind
+  def saveDetails(details: TaskExecutionDetails): Mono[Void] = {
+    val boundStatement =  insertStatement.bind
       .setUUID(TASK_ID, details.getTaskId.getValue)
       .setString(TYPE, details.getType.asString())
       .setString(STATUS, details.getStatus.getValue)
       .setUDTValue(SUBMITTED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getSubmittedDate))
       .setString(SUBMITTED_NODE, details.getSubmittedNode.asString)
-      .setUDTValue(STARTED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getStartedDate).orElse(null))
-      .setString(RAN_NODE, details.getRanNode.map[String](_.asString).orElse(null))
-      .setUDTValue(COMPLETED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getCompletedDate).orElse(null))
-      .setUDTValue(CANCELED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getCanceledDate).orElse(null))
-      .setString(CANCEL_REQUESTED_NODE, details.getCancelRequestedNode.map[String](_.asString).orElse(null))
-      .setUDTValue(FAILED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getStartedDate).orElse(null))
-      .setString(ADDITIONAL_INFORMATION, serializeAdditionalInformation(details).orElse(null)))
+
+    val optionalFieldsToBind = List((STARTED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getStartedDate)),
+      (RAN_NODE, details.getRanNode.map[String](_.asString)),
+      (COMPLETED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getCompletedDate)),
+      (CANCELED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getCanceledDate)),
+      (CANCEL_REQUESTED_NODE, details.getCancelRequestedNode.map[String](_.asString)),
+      (FAILED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getFailedDate)),
+      (ADDITIONAL_INFORMATION, serializeAdditionalInformation(details))
+    )
+
+    val fullyBoundStatement = optionalFieldsToBind.foldLeft(boundStatement)((statement, field) => {
+      val (fieldName, fieldValue) = field
+      bindOptionalValue(statement, fieldName, fieldValue)
+    })
+
+    cassandraAsyncExecutor.executeVoid(fullyBoundStatement);
+  }
+
+  private def bindOptionalValue(statement: BoundStatement, fieldName: String, fieldValue: Optional[_]) = {
+    fieldValue.asScala match {
+      case Some(value) => value match {
+        case udtValue: UDTValue => statement.setUDTValue(fieldName, udtValue)
+        case stringValue: String => statement.setString(fieldName, stringValue)
+        case intValue: Int => statement.setInt(fieldName, intValue)
+        case longValue: Long => statement.setLong(fieldName, longValue)
+        case _ => statement
+      }
+      case None => statement
+    }
+  }
 
   private def serializeAdditionalInformation(details: TaskExecutionDetails): Optional[String] = details
     .getAdditionalInformation
@@ -96,8 +121,7 @@ class CassandraTaskExecutionDetailsProjectionDAO @Inject()(session: Session, typ
       canceledDate = CassandraZonedDateTimeModule.fromUDTOptional(row.getUDTValue(CANCELED_DATE)),
       cancelRequestedNode = Optional.ofNullable(row.getString(CANCEL_REQUESTED_NODE)).map(Hostname(_)),
       failedDate = CassandraZonedDateTimeModule.fromUDTOptional(row.getUDTValue(FAILED_DATE)),
-      additionalInformation = () => deserializeAdditionalInformation(taskType, row),
-    )
+      additionalInformation = () => deserializeAdditionalInformation(taskType, row))
   }
 
   private def deserializeAdditionalInformation(taskType: TaskType, row: Row): Optional[TaskExecutionDetails.AdditionalInformation] = {
