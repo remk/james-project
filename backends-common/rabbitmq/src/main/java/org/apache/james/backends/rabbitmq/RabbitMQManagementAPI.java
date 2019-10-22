@@ -131,7 +131,7 @@ public interface RabbitMQManagementAPI {
             return arguments;
         }
 
-        List<ConsumerDetails> getConsumerDetails() {
+        public List<ConsumerDetails> getConsumerDetails() {
             return consumerDetails;
         }
     }
