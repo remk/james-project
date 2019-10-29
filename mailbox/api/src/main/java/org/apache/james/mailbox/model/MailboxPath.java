@@ -148,10 +148,11 @@ public class MailboxPath {
     }
 
     public boolean hasEmptyNameInHierarchy(char pathDelimiter) {
+        String delimiterString = String.valueOf(pathDelimiter);
         return this.name.isEmpty()
-            || this.name.contains("..")
-            || this.name.startsWith(".")
-            || this.name.endsWith(".");
+            || this.name.contains(delimiterString + delimiterString)
+            || this.name.startsWith(delimiterString)
+            || this.name.endsWith(delimiterString);
     }
 
     public String asString() {

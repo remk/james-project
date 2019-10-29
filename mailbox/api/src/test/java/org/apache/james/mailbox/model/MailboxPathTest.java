@@ -154,7 +154,7 @@ public class MailboxPathTest {
     }
 
     @Test
-    public void hasEmptyNameInHierarchyShouldBeTrueIfPathWithAnEmptyNamesBetweenTwoNames() {
+    public void hasEmptyNameInHierarchyShouldBeTrueIfPathWithAnEmptyNameBetweenTwoNames() {
         assertThat(MailboxPath.forUser("user", "a..b")
             .hasEmptyNameInHierarchy('.'))
             .isTrue();
