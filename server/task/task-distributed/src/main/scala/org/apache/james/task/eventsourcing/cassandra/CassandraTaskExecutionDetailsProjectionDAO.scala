@@ -65,32 +65,33 @@ class CassandraTaskExecutionDetailsProjectionDAO @Inject()(session: Session, typ
       .setUDTValue(SUBMITTED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getSubmittedDate))
       .setString(SUBMITTED_NODE, details.getSubmittedNode.asString)
 
-    val optionalFieldsToBind = List((STARTED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getStartedDate)),
-      (RAN_NODE, details.getRanNode.map[String](_.asString)),
-      (COMPLETED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getCompletedDate)),
-      (CANCELED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getCanceledDate)),
-      (CANCEL_REQUESTED_NODE, details.getCancelRequestedNode.map[String](_.asString)),
-      (FAILED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getFailedDate)),
-      (ADDITIONAL_INFORMATION, serializeAdditionalInformation(details))
+    val bindOptionalFieldOperations = List(
+      (statement: BoundStatement) => bindOptionalUDTValue(statement, STARTED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getStartedDate)),
+      (statement: BoundStatement) => bindOptionalStringValue(statement, RAN_NODE, details.getRanNode.map[String](_.asString)),
+      (statement: BoundStatement) => bindOptionalUDTValue(statement, COMPLETED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getCompletedDate)),
+      (statement: BoundStatement) => bindOptionalUDTValue(statement, CANCELED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getCanceledDate)),
+      (statement: BoundStatement) => bindOptionalStringValue(statement, CANCEL_REQUESTED_NODE, details.getCancelRequestedNode.map[String](_.asString)),
+      (statement: BoundStatement) => bindOptionalUDTValue(statement, FAILED_DATE, CassandraZonedDateTimeModule.toUDT(dateType, details.getFailedDate)),
+      (statement: BoundStatement) => bindOptionalStringValue(statement, ADDITIONAL_INFORMATION, serializeAdditionalInformation(details)),
     )
 
-    val fullyBoundStatement = optionalFieldsToBind.foldLeft(boundStatement)((statement, field) => {
-      val (fieldName, fieldValue) = field
-      bindOptionalValue(statement, fieldName, fieldValue)
+    val fullyBoundStatement = bindOptionalFieldOperations.foldLeft(boundStatement)((statement, bindFieldOperation) => {
+      bindFieldOperation(statement)
     })
 
     cassandraAsyncExecutor.executeVoid(fullyBoundStatement);
   }
 
-  private def bindOptionalValue(statement: BoundStatement, fieldName: String, fieldValue: Optional[_]) = {
+  private def bindOptionalStringValue(statement: BoundStatement, fieldName: String, fieldValue: Optional[String]) = {
     fieldValue.asScala match {
-      case Some(value) => value match {
-        case udtValue: UDTValue => statement.setUDTValue(fieldName, udtValue)
-        case stringValue: String => statement.setString(fieldName, stringValue)
-        case intValue: Int => statement.setInt(fieldName, intValue)
-        case longValue: Long => statement.setLong(fieldName, longValue)
-        case _ => statement
-      }
+      case Some(value) => statement.setString(fieldName, value)
+      case None => statement
+    }
+  }
+
+  private def bindOptionalUDTValue(statement: BoundStatement, fieldName: String, fieldValue: Optional[UDTValue]) = {
+    fieldValue.asScala match {
+      case Some(value) => statement.setUDTValue(fieldName, value)
       case None => statement
     }
   }
