@@ -407,7 +407,8 @@ class RabbitMQTest {
                     .map(consumer -> consumer.tag)
                     .collect(Collectors.toList());
 
-                assertThat(currentConsumerName).hasSize(1).element(0).isEqualTo(firstRegisteredConsumer);
+                assertThat(currentConsumerName).hasSize(1)
+                    .element(0).isEqualTo(firstRegisteredConsumer);
             }
 
             @Test
