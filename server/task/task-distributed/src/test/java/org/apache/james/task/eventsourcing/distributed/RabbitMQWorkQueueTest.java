@@ -20,9 +20,11 @@
 package org.apache.james.task.eventsourcing.distributed;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Duration.FIVE_HUNDRED_MILLISECONDS;
+import static org.awaitility.Duration.TWO_SECONDS;
 import static org.mockito.Mockito.spy;
 
 import java.io.IOException;
@@ -44,6 +46,7 @@ import org.apache.james.task.TaskExecutionDetails;
 import org.apache.james.task.TaskId;
 import org.apache.james.task.TaskManagerWorker;
 import org.apache.james.task.TaskWithId;
+import org.awaitility.core.ConditionTimeoutException;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -191,8 +194,9 @@ class RabbitMQWorkQueueTest {
         testee.submit(taskWithId1);
         testee.submit(taskWithId2);
 
-        assertThatThrownBy(() -> await().atMost(500, TimeUnit.MILLISECONDS).untilAtomic(counter, CoreMatchers.equalTo(3L)))
-            .hasMessageContaining("expected <3L> but was <1L>");
+        assertThatThrownBy(() -> await().atMost(FIVE_HUNDRED_MILLISECONDS).untilAtomic(counter, CoreMatchers.equalTo(3L))).isInstanceOf(ConditionTimeoutException.class);
+        assertThatCode(() -> await().atMost(TWO_SECONDS).untilAtomic(counter, CoreMatchers.equalTo(3L))).doesNotThrowAnyException();
+
     }
 
 }
