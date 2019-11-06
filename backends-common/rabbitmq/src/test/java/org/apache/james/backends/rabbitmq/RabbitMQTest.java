@@ -62,6 +62,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.Delivery;
 
 class RabbitMQTest {
 
@@ -340,7 +341,7 @@ class RabbitMQTest {
                     .mapToObj(String::valueOf)
                     .map(RabbitMQTest.this::asBytes)
                     .forEach(Throwing.consumer(
-                        bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)));
+                        (byte[] bytes) -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)).sneakyThrow());
 
                 channel2.basicQos(1);
                 channel3.basicQos(1);
@@ -351,32 +352,27 @@ class RabbitMQTest {
                 String firstRegisteredConsumer = "firstRegisteredConsumer";
                 ImmutableMap<String, Object> arguments = ImmutableMap.of();
                 channel2.basicConsume(WORK_QUEUE, !AUTO_ACK, firstRegisteredConsumer, !NO_LOCAL, !EXCLUSIVE, arguments,
-                    (consumerTag, message) -> {
-                        try {
-                            firstRegisteredConsumerMessageCount.incrementAndGet();
-                            TimeUnit.SECONDS.sleep(1);
-                            channel2.basicAck(message.getEnvelope().getDeliveryTag(), false);
-                        } catch (InterruptedException e) {
-                            //do nothing
-                        }
-                    },
-                    (consumerTag -> { }));
+                    (consumerTag, message) -> incrementCountForConsumerAndAckMessage(firstRegisteredConsumerMessageCount, message, channel2),
+                    (consumerTag -> {
+                    }));
                 channel3.basicConsume(WORK_QUEUE, !AUTO_ACK, "starvingConsumer", !NO_LOCAL, !EXCLUSIVE, arguments,
-                    (consumerTag, message) -> {
-                        try {
-                            secondRegisteredConsumerMessageCount.incrementAndGet();
-                            TimeUnit.SECONDS.sleep(1);
-                            channel3.basicAck(message.getEnvelope().getDeliveryTag(), false);
-                        } catch (InterruptedException e) {
-                            //do nothing
-                        }
-                    },
+                    (consumerTag, message) -> incrementCountForConsumerAndAckMessage(secondRegisteredConsumerMessageCount, message, channel3),
                     consumerTag -> { });
 
                 awaitAtMostOneMinute.until(() -> (firstRegisteredConsumerMessageCount.get() + secondRegisteredConsumerMessageCount.get()) == 10);
 
                 assertThat(firstRegisteredConsumerMessageCount.get()).isEqualTo(10);
                 assertThat(secondRegisteredConsumerMessageCount.get()).isEqualTo(0);
+            }
+
+            private void incrementCountForConsumerAndAckMessage(AtomicInteger firstRegisteredConsumerMessageCount, Delivery message, Channel channel2) throws IOException {
+                try {
+                    firstRegisteredConsumerMessageCount.incrementAndGet();
+                    TimeUnit.SECONDS.sleep(1);
+                    channel2.basicAck(message.getEnvelope().getDeliveryTag(), false);
+                } catch (InterruptedException e) {
+                    //do nothing
+                }
             }
 
             @Test
