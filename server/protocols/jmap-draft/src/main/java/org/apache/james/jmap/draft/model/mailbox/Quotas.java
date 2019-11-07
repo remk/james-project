@@ -22,9 +22,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.james.core.quota.QuotaCount;
-import org.apache.james.core.quota.QuotaSize;
-import org.apache.james.core.quota.QuotaValue;
+import org.apache.james.core.quota.QuotaCountLimit;
+import org.apache.james.core.quota.QuotaLimitValue;
+import org.apache.james.core.quota.QuotaSizeLimit;
 import org.apache.james.jmap.draft.model.Number;
 import org.apache.james.mailbox.model.QuotaRoot;
 
@@ -90,7 +90,7 @@ public class Quotas {
             return new Quota(quota);
         }
 
-        public static Quota from(Value<QuotaSize> storage, Value<QuotaCount> message) {
+        public static Quota from(Value<QuotaSizeLimit> storage, Value<QuotaCountLimit> message) {
             return new Quota(ImmutableMap.of(Type.STORAGE, storage,
                 Type.MESSAGE, message));
         }
@@ -110,7 +110,7 @@ public class Quotas {
         MESSAGE;
     }
 
-    public static class Value<T extends QuotaValue<T>> {
+    public static class Value<T extends QuotaLimitValue<T>> {
         private final Number used;
         private final Optional<Number> max;
         
