@@ -34,9 +34,4 @@ public interface QuotaLimitValue<T extends QuotaLimitValue<T>> {
         return !isLimited();
     }
 
-    T add(long additionalValue);
-
-    T add(T additionalValue);
-
-    boolean isGreaterThan(T other);
 }
