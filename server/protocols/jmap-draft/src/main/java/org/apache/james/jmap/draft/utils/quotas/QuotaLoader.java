@@ -32,7 +32,7 @@ public abstract class QuotaLoader {
 
     public abstract Quotas getQuotas(MailboxPath mailboxPath) throws MailboxException;
 
-    protected <T extends QuotaLimitValue<T>, U extends QuotaUsageValue<U, T>> Quotas.Value<T> quotaToValue(Quota<T, U> quota) {
+    protected <T extends QuotaLimitValue<T>, U extends QuotaUsageValue<U, T>> Quotas.Value<T, U> quotaToValue(Quota<T, U> quota) {
         return new Quotas.Value<>(
             quotaValueUsageToNumber(quota.getUsed()),
             quotaLimitValueToOptionalNumber(quota.getLimit()));
