@@ -204,8 +204,8 @@ class RabbitMQTest {
                 IntStream.range(0, 10)
                     .mapToObj(String::valueOf)
                     .map(RabbitMQTest.this::asBytes)
-                    .forEach(Throwing.consumer(
-                        bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)));
+                    .forEach(Throwing.<byte[]>consumer(
+                        bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)).sneakyThrow());
 
                 awaitAtMostOneMinute.until(
                     () -> countReceivedMessages(consumer2, consumer3, consumer4) == 30);
@@ -237,8 +237,8 @@ class RabbitMQTest {
                 IntStream.range(0, nbMessages)
                     .mapToObj(String::valueOf)
                     .map(RabbitMQTest.this::asBytes)
-                    .forEach(Throwing.consumer(
-                        bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)));
+                    .forEach(Throwing.<byte[]>consumer(
+                        bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)).sneakyThrow());
 
                 InMemoryConsumer consumer2 = new InMemoryConsumer(channel2);
                 InMemoryConsumer consumer3 = new InMemoryConsumer(channel3);
@@ -269,8 +269,8 @@ class RabbitMQTest {
                 IntStream.range(0, 10)
                         .mapToObj(String::valueOf)
                         .map(RabbitMQTest.this::asBytes)
-                        .forEach(Throwing.consumer(
-                                bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)));
+                        .forEach(Throwing.<byte[]>consumer(
+                                bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)).sneakyThrow());
 
                 ConcurrentLinkedQueue<Integer> receivedMessages = new ConcurrentLinkedQueue<>();
                 String dyingConsumerTag = "dyingConsumer";
@@ -301,8 +301,8 @@ class RabbitMQTest {
                 IntStream.range(0, 10)
                         .mapToObj(String::valueOf)
                         .map(RabbitMQTest.this::asBytes)
-                        .forEach(Throwing.consumer(
-                                bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)));
+                        .forEach(Throwing.<byte[]>consumer(
+                                bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)).sneakyThrow());
 
                 String dyingConsumerTag = "dyingConsumer";
                 ImmutableMap<String, Object> arguments = ImmutableMap.of();
@@ -340,8 +340,8 @@ class RabbitMQTest {
                 IntStream.range(0, 10)
                     .mapToObj(String::valueOf)
                     .map(RabbitMQTest.this::asBytes)
-                    .forEach(Throwing.consumer(
-                        (byte[] bytes) -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)).sneakyThrow());
+                    .forEach(Throwing.<byte[]>consumer(
+                        bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)).sneakyThrow());
 
                 channel2.basicQos(1);
                 channel3.basicQos(1);
@@ -404,11 +404,13 @@ class RabbitMQTest {
                     .consumerDetails
                     .stream()
                     .filter(consumer -> consumer.status == RabbitMQManagementAPI.ActivityStatus.SingleActive)
-                    .map(consumer -> consumer.tag)
+                    .map(RabbitMQManagementAPI.ConsumerDetails::getTag)
                     .collect(Collectors.toList());
 
-                assertThat(currentConsumerName).hasSize(1)
-                    .element(0).isEqualTo(firstRegisteredConsumer);
+                assertThat(currentConsumerName)
+                    .hasSize(1)
+                    .first()
+                    .isEqualTo(firstRegisteredConsumer);
             }
 
             @Test
@@ -420,8 +422,8 @@ class RabbitMQTest {
                 IntStream.range(0, 10)
                     .mapToObj(String::valueOf)
                     .map(RabbitMQTest.this::asBytes)
-                    .forEach(Throwing.consumer(
-                        bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)));
+                    .forEach(Throwing.<byte[]>consumer(
+                        bytes -> channel1.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, bytes)).sneakyThrow());
 
                 AtomicInteger firstRegisteredConsumerMessageCount = new AtomicInteger(0);
                 AtomicInteger secondRegisteredConsumerMessageCount = new AtomicInteger(0);
