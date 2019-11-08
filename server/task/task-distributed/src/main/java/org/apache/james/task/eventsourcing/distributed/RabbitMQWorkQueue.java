@@ -200,7 +200,6 @@ public class RabbitMQWorkQueue implements WorkQueue {
         Optional.ofNullable(receiver).ifPresent(Receiver::close);
         Optional.ofNullable(sendCancelRequestsQueueHandle).ifPresent(Disposable::dispose);
         Optional.ofNullable(cancelRequestListenerHandle).ifPresent(Disposable::dispose);
-        Optional.ofNullable(cancelRequestSender).ifPresent(Sender::close);
         Optional.ofNullable(cancelRequestListener).ifPresent(Receiver::close);
     }
 }
