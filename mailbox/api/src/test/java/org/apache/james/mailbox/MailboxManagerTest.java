@@ -634,8 +634,8 @@ public abstract class MailboxManagerTest<T extends MailboxManager> {
                 .element(0)
                 .satisfies(event -> assertThat(event.getMailboxId()).isEqualTo(inboxId))
                 .satisfies(event -> assertThat(event.getQuotaRoot()).isEqualTo(quotaRoot))
-                .satisfies(event -> assertThat(event.getDeletedMessageCount()).isEqualTo(QuotaCountLimit.count(0)))
-                .satisfies(event -> assertThat(event.getTotalDeletedSize()).isEqualTo(QuotaSizeLimit.size(0)));
+                .satisfies(event -> assertThat(event.getDeletedMessageCount()).isEqualTo(QuotaCountUsage.count(0)))
+                .satisfies(event -> assertThat(event.getTotalDeletedSize()).isEqualTo(QuotaSizeUsage.size(0)));
         }
 
         @Test
