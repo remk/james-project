@@ -206,8 +206,8 @@ public abstract class QuotaMessageManagerTest<T extends MailboxManager> {
         Quota<QuotaCountLimit, QuotaCountUsage> messageQuota = quotaManager.getMessageQuota(quotaRoot);
         Quota<QuotaSizeLimit, QuotaSizeUsage> storageQuota = quotaManager.getStorageQuota(quotaRoot);
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(messageQuota.getUsed()).isEqualTo(QuotaCountLimit.count(0));
-            softly.assertThat(storageQuota.getUsed()).isEqualTo(QuotaSizeLimit.size(0));
+            softly.assertThat(messageQuota.getUsed()).isEqualTo(QuotaCountUsage.count(0));
+            softly.assertThat(storageQuota.getUsed()).isEqualTo(QuotaSizeUsage.size(0));
         });
     }
 
@@ -228,8 +228,8 @@ public abstract class QuotaMessageManagerTest<T extends MailboxManager> {
         Quota<QuotaCountLimit, QuotaCountUsage> messageQuota = quotaManager.getMessageQuota(quotaRoot);
         Quota<QuotaSizeLimit, QuotaSizeUsage> storageQuota = quotaManager.getStorageQuota(quotaRoot);
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(messageQuota.getUsed()).isEqualTo(QuotaCountLimit.count(16));
-            softly.assertThat(storageQuota.getUsed()).isEqualTo(QuotaSizeLimit.size(16 * 247));
+            softly.assertThat(messageQuota.getUsed()).isEqualTo(QuotaCountUsage.count(16));
+            softly.assertThat(storageQuota.getUsed()).isEqualTo(QuotaSizeUsage.size(16 * 247));
         });
     }
 }
