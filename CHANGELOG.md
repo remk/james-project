@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 - Multiple changes have been made to enhance ElasticSearch performance:
   - Use of routing keys to collocate documents per mailbox
   - Read related [upgrade instructions](upgrade-instructions.md)
+  - By default the cassandra keyspace creation by James is now disabled by default. This allow to have credentials limited to a keyspace. It can be enabled by setting cassandra.keyspace.create=true in the cassandra.properties file.
 
 ### Removed
 - Classes marked as deprecated whose removal was planned after 3.4.0 release (See JAMES-2703). This includes:
