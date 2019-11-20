@@ -19,6 +19,8 @@
 
 package org.apache.james;
 
+import java.util.UUID;
+
 import org.apache.james.core.Domain;
 import org.apache.james.modules.protocols.ImapGuiceProbe;
 import org.apache.james.modules.protocols.SmtpGuiceProbe;
@@ -31,6 +33,10 @@ import org.awaitility.Duration;
 import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.Test;
 
+import com.github.fge.lambdas.runnable.ThrowingRunnable;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
 interface MailsShouldBeWellReceived {
 
     String JAMES_SERVER_HOST = "127.0.0.1";
@@ -40,6 +46,7 @@ interface MailsShouldBeWellReceived {
     ConditionFactory CALMLY_AWAIT = Awaitility
         .with().pollInterval(Duration.ONE_HUNDRED_MILLISECONDS)
         .and().pollDelay(Duration.ONE_HUNDRED_MILLISECONDS)
+        .timeout(Duration.FIVE_MINUTES)
         .await();
 
     @Test
@@ -63,4 +70,30 @@ interface MailsShouldBeWellReceived {
         }
     }
 
+    @Test
+    default void twoHundredMailsShouldBeWellReceived(GuiceJamesServer server) throws Exception {
+        server.getProbe(DataProbeImpl.class).fluent()
+            .addDomain(DOMAIN)
+            .addUser(JAMES_USER, PASSWORD);
+
+        int messageCount = 200;
+
+        try (SMTPMessageSender sender = new SMTPMessageSender(Domain.LOCALHOST.asString())) {
+            Mono.fromRunnable(((ThrowingRunnable) () ->
+                sender.connect(JAMES_SERVER_HOST, server.getProbe(SmtpGuiceProbe.class).getSmtpPort())
+                    .sendMessageWithHeaders("bob@any.com", JAMES_USER, "UUID " + UUID.randomUUID().toString())))
+                .repeat(messageCount - 1)
+                .subscribeOn(Schedulers.elastic())
+                .blockLast();
+        }
+
+        CALMLY_AWAIT.until(() -> server.getProbe(SpoolerProbe.class).processingFinished());
+
+        try (IMAPMessageReader reader = new IMAPMessageReader()) {
+            reader.connect(JAMES_SERVER_HOST, server.getProbe(ImapGuiceProbe.class).getImapPort())
+                .login(JAMES_USER, PASSWORD)
+                .select(IMAPMessageReader.INBOX)
+                .awaitMessageCount(CALMLY_AWAIT, messageCount);
+        }
+    }
 }
