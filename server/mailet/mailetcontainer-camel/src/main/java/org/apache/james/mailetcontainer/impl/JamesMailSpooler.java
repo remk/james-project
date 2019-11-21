@@ -105,9 +105,8 @@ public class JamesMailSpooler implements Disposable, Configurable, MailSpoolerMB
 
     private void run() {
         LOGGER.info("Queue={}", queue);
-
         disposable = Flux.from(queue.deQueue())
-            .flatMap(item -> handleOnQueueItem(item).subscribeOn(spooler))
+            .flatMap(item -> handleOnQueueItem(item).subscribeOn(spooler), numThreads)
             .onErrorContinue((throwable, item) -> LOGGER.error("Exception processing mail while spooling {}", item, throwable))
             .subscribeOn(Schedulers.boundedElastic())
             .subscribe();
@@ -116,8 +115,8 @@ public class JamesMailSpooler implements Disposable, Configurable, MailSpoolerMB
     private Mono<Void> handleOnQueueItem(MailQueueItem queueItem) {
         TimeMetric timeMetric = metricFactory.timer(SPOOL_PROCESSING);
         try {
-            processingActive.incrementAndGet();
-            return processMail(queueItem)
+            return Mono.fromCallable(processingActive::incrementAndGet)
+                .flatMap(ignore -> processMail(queueItem))
                 .doOnSuccess(any -> timeMetric.stopAndPublish())
                 .doOnSuccess(any -> processingActive.decrementAndGet());
         } catch (Throwable e) {
@@ -126,14 +125,14 @@ public class JamesMailSpooler implements Disposable, Configurable, MailSpoolerMB
     }
 
     private Mono<Void> processMail(MailQueueItem queueItem) {
-        Mail mail = queueItem.getMail();
-        return Mono.fromRunnable(() -> LOGGER.debug("==== Begin processing mail {} ====", mail.getName()))
-            .subscribeOn(Schedulers.boundedElastic())
+        Mono<Mail> mailPublisher = Mono.fromSupplier(queueItem::getMail);
+        return mailPublisher.flatMap(mail -> Mono.fromRunnable(() -> LOGGER.debug("==== Begin processing mail {} ====", mail.getName()))
+            .subscribeOn(spooler)
             .then(Mono.fromCallable(() -> performProcessMail(mail)))
             .flatMap(any -> acknowledgeItem(queueItem, true))
             .onErrorResume(any -> acknowledgeItem(queueItem, false))
             .then(Mono.fromRunnable(() -> LOGGER.debug("==== End processing mail {} ====", mail.getName())))
-            .then(Mono.fromRunnable(() -> LifecycleUtil.dispose(mail)));
+            .then(Mono.fromRunnable(() -> LifecycleUtil.dispose(mail))));
     }
 
     private Mono<Void> acknowledgeItem(MailQueueItem queueItem, boolean success) {
