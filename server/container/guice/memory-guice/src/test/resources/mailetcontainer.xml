@@ -58,10 +58,6 @@
                 <errorProcessor>rrt-error</errorProcessor>
             </mailet>
             <mailet match="RecipientIsLocal" class="org.apache.james.jmap.mailet.VacationMailet"/>
-            <mailet match="RecipientIsLocal" class="SpamAssassin">
-                <spamdHost>localhost</spamdHost>
-                <spamdPort>783</spamdPort>
-            </mailet>
             <mailet match="IsMarkedAsSpam" class="WithStorageDirective">
                 <targetFolderName>Spam</targetFolderName>
             </mailet>
