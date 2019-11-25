@@ -78,6 +78,7 @@ public class JamesMailSpooler implements Disposable, Configurable, MailSpoolerMB
     private final MailQueueFactory<?> queueFactory;
     private reactor.core.Disposable disposable;
     private Scheduler spooler;
+    private int parallelismLevel;
 
     @Inject
     public JamesMailSpooler(MetricFactory metricFactory, MailProcessor mailProcessor, MailQueueFactory<?> queueFactory) {
@@ -89,6 +90,7 @@ public class JamesMailSpooler implements Disposable, Configurable, MailSpoolerMB
     @Override
     public void configure(HierarchicalConfiguration<ImmutableNode> config) {
         numThreads = config.getInt("threads", 100);
+        parallelismLevel = Math.max(1, numThreads - 2);
     }
 
     /**
@@ -106,9 +108,9 @@ public class JamesMailSpooler implements Disposable, Configurable, MailSpoolerMB
     private void run() {
         LOGGER.info("Queue={}", queue);
         disposable = Flux.from(queue.deQueue())
-            .flatMap(item -> handleOnQueueItem(item).subscribeOn(spooler), numThreads)
+            .flatMap(item -> handleOnQueueItem(item).subscribeOn(spooler), parallelismLevel)
             .onErrorContinue((throwable, item) -> LOGGER.error("Exception processing mail while spooling {}", item, throwable))
-            .subscribeOn(Schedulers.boundedElastic())
+            .subscribeOn(spooler)
             .subscribe();
     }
 
