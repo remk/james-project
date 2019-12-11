@@ -71,6 +71,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.glowroot</groupId>
+            <artifactId>glowroot-agent</artifactId>
+            <classifier>dist</classifier>
+            <type>zip</type>
+            <scope>provided</scope> <!-- it will be unzip, we don't want jib to include it as a runtime dependency-->
+        </dependency>
+        <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
             <version>2.4.3</version>
@@ -86,6 +93,48 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>docker packaging</id>
+                        <goals>
+                            <goal>dockerBuild</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <to>
+                                <image>james-server-jpa-smtp-mariadb:${buildId}</image>
+                            </to>
+                            <container>
+                                <mainClass>org.apache.james.JPAJamesServerMain</mainClass>
+                                <volumes>
+                                    <volume>/root/conf</volume>
+                                    <volume>/logs</volume>
+                                </volumes>
+                                <jvmFlags>
+                                    <jvmFlag>-javaagent:/app/libs/openjpa-${apache.openjpa.version}.jar</jvmFlag>
+                                    <jvmFlag>-Dworking.directory=/root</jvmFlag>
+                                    <jvmFlag>-Dlogback.configurationFile=/root/conf/logback.xml</jvmFlag>
+                                </jvmFlags>
+                                <ports>
+                                    <port>25</port>
+                                    <port>465</port>
+                                    <port>587</port>
+                                    <port>8000</port>
+                                </ports>
+                            </container>
+                            <extraDirectories>
+                                <paths>
+                                    <path>${project.build.directory}/glowroot/</path>
+                                    <path>src/main/jib/</path>
+                                </paths>
+                            </extraDirectories>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
@@ -99,6 +148,19 @@
                             <includeScope>compile</includeScope>
                             <includeScope>runtime</includeScope>
                             <outputDirectory>${project.build.directory}/${project.artifactId}.lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-glowroot</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeGroupIds>org.glowroot</includeGroupIds>
+                            <includeArtifactIds>glowroot-agent</includeArtifactIds>
+                            <outputDirectory>${project.build.directory}/glowroot</outputDirectory>
+                            <excludes>glowroot/lib/glowroot-central-collector-https-linux-alpine.jar,glowroot/lib/glowroot-central-collector-https-osx.jar,glowroot/lib/glowroot-central-collector-https-windows.jar</excludes>
                         </configuration>
                     </execution>
                 </executions>
