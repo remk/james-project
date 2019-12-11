@@ -43,8 +43,12 @@ public class DockerJamesRule implements TestRule {
 
     private final DockerContainer container;
 
+    public DockerJamesRule(DockerContainer container) {
+        this.container = container;
+    }
+
     public DockerJamesRule(String image) {
-        container = DockerContainer.fromName(image)
+        this(DockerContainer.fromName(image)
             .withExposedPorts(SMTP_PORT, IMAP_PORT)
             .waitingFor(new HostPortWaitStrategy())
             .withLogConsumer(frame -> {
@@ -58,7 +62,7 @@ public class DockerJamesRule implements TestRule {
                     case END:
                         break; //Ignore
                 }
-            });
+            }));
     }
 
     public ProvisioningAPI cliJarDomainsAndUsersAdder() throws InterruptedException, ProvisioningException, IOException {

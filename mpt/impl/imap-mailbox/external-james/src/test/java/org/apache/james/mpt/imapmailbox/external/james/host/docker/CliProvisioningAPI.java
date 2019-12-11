@@ -40,7 +40,7 @@ public class CliProvisioningAPI implements ProvisioningAPI {
     private final DockerContainer container;
     private final String[] cmd;
 
-    private static final String[] jarCmd = {"java", "-jar", "/root/james-cli.jar"};
+    private static final String[] jarCmd = {"java", "-cp", "/app/libs/*", "org.apache.james.cli.ServerCmd"};
     private static final String[] hostAndPort = {"-h", "127.0.0.1", "-p", "9999"};
 
     public CliProvisioningAPI(CliType cliType, DockerContainer container) throws InterruptedException, ProvisioningException, IOException, IllegalArgumentException {

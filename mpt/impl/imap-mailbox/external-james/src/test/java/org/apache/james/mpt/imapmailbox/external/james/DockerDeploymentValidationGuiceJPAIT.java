@@ -19,33 +19,37 @@
 
 package org.apache.james.mpt.imapmailbox.external.james;
 
+import static org.hamcrest.Matchers.notNullValue;
+
 import org.apache.james.core.Username;
 import org.apache.james.mpt.api.ImapHostSystem;
 import org.apache.james.mpt.imapmailbox.external.james.host.ProvisioningAPI;
 import org.apache.james.mpt.imapmailbox.external.james.host.SmtpHostSystem;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-@Ignore("Not to be run on CI, as it will not use the current build")
-public class DockerDeploymentValidationGuiceJPATest extends DeploymentValidation {
+public class DockerDeploymentValidationGuiceJPAIT extends DeploymentValidation {
 
     private ImapHostSystem system;
     private SmtpHostSystem smtpHostSystem;
 
-    @Rule
-    public DockerJamesRule dockerJamesRule = new DockerJamesRule("linagora/james-jpa-guice");
+    private static String retrieveDockerImageName() {
+        String imageName = System.getProperty("docker.image.jpa");
+        Assume.assumeThat("No property docker.image.jpa defined to run integration-test", imageName, notNullValue());
+        return imageName;
+    }
+
+    private DockerJamesRule dockerJamesRule;
 
     @Override
     @Before
     public void setUp() throws Exception {
-
+        dockerJamesRule = new DockerJamesRule(retrieveDockerImageName());
         dockerJamesRule.start();
 
         ProvisioningAPI provisioningAPI = dockerJamesRule.cliJarDomainsAndUsersAdder();
@@ -57,18 +61,6 @@ public class DockerDeploymentValidationGuiceJPATest extends DeploymentValidation
         system.beforeTest();
 
         super.setUp();
-    }
-
-    @Test
-    @Ignore("Not to be run on CI, as it will not use the current build. Uncomment to test on local dev environment")
-    @Override
-    public void validateDeployment() throws Exception {
-    }
-
-    @Test
-    @Ignore("Not to be run on CI, as it will not use the current build. Uncomment to test on local dev environment")
-    @Override
-    public void validateDeploymentWithMailsFromSmtp() throws Exception {
     }
 
     @Override

@@ -32,6 +32,7 @@ import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -79,6 +80,11 @@ public class DockerContainer implements TestRule {
         List<String> envVariables = container.getEnv();
         envVariables.add("affinity:container==" + container);
         container.setEnv(envVariables);
+        return this;
+    }
+
+    public DockerContainer withReadOnlyMount(String hostPath, String containerPath) {
+        container.addFileSystemBind(hostPath, containerPath, BindMode.READ_ONLY);
         return this;
     }
 

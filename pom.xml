@@ -653,7 +653,9 @@
         <scala.version>${scala.base}.1</scala.version>
 
         <doclint>none</doclint>
+
         <docker.openjdk8>openjdk:8u222-jre</docker.openjdk8>
+        <docker.image.jpa>james-server-jpa:${buildId}</docker.image.jpa>
     </properties>
 
     <dependencyManagement>
@@ -1525,6 +1527,11 @@
                 <artifactId>james-server-jmap-draft-integration-testing</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>${james.groupId}</groupId>
+                <artifactId>james-server-jpa-guice</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${james.groupId}</groupId>

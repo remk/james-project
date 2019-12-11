@@ -220,7 +220,7 @@
                                 <image>${docker.openjdk8}</image>
                             </from>
                             <to>
-                                <image>james-server-jpa:${buildId}</image>
+                                <image>${docker.image.jpa}</image>
                             </to>
                             <container>
                                 <mainClass>org.apache.james.JPAJamesServerMain</mainClass>
