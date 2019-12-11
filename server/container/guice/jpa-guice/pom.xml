@@ -217,7 +217,7 @@
                         <phase>package</phase>
                         <configuration>
                             <to>
-                                <image>james-server-jpa:${buildId}</image>
+                                <image>${docker.image.jpa}</image>
                             </to>
                             <container>
                                 <mainClass>org.apache.james.JPAJamesServerMain</mainClass>
