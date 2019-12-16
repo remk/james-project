@@ -216,6 +216,9 @@
                         </goals>
                         <phase>package</phase>
                         <configuration>
+                            <from>
+                                <image>openjdk:8u222-jre</image>
+                            </from>
                             <to>
                                 <image>${docker.image.jpa}</image>
                             </to>
