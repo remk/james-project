@@ -549,6 +549,13 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>org.glowroot</groupId>
+            <artifactId>glowroot-agent</artifactId>
+            <classifier>dist</classifier>
+            <type>zip</type>
+            <scope>provided</scope> <!-- it will be unzipped in the docker image, we don't want it to included in the zip-->
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
             <scope>runtime</scope>
@@ -588,6 +595,25 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unpack-glowroot</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeGroupIds>org.glowroot</includeGroupIds>
+                            <includeArtifactIds>glowroot-agent</includeArtifactIds>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <excludes>glowroot/lib/glowroot-central-collector-https-linux-alpine.jar,glowroot/lib/glowroot-central-collector-https-osx.jar,glowroot/lib/glowroot-central-collector-https-windows.jar</excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>appassembler-maven-plugin</artifactId>
@@ -888,6 +914,25 @@
                         <phase>package</phase>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>1.4.13</version>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <repository>${docker.image.spring.jpa.image}</repository>
+                    <tag>${docker.image.spring.jpa.tag}</tag>
+                </configuration>
             </plugin>
             <!--
             The signing process excludes the artifact created by this plugin.
