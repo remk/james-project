@@ -26,17 +26,12 @@ import org.apache.james.mpt.api.ImapHostSystem;
 import org.apache.james.mpt.imapmailbox.external.james.host.ProvisioningAPI;
 import org.apache.james.mpt.imapmailbox.external.james.host.SmtpHostSystem;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
-import org.apache.james.util.docker.DockerContainer;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.wait.strategy.Wait;
 
-import com.google.common.io.Resources;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 

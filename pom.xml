@@ -655,6 +655,7 @@
         <doclint>none</doclint>
 
         <docker.image.jpa>james-server-jpa:${buildId}</docker.image.jpa>
+        <docker.image.spring.jpa>james-server-spring-jpa:${buildId}</docker.image.spring.jpa>
     </properties>
 
     <dependencyManagement>

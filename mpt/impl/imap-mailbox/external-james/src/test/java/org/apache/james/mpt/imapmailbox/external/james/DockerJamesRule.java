@@ -19,6 +19,7 @@
 package org.apache.james.mpt.imapmailbox.external.james;
 
 import java.io.IOException;
+import java.time.Duration;
 
 import org.apache.james.mpt.imapmailbox.external.james.host.ProvisioningAPI;
 import org.apache.james.mpt.imapmailbox.external.james.host.StaticJamesConfiguration;
@@ -51,6 +52,7 @@ public class DockerJamesRule implements TestRule {
         this(DockerContainer.fromName(image)
             .withExposedPorts(SMTP_PORT, IMAP_PORT)
             .waitingFor(new HostPortWaitStrategy())
+            .withStartupTimeout(Duration.ofMinutes(60))
             .withLogConsumer(frame -> {
                 switch (frame.getType()) {
                     case STDOUT:
