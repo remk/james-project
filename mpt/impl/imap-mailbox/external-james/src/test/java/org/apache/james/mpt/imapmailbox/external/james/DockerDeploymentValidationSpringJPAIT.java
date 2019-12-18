@@ -19,70 +19,15 @@
 
 package org.apache.james.mpt.imapmailbox.external.james;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
+import org.apache.james.mpt.imapmailbox.external.james.host.docker.CliProvisioningAPI;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import org.apache.james.core.Username;
-import org.apache.james.mpt.api.ImapHostSystem;
-import org.apache.james.mpt.imapmailbox.external.james.host.ProvisioningAPI;
-import org.apache.james.mpt.imapmailbox.external.james.host.SmtpHostSystem;
-import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
+public class DockerDeploymentValidationSpringJPAIT implements DeploymentValidation {
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-
-public class DockerDeploymentValidationSpringJPAIT extends DeploymentValidation {
-
-    private ImapHostSystem system;
-    private SmtpHostSystem smtpHostSystem;
-
-    private static String retrieveDockerImageName() {
-        String imageName = System.getProperty("docker.image.spring.jpa");
-        Assume.assumeThat("No property docker.image.spring.jpa defined to run integration-test", imageName, notNullValue());
-        return imageName;
-    }
-
-    private DockerJamesRule dockerJamesRule;
-
-    @Override
-    @Before
-    public void setUp() throws Exception {
-        dockerJamesRule = new DockerJamesRule(retrieveDockerImageName());
-
-        dockerJamesRule.start();
-
-        ProvisioningAPI provisioningAPI = dockerJamesRule.cliShellDomainsAndUsersAdder();
-        Injector injector = Guice.createInjector(new ExternalJamesModule(getConfiguration(), provisioningAPI));
-        system = injector.getInstance(ImapHostSystem.class);
-        provisioningAPI.addDomain(DOMAIN);
-        provisioningAPI.addUser(Username.of(USER_ADDRESS), PASSWORD);
-        smtpHostSystem = injector.getInstance(SmtpHostSystem.class);
-        system.beforeTest();
-
-        super.setUp();
-    }
-
-    @Override
-    protected ImapHostSystem createImapHostSystem() {
-        return system;
-    }
-
-    @Override
-    protected SmtpHostSystem createSmtpHostSystem() {
-        return smtpHostSystem;
-    }
-
-    @Override
-    protected ExternalJamesConfiguration getConfiguration() {
-        return dockerJamesRule.getConfiguration();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        system.afterTest();
-        dockerJamesRule.stop();
-    }
+    @RegisterExtension
+    DockerJamesExtension dockerJamesRule =
+        DockerJamesExtension
+            .imageFromProperty("docker.image.spring.jpa")
+            .withProvisioning(CliProvisioningAPI.CliType.SH);
 
 }

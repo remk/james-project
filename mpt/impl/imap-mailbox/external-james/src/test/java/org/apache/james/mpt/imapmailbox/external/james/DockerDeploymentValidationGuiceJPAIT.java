@@ -19,69 +19,16 @@
 
 package org.apache.james.mpt.imapmailbox.external.james;
 
-import static org.hamcrest.Matchers.notNullValue;
+import org.apache.james.mpt.imapmailbox.external.james.host.docker.CliProvisioningAPI;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import org.apache.james.core.Username;
-import org.apache.james.mpt.api.ImapHostSystem;
-import org.apache.james.mpt.imapmailbox.external.james.host.ProvisioningAPI;
-import org.apache.james.mpt.imapmailbox.external.james.host.SmtpHostSystem;
-import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
+public class DockerDeploymentValidationGuiceJPAIT implements DeploymentValidation {
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+    @RegisterExtension
+    DockerJamesExtension dockerJamesRule =
+        DockerJamesExtension
+            .imageFromProperty("docker.image.jpa")
+            .withProvisioning(CliProvisioningAPI.CliType.JAR);
 
-public class DockerDeploymentValidationGuiceJPAIT extends DeploymentValidation {
-
-    private ImapHostSystem system;
-    private SmtpHostSystem smtpHostSystem;
-
-    private static String retrieveDockerImageName() {
-        String imageName = System.getProperty("docker.image.jpa");
-        Assume.assumeThat("No property docker.image.jpa defined to run integration-test", imageName, notNullValue());
-        return imageName;
-    }
-
-    private DockerJamesRule dockerJamesRule;
-
-    @Override
-    @Before
-    public void setUp() throws Exception {
-        dockerJamesRule = new DockerJamesRule(retrieveDockerImageName());
-        dockerJamesRule.start();
-
-        ProvisioningAPI provisioningAPI = dockerJamesRule.cliJarDomainsAndUsersAdder();
-        Injector injector = Guice.createInjector(new ExternalJamesModule(getConfiguration(), provisioningAPI));
-        provisioningAPI.addDomain(DOMAIN);
-        provisioningAPI.addUser(Username.of(USER_ADDRESS), PASSWORD);
-        system = injector.getInstance(ImapHostSystem.class);
-        smtpHostSystem = injector.getInstance(SmtpHostSystem.class);
-        system.beforeTest();
-
-        super.setUp();
-    }
-
-    @Override
-    protected ImapHostSystem createImapHostSystem() {
-        return system;
-    }
-
-    @Override
-    protected SmtpHostSystem createSmtpHostSystem() {
-        return smtpHostSystem;
-    }
-
-    @Override
-    protected ExternalJamesConfiguration getConfiguration() {
-        return dockerJamesRule.getConfiguration();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        system.afterTest();
-        dockerJamesRule.stop();
-    }
 
 }
