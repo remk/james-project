@@ -18,24 +18,33 @@
  ****************************************************************/
 package org.apache.james.mpt.imapmailbox.external.james;
 
-import java.io.IOException;
+import java.time.Duration;
 
+import org.apache.james.mpt.api.ImapHostSystem;
 import org.apache.james.mpt.imapmailbox.external.james.host.ProvisioningAPI;
+import org.apache.james.mpt.imapmailbox.external.james.host.SmtpHostSystem;
 import org.apache.james.mpt.imapmailbox.external.james.host.StaticJamesConfiguration;
 import org.apache.james.mpt.imapmailbox.external.james.host.docker.CliProvisioningAPI;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
 import org.apache.james.util.Port;
 import org.apache.james.util.docker.DockerContainer;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.function.ThrowingSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 
-public class DockerJamesRule implements TestRule {
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DockerJamesRule.class);
+public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerJamesExtension.class);
 
     private static final int IMAP_PORT = 143;
     private static final int SMTP_PORT = 587;
@@ -43,14 +52,21 @@ public class DockerJamesRule implements TestRule {
 
     private final DockerContainer container;
 
-    public DockerJamesRule(DockerContainer container) {
+    private ImapHostSystem system;
+    private SmtpHostSystem smtpHostSystem;
+    private final ThrowingSupplier<ProvisioningAPI> provisioningAPI;
+
+
+    public DockerJamesExtension(DockerContainer container, CliProvisioningAPI.CliType cliProvisioningType) {
         this.container = container;
+        this.provisioningAPI = () -> new CliProvisioningAPI(cliProvisioningType, container);
     }
 
-    public DockerJamesRule(String image) {
+    public DockerJamesExtension(String image, CliProvisioningAPI.CliType cliProvisioningType) {
         this(DockerContainer.fromName(image)
             .withExposedPorts(SMTP_PORT, IMAP_PORT)
             .waitingFor(new HostPortWaitStrategy())
+            .withStartupTimeout(Duration.ofMinutes(60))
             .withLogConsumer(frame -> {
                 switch (frame.getType()) {
                     case STDOUT:
@@ -62,16 +78,9 @@ public class DockerJamesRule implements TestRule {
                     case END:
                         break; //Ignore
                 }
-            }));
+            }), cliProvisioningType);
     }
 
-    public ProvisioningAPI cliJarDomainsAndUsersAdder() throws InterruptedException, ProvisioningException, IOException {
-        return new CliProvisioningAPI(CliProvisioningAPI.CliType.JAR, container);
-    }
-
-    public ProvisioningAPI cliShellDomainsAndUsersAdder() throws InterruptedException, ProvisioningException, IOException {
-        return new CliProvisioningAPI(CliProvisioningAPI.CliType.SH, container);
-    }
 
     public void start() {
         container.start();
@@ -102,7 +111,45 @@ public class DockerJamesRule implements TestRule {
     }
 
     @Override
-    public Statement apply(Statement statement, Description description) {
-        return statement;
+    public void beforeEach(ExtensionContext context) throws Exception {
+        start();
+        Injector injector = Guice.createInjector(new ExternalJamesModule(getConfiguration(), getProvisioningAPI()));
+        system = injector.getInstance(ImapHostSystem.class);
+        smtpHostSystem = injector.getInstance(SmtpHostSystem.class);
+        system.beforeTest();
+    }
+
+    @Override
+    public void afterEach(ExtensionContext context) throws Exception {
+        stop();
+        system.afterTest();
+    }
+
+    @Override
+    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        Class<?> parameterType = parameterContext.getParameter().getType();
+        return parameterType == ImapHostSystem.class || parameterType == SmtpHostSystem.class;
+    }
+
+    @Override
+    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        Class<?> parameterType = parameterContext.getParameter().getType();
+        if (parameterType == ImapHostSystem.class) {
+            return system;
+        } else if (parameterType == SmtpHostSystem.class) {
+            return smtpHostSystem;
+        }
+        return null;
+    }
+
+    public ProvisioningAPI getProvisioningAPI() throws Exception {
+        try {
+            return provisioningAPI.get();
+        } catch (Exception e) {
+            throw e;
+        }
+        catch (Throwable throwable) {
+            throw new RuntimeException(throwable);
+        }
     }
 }

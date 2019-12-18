@@ -24,46 +24,63 @@ import org.apache.james.mpt.imapmailbox.external.james.host.SmtpHostSystem;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfigurationEnvironnementVariables;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.NoopDomainsAndUserAdder;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-public class JamesDeploymentValidationTest extends DeploymentValidation {
+public class JamesDeploymentValidationTest implements DeploymentValidation {
 
-    private ImapHostSystem system;
-    private SmtpHostSystem smtpHostSystem;
+    public static class HostSystemsResolver implements ParameterResolver {
+        @Override
+        public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+            Class<?> parameterType = parameterContext.getParameter().getType();
+            return parameterType == ImapHostSystem.class || parameterType == SmtpHostSystem.class;
+        }
+
+        @Override
+        public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+            Class<?> parameterType = parameterContext.getParameter().getType();
+            if (parameterType == ImapHostSystem.class) {
+                return system;
+            } else if (parameterType == SmtpHostSystem.class) {
+                return smtpHostSystem;
+            }
+            return null;
+        }
+
+    }
+
+    private static ImapHostSystem system;
+    private static SmtpHostSystem smtpHostSystem;
     private final ExternalJamesConfiguration configuration = new ExternalJamesConfigurationEnvironnementVariables();
 
-    @Override
-    @Before
+    @RegisterExtension
+    public HostSystemsResolver hostSystemsResolver = new HostSystemsResolver();
+
+    @BeforeEach
     public void setUp() throws Exception {
         Injector injector = Guice.createInjector(new ExternalJamesModule(configuration, new NoopDomainsAndUserAdder()));
         system = injector.getInstance(ImapHostSystem.class);
         smtpHostSystem = injector.getInstance(SmtpHostSystem.class);
         system.beforeTest();
-        super.setUp();
     }
 
     @Override
-    protected ImapHostSystem createImapHostSystem() {
-        return system;
-    }
-
-    @Override
-    protected SmtpHostSystem createSmtpHostSystem() {
-        return smtpHostSystem;
-    }
-
-    @Override
-    protected ExternalJamesConfiguration getConfiguration() {
+    public ExternalJamesConfiguration getConfiguration() {
         return configuration;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         system.afterTest();
     }
+
 
 }
