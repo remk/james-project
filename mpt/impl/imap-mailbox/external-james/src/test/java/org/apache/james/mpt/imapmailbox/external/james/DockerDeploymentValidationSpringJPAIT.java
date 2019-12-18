@@ -55,7 +55,7 @@ public class DockerDeploymentValidationSpringJPAIT extends DeploymentValidation 
 
         dockerJamesRule.start();
 
-        ProvisioningAPI provisioningAPI = dockerJamesRule.cliJarDomainsAndUsersAdder();
+        ProvisioningAPI provisioningAPI = dockerJamesRule.cliShellDomainsAndUsersAdder();
         Injector injector = Guice.createInjector(new ExternalJamesModule(getConfiguration(), provisioningAPI));
         system = injector.getInstance(ImapHostSystem.class);
         provisioningAPI.addDomain(DOMAIN);

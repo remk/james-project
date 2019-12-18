@@ -549,6 +549,13 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>org.glowroot</groupId>
+            <artifactId>glowroot-agent</artifactId>
+            <classifier>dist</classifier>
+            <type>zip</type>
+            <scope>provided</scope> <!-- it will be unzipped in the docker image, we don't want it to included in the zip-->
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
             <scope>runtime</scope>
@@ -589,50 +596,20 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>com.google.cloud.tools</groupId>
-                <artifactId>jib-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>docker packaging</id>
-                        <goals>
-                            <goal>dockerBuild</goal>
-                        </goals>
+                        <id>unpack-glowroot</id>
                         <phase>package</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
                         <configuration>
-                            <from>
-                                <image>openjdk:8u222-jre</image>
-                            </from>
-                            <to>
-                                <image>${docker.image.spring.jpa}</image>
-                            </to>
-                            <container>
-                                <mainClass>org.apache.james.app.spring.JamesAppSpringMain</mainClass>
-                                <extraClasspath>/root/conf</extraClasspath>
-                                <workingDirectory>/root/var</workingDirectory>
-                                <volumes>
-                                    <volume>/root/conf</volume>
-                                    <volume>/logs</volume>
-                                </volumes>
-                                <jvmFlags>
-                                    <jvmFlag>-javaagent:/app/libs/openjpa-${apache.openjpa.version}.jar</jvmFlag>
-                                    <jvmFlag>-Dworking.directory=/root</jvmFlag>
-                                    <jvmFlag>-Dlogback.configurationFile=/root/conf/logback.xml</jvmFlag>
-                                </jvmFlags>
-                                <ports>
-                                    <port>25</port>
-                                    <port>143</port>
-                                    <port>465</port>
-                                    <port>587</port>
-                                    <port>993</port>
-                                    <port>8000</port>
-                                </ports>
-                            </container>
-                            <extraDirectories>
-<!--                                <paths>-->
-<!--                                    <path>${project.build.directory}/glowroot/</path>-->
-<!--                                    <path>src/main/jib/</path>-->
-<!--                                </paths>-->
-                            </extraDirectories>
+                            <includeGroupIds>org.glowroot</includeGroupIds>
+                            <includeArtifactIds>glowroot-agent</includeArtifactIds>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <excludes>glowroot/lib/glowroot-central-collector-https-linux-alpine.jar,glowroot/lib/glowroot-central-collector-https-osx.jar,glowroot/lib/glowroot-central-collector-https-windows.jar</excludes>
                         </configuration>
                     </execution>
                 </executions>
@@ -937,6 +914,25 @@
                         <phase>package</phase>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>1.4.13</version>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <repository>${docker.image.spring.jpa.image}</repository>
+                    <tag>${docker.image.spring.jpa.tag}</tag>
+                </configuration>
             </plugin>
             <!--
             The signing process excludes the artifact created by this plugin.

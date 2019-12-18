@@ -655,7 +655,9 @@
         <doclint>none</doclint>
 
         <docker.image.jpa>james-server-jpa:${buildId}</docker.image.jpa>
-        <docker.image.spring.jpa>james-server-spring-jpa:${buildId}</docker.image.spring.jpa>
+        <docker.image.spring.jpa.image>james-server-spring-jpa</docker.image.spring.jpa.image>
+        <docker.image.spring.jpa.tag>${buildId}</docker.image.spring.jpa.tag>
+        <docker.image.spring.jpa>${docker.image.spring.jpa.image}:${docker.image.spring.jpa.tag}</docker.image.spring.jpa>
     </properties>
 
     <dependencyManagement>
