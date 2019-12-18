@@ -19,6 +19,7 @@
 package org.apache.james.mpt.imapmailbox.external.james;
 
 import java.io.IOException;
+import java.time.Duration;
 
 import org.apache.james.mpt.imapmailbox.external.james.host.ProvisioningAPI;
 import org.apache.james.mpt.imapmailbox.external.james.host.StaticJamesConfiguration;
@@ -26,16 +27,16 @@ import org.apache.james.mpt.imapmailbox.external.james.host.docker.CliProvisioni
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
 import org.apache.james.util.Port;
 import org.apache.james.util.docker.DockerContainer;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 
-public class DockerJamesRule implements TestRule {
+public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallback {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DockerJamesRule.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerJamesExtension.class);
 
     private static final int IMAP_PORT = 143;
     private static final int SMTP_PORT = 587;
@@ -43,14 +44,15 @@ public class DockerJamesRule implements TestRule {
 
     private final DockerContainer container;
 
-    public DockerJamesRule(DockerContainer container) {
+    public DockerJamesExtension(DockerContainer container) {
         this.container = container;
     }
 
-    public DockerJamesRule(String image) {
+    public DockerJamesExtension(String image) {
         this(DockerContainer.fromName(image)
             .withExposedPorts(SMTP_PORT, IMAP_PORT)
             .waitingFor(new HostPortWaitStrategy())
+            .withStartupTimeout(Duration.ofMinutes(60))
             .withLogConsumer(frame -> {
                 switch (frame.getType()) {
                     case STDOUT:
@@ -102,7 +104,13 @@ public class DockerJamesRule implements TestRule {
     }
 
     @Override
-    public Statement apply(Statement statement, Description description) {
-        return statement;
+    public void beforeEach(ExtensionContext context) throws Exception {
+        start();
     }
+
+    @Override
+    public void afterEach(ExtensionContext context) throws Exception {
+        stop();
+    }
+
 }

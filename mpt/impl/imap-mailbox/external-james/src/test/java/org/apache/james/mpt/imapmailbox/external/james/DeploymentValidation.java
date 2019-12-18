@@ -19,6 +19,7 @@
 
 package org.apache.james.mpt.imapmailbox.external.james;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
 import static org.awaitility.Duration.TEN_SECONDS;
 
@@ -34,70 +35,63 @@ import org.apache.james.utils.SMTPMessageSender;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.awaitility.core.ConditionFactory;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public abstract class DeploymentValidation {
+public interface DeploymentValidation {
 
-    public static final String DOMAIN = "domain";
-    public static final String USER = "imapuser";
-    public static final String USER_ADDRESS = USER + "@" + DOMAIN;
-    public static final String PASSWORD = "password";
-    private static final String INBOX = "INBOX";
-    private static final String ONE_MAIL = "* 1 EXISTS";
+    String DOMAIN = "domain";
+    String USER = "imapuser";
+    String USER_ADDRESS = USER + "@" + DOMAIN;
+    String PASSWORD = "password";
+    String INBOX = "INBOX";
+    String ONE_MAIL = "* 1 EXISTS";
 
-    protected abstract ImapHostSystem createImapHostSystem();
+    ImapHostSystem imapHostSystem();
 
-    protected abstract SmtpHostSystem createSmtpHostSystem();
+    SmtpHostSystem smtpHostSystem();
 
-    protected abstract ExternalJamesConfiguration getConfiguration();
+    ExternalJamesConfiguration getConfiguration();
 
-    private ImapHostSystem system;
-    private SmtpHostSystem smtpSystem;
-    private SimpleScriptedTestProtocol simpleScriptedTestProtocol;
-    private IMAPClient imapClient = new IMAPClient();
-
-    protected static final Duration slowPacedPollInterval = ONE_HUNDRED_MILLISECONDS;
-    protected static final ConditionFactory calmlyAwait = Awaitility.with()
+    Duration slowPacedPollInterval = ONE_HUNDRED_MILLISECONDS;
+    ConditionFactory calmlyAwait = Awaitility.with()
         .pollInterval(slowPacedPollInterval)
         .and()
         .with()
         .pollDelay(slowPacedPollInterval)
         .await();
-    protected static final ConditionFactory awaitAtMostTenSeconds = calmlyAwait.atMost(TEN_SECONDS);
+    ConditionFactory awaitAtMostTenSeconds = calmlyAwait.atMost(TEN_SECONDS);
 
-    @Before
-    public void setUp() throws Exception {
-        system = createImapHostSystem();
-        smtpSystem = createSmtpHostSystem();
 
-        simpleScriptedTestProtocol = new SimpleScriptedTestProtocol("/org/apache/james/imap/scripts/", system)
+
+    default SimpleScriptedTestProtocol simpleScriptedTestProtocol() throws Exception {
+         return new SimpleScriptedTestProtocol("/org/apache/james/imap/scripts/", imapHostSystem())
             .withUser(USER_ADDRESS, PASSWORD)
             .withLocale(Locale.US);
     }
 
     @Test
-    public void validateDeployment() throws Exception {
-        simpleScriptedTestProtocol.run("ValidateDeployment");
+    default void validateDeployment() throws Exception {
+        simpleScriptedTestProtocol().run("ValidateDeployment");
     }
 
     @Test
-    public void selectThenFetchWithExistingMessages() throws Exception {
-        simpleScriptedTestProtocol.run("SelectThenFetchWithExistingMessages");
+    default void selectThenFetchWithExistingMessages() throws Exception {
+        simpleScriptedTestProtocol().run("SelectThenFetchWithExistingMessages");
     }
 
     @Test
-    public void validateDeploymentWithMailsFromSmtp() throws Exception {
+    default void validateDeploymentWithMailsFromSmtp() throws Exception {
+        IMAPClient imapClient = new IMAPClient();
         SMTPMessageSender smtpMessageSender = new SMTPMessageSender("another-domain");
-        smtpSystem.connect(smtpMessageSender).sendMessage("test@" + DOMAIN, USER_ADDRESS);
+        smtpHostSystem().connect(smtpMessageSender).sendMessage("test@" + DOMAIN, USER_ADDRESS);
         imapClient.connect(getConfiguration().getAddress(), getConfiguration().getImapPort().getValue());
         imapClient.login(USER_ADDRESS, PASSWORD);
-        awaitAtMostTenSeconds.until(this::checkMailDelivery);
+        awaitAtMostTenSeconds.untilAsserted(() -> checkMailDelivery(imapClient));
     }
 
-    private Boolean checkMailDelivery() throws IOException {
+    default void checkMailDelivery(IMAPClient imapClient) throws IOException {
         imapClient.select(INBOX);
         String replyString = imapClient.getReplyString();
-        return replyString.contains(ONE_MAIL);
+        assertThat(replyString).contains(ONE_MAIL);
     }
 }
