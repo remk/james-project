@@ -91,8 +91,6 @@
                 <configuration>
                     <systemPropertyVariables>
                         <docker.image.jpa>${docker.image.jpa}</docker.image.jpa>
-                    </systemPropertyVariables>
-                    <systemPropertyVariables>
                         <docker.image.spring.jpa>${docker.image.spring.jpa}</docker.image.spring.jpa>
                     </systemPropertyVariables>
                 </configuration>
