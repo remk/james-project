@@ -21,6 +21,11 @@ COPY compile.sh /root/compile.sh
 COPY integration_tests.sh /root/integration_tests.sh
 COPY .testcontainers.properties /root/.testcontainers.properties
 
+RUN curl "https://get.docker.com/builds/`uname -s`/`uname -m`/docker-latest.tgz" > docker.tgz &&\
+    tar -xvzf docker.tgz &&\
+    mv docker/* /usr/bin &&\
+    rm -rf docker*
+
 # Define the entrypoint
 WORKDIR /james-project
 ENTRYPOINT ["/root/compile.sh"]
