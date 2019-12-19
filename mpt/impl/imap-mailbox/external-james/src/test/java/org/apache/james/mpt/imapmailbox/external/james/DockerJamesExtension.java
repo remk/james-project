@@ -18,10 +18,11 @@
  ****************************************************************/
 package org.apache.james.mpt.imapmailbox.external.james;
 
-import java.io.IOException;
 import java.time.Duration;
 
+import org.apache.james.mpt.api.ImapHostSystem;
 import org.apache.james.mpt.imapmailbox.external.james.host.ProvisioningAPI;
+import org.apache.james.mpt.imapmailbox.external.james.host.SmtpHostSystem;
 import org.apache.james.mpt.imapmailbox.external.james.host.StaticJamesConfiguration;
 import org.apache.james.mpt.imapmailbox.external.james.host.docker.CliProvisioningAPI;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
@@ -30,11 +31,18 @@ import org.apache.james.util.docker.DockerContainer;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.function.ThrowingSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 
-public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallback {
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
+public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerJamesExtension.class);
 
@@ -44,11 +52,17 @@ public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallba
 
     private final DockerContainer container;
 
-    public DockerJamesExtension(DockerContainer container) {
+    private ImapHostSystem system;
+    private SmtpHostSystem smtpHostSystem;
+    private final ThrowingSupplier<ProvisioningAPI> provisioningAPI;
+
+
+    public DockerJamesExtension(DockerContainer container, CliProvisioningAPI.CliType cliProvisioningType) {
         this.container = container;
+        this.provisioningAPI = () -> new CliProvisioningAPI(cliProvisioningType, container);
     }
 
-    public DockerJamesExtension(String image) {
+    public DockerJamesExtension(String image, CliProvisioningAPI.CliType cliProvisioningType) {
         this(DockerContainer.fromName(image)
             .withExposedPorts(SMTP_PORT, IMAP_PORT)
             .waitingFor(new HostPortWaitStrategy())
@@ -64,16 +78,9 @@ public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallba
                     case END:
                         break; //Ignore
                 }
-            }));
+            }), cliProvisioningType);
     }
 
-    public ProvisioningAPI cliJarDomainsAndUsersAdder() throws InterruptedException, ProvisioningException, IOException {
-        return new CliProvisioningAPI(CliProvisioningAPI.CliType.JAR, container);
-    }
-
-    public ProvisioningAPI cliShellDomainsAndUsersAdder() throws InterruptedException, ProvisioningException, IOException {
-        return new CliProvisioningAPI(CliProvisioningAPI.CliType.SH, container);
-    }
 
     public void start() {
         container.start();
@@ -106,11 +113,43 @@ public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallba
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
         start();
+        Injector injector = Guice.createInjector(new ExternalJamesModule(getConfiguration(), getProvisioningAPI()));
+        system = injector.getInstance(ImapHostSystem.class);
+        smtpHostSystem = injector.getInstance(SmtpHostSystem.class);
+        system.beforeTest();
     }
 
     @Override
     public void afterEach(ExtensionContext context) throws Exception {
         stop();
+        system.afterTest();
     }
 
+    @Override
+    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        Class<?> parameterType = parameterContext.getParameter().getType();
+        return parameterType == ImapHostSystem.class || parameterType == SmtpHostSystem.class;
+    }
+
+    @Override
+    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        Class<?> parameterType = parameterContext.getParameter().getType();
+        if (parameterType == ImapHostSystem.class) {
+            return system;
+        } else if (parameterType == SmtpHostSystem.class) {
+            return smtpHostSystem;
+        }
+        return null;
+    }
+
+    public ProvisioningAPI getProvisioningAPI() throws Exception {
+        try {
+            return provisioningAPI.get();
+        } catch (Exception e) {
+            throw e;
+        }
+        catch (Throwable throwable) {
+            throw new RuntimeException(throwable);
+        }
+    }
 }

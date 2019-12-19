@@ -26,15 +26,43 @@ import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJam
 import org.apache.james.mpt.imapmailbox.external.james.host.external.NoopDomainsAndUserAdder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 public class JamesDeploymentValidationTest implements DeploymentValidation {
 
-    private ImapHostSystem system;
-    private SmtpHostSystem smtpHostSystem;
+    public static class HostSystemsResolver implements ParameterResolver {
+        @Override
+        public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+            Class<?> parameterType = parameterContext.getParameter().getType();
+            return parameterType == ImapHostSystem.class || parameterType == SmtpHostSystem.class;
+        }
+
+        @Override
+        public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+            Class<?> parameterType = parameterContext.getParameter().getType();
+            if (parameterType == ImapHostSystem.class) {
+                return system;
+            } else if (parameterType == SmtpHostSystem.class) {
+                return smtpHostSystem;
+            }
+            return null;
+        }
+
+    }
+
+    private static ImapHostSystem system;
+    private static SmtpHostSystem smtpHostSystem;
     private final ExternalJamesConfiguration configuration = new ExternalJamesConfigurationEnvironnementVariables();
+
+    @RegisterExtension
+    public HostSystemsResolver hostSystemsResolver = new HostSystemsResolver();
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -42,16 +70,6 @@ public class JamesDeploymentValidationTest implements DeploymentValidation {
         system = injector.getInstance(ImapHostSystem.class);
         smtpHostSystem = injector.getInstance(SmtpHostSystem.class);
         system.beforeTest();
-    }
-
-    @Override
-    public ImapHostSystem imapHostSystem() {
-        return system;
-    }
-
-    @Override
-    public SmtpHostSystem smtpHostSystem() {
-        return smtpHostSystem;
     }
 
     @Override
@@ -63,5 +81,6 @@ public class JamesDeploymentValidationTest implements DeploymentValidation {
     public void tearDown() throws Exception {
         system.afterTest();
     }
+
 
 }

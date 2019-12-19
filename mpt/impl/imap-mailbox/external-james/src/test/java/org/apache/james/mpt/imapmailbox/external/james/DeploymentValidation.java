@@ -46,9 +46,6 @@ public interface DeploymentValidation {
     String INBOX = "INBOX";
     String ONE_MAIL = "* 1 EXISTS";
 
-    ImapHostSystem imapHostSystem();
-
-    SmtpHostSystem smtpHostSystem();
 
     ExternalJamesConfiguration getConfiguration();
 
@@ -63,27 +60,27 @@ public interface DeploymentValidation {
 
 
 
-    default SimpleScriptedTestProtocol simpleScriptedTestProtocol() throws Exception {
-         return new SimpleScriptedTestProtocol("/org/apache/james/imap/scripts/", imapHostSystem())
+    default SimpleScriptedTestProtocol simpleScriptedTestProtocol(ImapHostSystem imapHostSystem) throws Exception {
+         return new SimpleScriptedTestProtocol("/org/apache/james/imap/scripts/", imapHostSystem)
             .withUser(USER_ADDRESS, PASSWORD)
             .withLocale(Locale.US);
     }
 
     @Test
-    default void validateDeployment() throws Exception {
-        simpleScriptedTestProtocol().run("ValidateDeployment");
+    default void validateDeployment(ImapHostSystem imapHostSystem) throws Exception {
+        simpleScriptedTestProtocol(imapHostSystem).run("ValidateDeployment");
     }
 
     @Test
-    default void selectThenFetchWithExistingMessages() throws Exception {
-        simpleScriptedTestProtocol().run("SelectThenFetchWithExistingMessages");
+    default void selectThenFetchWithExistingMessages(ImapHostSystem imapHostSystem) throws Exception {
+        simpleScriptedTestProtocol(imapHostSystem).run("SelectThenFetchWithExistingMessages");
     }
 
     @Test
-    default void validateDeploymentWithMailsFromSmtp() throws Exception {
+    default void validateDeploymentWithMailsFromSmtp(SmtpHostSystem smtpHostSystem) throws Exception {
         IMAPClient imapClient = new IMAPClient();
         SMTPMessageSender smtpMessageSender = new SMTPMessageSender("another-domain");
-        smtpHostSystem().connect(smtpMessageSender).sendMessage("test@" + DOMAIN, USER_ADDRESS);
+        smtpHostSystem.connect(smtpMessageSender).sendMessage("test@" + DOMAIN, USER_ADDRESS);
         imapClient.connect(getConfiguration().getAddress(), getConfiguration().getImapPort().getValue());
         imapClient.login(USER_ADDRESS, PASSWORD);
         awaitAtMostTenSeconds.untilAsserted(() -> checkMailDelivery(imapClient));

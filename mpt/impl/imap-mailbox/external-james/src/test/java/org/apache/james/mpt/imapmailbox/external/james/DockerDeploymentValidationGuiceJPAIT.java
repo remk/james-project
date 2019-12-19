@@ -20,22 +20,13 @@
 package org.apache.james.mpt.imapmailbox.external.james;
 
 import org.apache.james.core.Username;
-import org.apache.james.mpt.api.ImapHostSystem;
-import org.apache.james.mpt.imapmailbox.external.james.host.ProvisioningAPI;
-import org.apache.james.mpt.imapmailbox.external.james.host.SmtpHostSystem;
+import org.apache.james.mpt.imapmailbox.external.james.host.docker.CliProvisioningAPI;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
 import org.assertj.core.api.Assumptions;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-
 public class DockerDeploymentValidationGuiceJPAIT implements DeploymentValidation {
-
-    private ImapHostSystem system;
-    private SmtpHostSystem smtpHostSystem;
 
     private static String retrieveDockerImageName() {
         String imageName = System.getProperty("docker.image.jpa");
@@ -46,38 +37,17 @@ public class DockerDeploymentValidationGuiceJPAIT implements DeploymentValidatio
     }
 
     @RegisterExtension
-    public DockerJamesExtension dockerJamesRule = new DockerJamesExtension(retrieveDockerImageName());
+    public DockerJamesExtension dockerJamesRule = new DockerJamesExtension(retrieveDockerImageName(), CliProvisioningAPI.CliType.JAR);
 
     @BeforeEach
     public void setUp() throws Exception {
-        ProvisioningAPI provisioningAPI = dockerJamesRule.cliJarDomainsAndUsersAdder();
-        Injector injector = Guice.createInjector(new ExternalJamesModule(getConfiguration(), provisioningAPI));
-        provisioningAPI.addDomain(DOMAIN);
-        provisioningAPI.addUser(Username.of(USER_ADDRESS), PASSWORD);
-        system = injector.getInstance(ImapHostSystem.class);
-        smtpHostSystem = injector.getInstance(SmtpHostSystem.class);
-        system.beforeTest();
-    }
-
-    @Override
-    public ImapHostSystem imapHostSystem() {
-        return system;
-    }
-
-    @Override
-    public SmtpHostSystem smtpHostSystem() {
-        return smtpHostSystem;
+        dockerJamesRule.getProvisioningAPI().addDomain(DOMAIN);
+        dockerJamesRule.getProvisioningAPI().addUser(Username.of(USER_ADDRESS), PASSWORD);
     }
 
     @Override
     public ExternalJamesConfiguration getConfiguration() {
         return dockerJamesRule.getConfiguration();
-    }
-
-
-    @AfterEach
-    public void tearDown() throws Exception {
-        system.afterTest();
     }
 
 }
