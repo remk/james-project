@@ -37,6 +37,7 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.function.ThrowingSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 
 import com.google.inject.Guice;
@@ -57,12 +58,12 @@ public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallba
     private final ThrowingSupplier<ProvisioningAPI> provisioningAPI;
 
 
-    public DockerJamesExtension(DockerContainer container, CliProvisioningAPI.CliType cliProvisioningType) {
-        this.container = container;
+    public DockerJamesExtension(DockerContainer container, CliProvisioningAPI.CliType cliProvisioningType, Network network) {
+        this.container = container.withNetwork(network);
         this.provisioningAPI = () -> new CliProvisioningAPI(cliProvisioningType, container);
     }
 
-    public DockerJamesExtension(String image, CliProvisioningAPI.CliType cliProvisioningType) {
+    public DockerJamesExtension(String image, CliProvisioningAPI.CliType cliProvisioningType, Network network) {
         this(DockerContainer.fromName(image)
             .withExposedPorts(SMTP_PORT, IMAP_PORT)
             .waitingFor(new HostPortWaitStrategy())
@@ -78,7 +79,7 @@ public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallba
                     case END:
                         break; //Ignore
                 }
-            }), cliProvisioningType);
+            }), cliProvisioningType, network);
     }
 
 

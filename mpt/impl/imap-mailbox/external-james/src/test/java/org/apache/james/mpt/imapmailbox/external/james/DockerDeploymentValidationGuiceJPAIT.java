@@ -25,6 +25,7 @@ import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJam
 import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.Network;
 
 public class DockerDeploymentValidationGuiceJPAIT implements DeploymentValidation {
 
@@ -37,7 +38,7 @@ public class DockerDeploymentValidationGuiceJPAIT implements DeploymentValidatio
     }
 
     @RegisterExtension
-    public DockerJamesExtension dockerJamesRule = new DockerJamesExtension(retrieveDockerImageName(), CliProvisioningAPI.CliType.JAR);
+    public DockerJamesExtension dockerJamesRule = new DockerJamesExtension(retrieveDockerImageName(), CliProvisioningAPI.CliType.JAR, Network.newNetwork());
 
     @BeforeEach
     public void setUp() throws Exception {

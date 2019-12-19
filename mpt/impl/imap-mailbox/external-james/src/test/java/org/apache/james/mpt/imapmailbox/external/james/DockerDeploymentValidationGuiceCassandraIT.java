@@ -19,29 +19,45 @@
 
 package org.apache.james.mpt.imapmailbox.external.james;
 
+import org.apache.james.backends.cassandra.CassandraClusterExtension;
+import org.apache.james.backends.cassandra.DockerCassandra;
+import org.apache.james.backends.cassandra.DockerCassandraExtension;
+import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.core.Username;
 import org.apache.james.mpt.imapmailbox.external.james.host.docker.CliProvisioningAPI;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
 import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.Network;
 
-public class DockerDeploymentValidationSpringJPAIT implements DeploymentValidation {
+public class DockerDeploymentValidationGuiceCassandraIT implements DeploymentValidation {
 
     private static String retrieveDockerImageName() {
-        String imageName = System.getProperty("docker.image.spring.jpa");
+        String imageName = System.getProperty("docker.image.cassandra");
         Assumptions.assumeThat(imageName)
-            .describedAs("No property docker.image.spring.jpa defined to run integration-test")
+            .describedAs("No property docker.image.cassandra defined to run integration-test")
             .isNotNull();
         return imageName;
     }
 
+    private static final Network network = Network.newNetwork();
+    private static final DockerCassandra cassandraContainer = new DockerCassandra("cassandra_3_11_3",
+        DockerCassandra.AdditionalDockerFileStep.IDENTITY,
+        container -> container.withNetworkAliases("cassandra")
+            .withNetwork(network));
+    private static final DockerCassandraExtension cassandraExtension = new DockerCassandraExtension(cassandraContainer);
     @RegisterExtension
-    public DockerJamesExtension dockerJamesRule = new DockerJamesExtension(retrieveDockerImageName(), CliProvisioningAPI.CliType.SH, Network.newNetwork());
+    @Order(1)
+    static CassandraClusterExtension cassandraClusterExtension = new CassandraClusterExtension(CassandraModule.aggregateModules(), cassandraExtension);
+
+    @RegisterExtension
+    @Order(2)
+    DockerJamesExtension dockerJamesRule = new DockerJamesExtension(retrieveDockerImageName(), CliProvisioningAPI.CliType.JAR, network);
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         dockerJamesRule.getProvisioningAPI().addDomain(DOMAIN);
         dockerJamesRule.getProvisioningAPI().addUser(Username.of(USER_ADDRESS), PASSWORD);
     }

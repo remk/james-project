@@ -38,6 +38,10 @@ public class CassandraClusterExtension implements BeforeAllCallback, BeforeEachC
         this.cassandraModule = cassandraModule;
         this.cassandraExtension = new DockerCassandraExtension();
     }
+    public CassandraClusterExtension(CassandraModule cassandraModule, DockerCassandraExtension cassandraExtension) {
+        this.cassandraModule = cassandraModule;
+        this.cassandraExtension = cassandraExtension;
+    }
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) {
