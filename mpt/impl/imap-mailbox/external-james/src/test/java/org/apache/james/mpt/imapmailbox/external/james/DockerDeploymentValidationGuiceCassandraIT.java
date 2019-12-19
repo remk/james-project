@@ -23,12 +23,19 @@ import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.backends.cassandra.DockerCassandra;
 import org.apache.james.backends.cassandra.DockerCassandraExtension;
 import org.apache.james.backends.cassandra.components.CassandraModule;
+import org.apache.james.backends.es.DockerElasticSearchExtension;
 import org.apache.james.core.Username;
 import org.apache.james.mpt.imapmailbox.external.james.host.docker.CliProvisioningAPI;
 import org.apache.james.mpt.imapmailbox.external.james.host.external.ExternalJamesConfiguration;
 import org.assertj.core.api.Assumptions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.Network;
 
@@ -51,9 +58,12 @@ public class DockerDeploymentValidationGuiceCassandraIT implements DeploymentVal
     @RegisterExtension
     @Order(1)
     static CassandraClusterExtension cassandraClusterExtension = new CassandraClusterExtension(CassandraModule.aggregateModules(), cassandraExtension);
-
     @RegisterExtension
     @Order(2)
+    static DockerElasticSearchExtension elasticSearchExtension = new DockerElasticSearchExtension(network, "elasticsearch");
+
+    @RegisterExtension
+    @Order(3)
     DockerJamesExtension dockerJamesRule = new DockerJamesExtension(retrieveDockerImageName(), CliProvisioningAPI.CliType.JAR, network);
 
     @BeforeEach
@@ -67,4 +77,14 @@ public class DockerDeploymentValidationGuiceCassandraIT implements DeploymentVal
         return dockerJamesRule.getConfiguration();
     }
 
+    @BeforeAll
+    static void beforeAll() {
+        elasticSearchExtension.start();
+    }
+
+    @AfterAll
+    static void afterAll() {
+        elasticSearchExtension.stop();
+
+    }
 }
