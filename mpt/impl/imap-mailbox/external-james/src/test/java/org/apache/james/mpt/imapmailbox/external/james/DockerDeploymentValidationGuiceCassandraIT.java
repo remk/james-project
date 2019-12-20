@@ -32,10 +32,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.Network;
 
@@ -55,9 +51,10 @@ public class DockerDeploymentValidationGuiceCassandraIT implements DeploymentVal
         container -> container.withNetworkAliases("cassandra")
             .withNetwork(network));
     private static final DockerCassandraExtension cassandraExtension = new DockerCassandraExtension(cassandraContainer);
+    public static final String KEYSPACE = "apache_james";
     @RegisterExtension
     @Order(1)
-    static CassandraClusterExtension cassandraClusterExtension = new CassandraClusterExtension(CassandraModule.aggregateModules(), cassandraExtension);
+    static CassandraClusterExtension cassandraClusterExtension = new CassandraClusterExtension(CassandraModule.aggregateModules(), cassandraExtension, KEYSPACE);
     @RegisterExtension
     @Order(2)
     static DockerElasticSearchExtension elasticSearchExtension = new DockerElasticSearchExtension(network, "elasticsearch");
