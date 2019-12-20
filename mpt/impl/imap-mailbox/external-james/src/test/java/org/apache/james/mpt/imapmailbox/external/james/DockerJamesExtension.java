@@ -125,7 +125,7 @@ public class DockerJamesExtension implements BeforeEachCallback, AfterEachCallba
     public void beforeEach(ExtensionContext context) throws Exception {
         start();
         provisioningAPI = new CliProvisioningAPI(cliProvisioningType, container);
-        configuration = new StaticJamesConfiguration("localhost", getMappedPort(IMAP_PORT), getMappedPort(SMTP_PORT));
+        configuration = new StaticJamesConfiguration(container.getContainerIp(), Port.of(IMAP_PORT), Port.of(SMTP_PORT));
         Injector injector = Guice.createInjector(new ExternalJamesModule(configuration, provisioningAPI));
         system = injector.getInstance(ImapHostSystem.class);
         smtpHostSystem = injector.getInstance(SmtpHostSystem.class);
