@@ -22,11 +22,13 @@ The modules concerned by this change are :
   -  `event-store-api`
   -  `event-store-cassandra`
 
-
-## Consequences
+## Rationales
 
 This will help to standardize the `event-*` modules as `event-store-memory` is already written in scala.
 This change will avoid interopability concerns with the main consumers of those modules which are already written in scala : see the distributed task manager.
 In the long run this will allow to have a stronger typing in those parts of the code and to have a much less verbose code.
+
+
+## Consequences
 
 We will have to mitigate the pervading of the scala api in the java code base by implementing java facade.
