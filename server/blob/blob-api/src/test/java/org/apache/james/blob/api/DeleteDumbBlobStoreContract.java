@@ -199,7 +199,7 @@ public interface DeleteDumbBlobStoreContract  {
                 (thread, iteration) -> checkConcurrentMixedOperation()
             )
             .threadCount(10)
-            .operationCount(100)
+            .operationCount(20)
             .runSuccessfullyWithin(Duration.ofMinutes(2));
     }
 
