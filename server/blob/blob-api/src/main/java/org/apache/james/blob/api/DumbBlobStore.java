@@ -82,6 +82,7 @@ public interface DumbBlobStore {
      * This operation should be atomic
      *
      * @return a successful Mono if the Blob is deleted or did not exist
+     * (either the blob doesn't exist in the bucket or the bucket itself doesn't exist)
      *  otherwise an IOObjectStoreException in its error channel
      */
     Mono<Void> delete(BucketName bucketName, BlobId blobId);

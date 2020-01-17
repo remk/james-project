@@ -56,6 +56,14 @@ public interface DeleteDumbBlobStoreContract  {
     }
 
     @Test
+    default void deleteShouldNotThrowWhenBucketDoesNotExist() {
+        DumbBlobStore store = testee();
+
+        assertThatCode(() -> store.delete(BucketName.of("not_existing_bucket_name"), TEST_BLOB_ID).block())
+            .doesNotThrowAnyException();
+    }
+
+    @Test
     default void deleteShouldDeleteExistingBlobData() {
         DumbBlobStore store = testee();
 
