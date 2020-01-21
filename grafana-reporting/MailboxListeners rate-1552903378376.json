@@ -23,7 +23,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "Elasticsearch",
+      "datasource": "${DS_JAMES_ES}",
       "fill": 1,
       "gridPos": {
         "h": 11,
@@ -150,7 +150,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "Elasticsearch",
+      "datasource": "${DS_JAMES_ES}",
       "fill": 1,
       "gridPos": {
         "h": 11,
@@ -277,7 +277,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "Elasticsearch",
+      "datasource": "${DS_JAMES_ES}",
       "fill": 1,
       "gridPos": {
         "h": 11,
@@ -404,7 +404,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "Elasticsearch",
+      "datasource": "${DS_JAMES_ES}",
       "fill": 1,
       "gridPos": {
         "h": 11,
@@ -531,7 +531,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "Elasticsearch",
+      "datasource": "${DS_JAMES_ES}",
       "fill": 1,
       "gridPos": {
         "h": 11,
@@ -658,7 +658,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "Elasticsearch",
+      "datasource": "${DS_JAMES_ES}",
       "fill": 1,
       "gridPos": {
         "h": 11,
