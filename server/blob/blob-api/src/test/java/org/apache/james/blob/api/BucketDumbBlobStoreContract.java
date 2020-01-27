@@ -20,11 +20,11 @@
 package org.apache.james.blob.api;
 
 import static org.apache.james.blob.api.DumbBlobStoreFixture.CUSTOM_BUCKET_NAME;
-import static org.apache.james.blob.api.DumbBlobStoreFixture.TEST_BUCKET_NAME;
-import static org.apache.james.blob.api.DumbBlobStoreFixture.TEST_BLOB_ID;
 import static org.apache.james.blob.api.DumbBlobStoreFixture.OTHER_TEST_BLOB_ID;
 import static org.apache.james.blob.api.DumbBlobStoreFixture.SHORT_BYTEARRAY;
 import static org.apache.james.blob.api.DumbBlobStoreFixture.SHORT_STRING;
+import static org.apache.james.blob.api.DumbBlobStoreFixture.TEST_BLOB_ID;
+import static org.apache.james.blob.api.DumbBlobStoreFixture.TEST_BUCKET_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,7 +33,6 @@ import java.io.ByteArrayInputStream;
 import java.time.Duration;
 
 import org.apache.james.util.concurrency.ConcurrentTestRunner;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public interface BucketDumbBlobStoreContract {
@@ -144,7 +143,6 @@ public interface BucketDumbBlobStoreContract {
         assertThat(bytesDefault).isEqualTo(bytesCustom);
     }
 
-    @Disabled("need to implement retry with async callback")
     @Test
     default void saveConcurrentlyWithNonPreExistingBucketShouldNotFail() throws Exception {
         DumbBlobStore store = testee();
