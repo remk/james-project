@@ -128,13 +128,8 @@ interface MailsShouldBeWellReceived {
         String message = Resources.toString(Resources.getResource("eml/htmlMail.eml"), StandardCharsets.UTF_8);
 
         try (SMTPMessageSender sender = new SMTPMessageSender(Domain.LOCALHOST.asString())) {
-            Mono.fromRunnable(
-                Throwing.runnable(() -> {
-                    sender.connect(JAMES_SERVER_HOST, smtpPort);
-                    sendUniqueMessage(sender, message);
-                }))
-                .subscribeOn(Schedulers.elastic())
-                .block();
+            sender.connect(JAMES_SERVER_HOST, smtpPort);
+            sendUniqueMessage(sender, message);
         }
 
         CALMLY_AWAIT.until(() -> server.getProbe(SpoolerProbe.class).processingFinished());
@@ -163,16 +158,11 @@ interface MailsShouldBeWellReceived {
         String message = Resources.toString(Resources.getResource("eml/htmlMail.eml"), StandardCharsets.UTF_8);
 
         try (SMTPMessageSender sender = new SMTPMessageSender(Domain.LOCALHOST.asString())) {
-            Mono.fromRunnable(
-                Throwing.runnable(() -> {
-                    sender.connect(JAMES_SERVER_HOST, smtpPort);
-                    sendUniqueMessageToTwoUsers(sender, message);
-                }))
-                .subscribeOn(Schedulers.elastic())
-                .block();
+            sender.connect(JAMES_SERVER_HOST, smtpPort);
+            sendUniqueMessageToTwoUsers(sender, message);
         }
 
-        CALMLY_AWAIT.until(() -> server.getProbe(SpoolerProbe.class).processingFinished());
+        CALMLY_AWAIT.untilAsserted(() -> assertThat(server.getProbe(SpoolerProbe.class).processingFinished()).isTrue());
 
         try (IMAPMessageReader reader = new IMAPMessageReader()) {
             reader.connect(JAMES_SERVER_HOST, server.getProbe(ImapGuiceProbe.class).getImapPort())
