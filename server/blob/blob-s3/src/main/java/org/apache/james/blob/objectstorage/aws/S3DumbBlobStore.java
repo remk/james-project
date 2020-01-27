@@ -155,12 +155,11 @@ public class S3DumbBlobStore implements DumbBlobStore {
 
     @Override
     public Mono<Void> save(BucketName bucketName, BlobId blobId, byte[] data) {
-        AppContext appContext = new AppContext();
         return Mono.fromFuture(() ->
                 client.putObject(
                     builder -> builder.bucket(bucketName.asString()).key(blobId.asString()).contentLength((long) data.length),
                     AsyncRequestBody.fromBytes(data)))
-            .retryWhen(createBucketOnRetry(bucketName, appContext))
+            .retryWhen(createBucketOnRetry(bucketName))
             .then();
     }
 
@@ -198,17 +197,14 @@ public class S3DumbBlobStore implements DumbBlobStore {
             .onErrorMap(IOException.class, e -> new IOObjectStoreException("Error saving blob", e));
     }
 
-    static class AppContext {
-        Mono<Void> mayCreateBucket = Mono.empty();
-    }
+
 
     @Override
     public Mono<Void> save(BucketName bucketName, BlobId blobId, ByteSource content) {
-        AppContext appContext = new AppContext();
         return Mono.using(content::openStream,
             stream ->
-                Mono.defer(() -> appContext.mayCreateBucket.then())
-                    .flatMap(ignored -> Mono.fromFuture(() ->
+                Mono.defer(() ->
+                    Mono.fromFuture(() ->
                     client.putObject(
                         Throwing.<PutObjectRequest.Builder>consumer(builder -> builder.bucket(bucketName.asString()).contentLength(content.size()).key(blobId.asString())).sneakyThrow(),
                         AsyncRequestBody.fromPublisher(
@@ -216,17 +212,19 @@ public class S3DumbBlobStore implements DumbBlobStore {
                         ))).subscribeOn(Schedulers.elastic())),
             Throwing.consumer(InputStream::close),
             LAZY)
-            .retryWhen(createBucketOnRetry(bucketName, appContext))
+            .retryWhen(createBucketOnRetry(bucketName))
             .onErrorMap(SdkClientException.class, e -> new IOObjectStoreException("Error saving blob", e))
             .then();
     }
 
-    private Retry<AppContext> createBucketOnRetry(BucketName bucketName, AppContext appContext) {
-        return Retry.<AppContext>onlyIf(retryContext -> retryContext.exception() instanceof NoSuchBucketException)
+    private Retry<Object> createBucketOnRetry(BucketName bucketName) {
+        return Retry.onlyIf(retryContext -> retryContext.exception() instanceof NoSuchBucketException)
             .exponentialBackoff(FIRST_BACK_OFF, FOREVER)
             .withBackoffScheduler(Schedulers.elastic())
-            .withApplicationContext(appContext)
-            .doOnRetry(context -> context.applicationContext().mayCreateBucket = Mono.fromFuture(() -> client.createBucket(builder -> builder.bucket(bucketName.asString()))).then())
+            .doOnRetry(context ->
+                Mono.fromFuture(() -> client.createBucket(builder -> builder.bucket(bucketName.asString())))
+                    .then()
+                    .block())
             .retryMax(MAX_RETRIES)
             ;
     }

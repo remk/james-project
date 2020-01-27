@@ -33,6 +33,7 @@ import java.io.ByteArrayInputStream;
 import java.time.Duration;
 
 import org.apache.james.util.concurrency.ConcurrentTestRunner;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public interface BucketDumbBlobStoreContract {
@@ -143,6 +144,7 @@ public interface BucketDumbBlobStoreContract {
         assertThat(bytesDefault).isEqualTo(bytesCustom);
     }
 
+    @Disabled("need to implement retry with async callback")
     @Test
     default void saveConcurrentlyWithNonPreExistingBucketShouldNotFail() throws Exception {
         DumbBlobStore store = testee();
