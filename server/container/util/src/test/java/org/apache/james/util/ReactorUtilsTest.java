@@ -35,7 +35,6 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 class ReactorUtilsTest {
-
     @Nested
     class ExecuteAndEmpty {
         @Test
