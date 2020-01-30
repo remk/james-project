@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.james.backends.rabbitmq.ReactorRabbitMQChannelPool;
 import org.apache.james.metrics.api.Metric;
 import org.apache.james.metrics.api.MetricFactory;
@@ -35,7 +36,6 @@ import org.apache.mailet.Mail;
 
 import com.github.fge.lambdas.consumers.ThrowingConsumer;
 import com.rabbitmq.client.Delivery;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.rabbitmq.AcknowledgableDelivery;
@@ -90,31 +90,29 @@ class Dequeuer {
     }
 
     Flux<? extends MailQueue.MailQueueItem> deQueue() {
-        return flux.concatMap(this::loadItem)
-            .concatMap(this::filterIfDeleted);
+        return flux.flatMapSequential(this::loadItem)
+            .flatMapSequential(this::itemWithIsPresent)
+            .concatMap(pair -> keepWhenPresent(pair.getValue(), pair.getKey()));
     }
 
-    private Mono<RabbitMQMailQueueItem> filterIfDeleted(RabbitMQMailQueueItem item) {
-        return mailQueueView.isPresent(item.getEnqueueId())
-            .flatMap(isPresent -> keepWhenPresent(item, isPresent));
+    private Mono<Pair<Boolean, RabbitMQMailQueueItem>> itemWithIsPresent(RabbitMQMailQueueItem item) {
+        return mailQueueView.isPresent(item.getEnqueueId()).map(isPresent -> Pair.of(isPresent, item));
     }
 
     private Mono<? extends RabbitMQMailQueueItem> keepWhenPresent(RabbitMQMailQueueItem item, Boolean isPresent) {
         if (isPresent) {
             return Mono.just(item);
         }
-        item.done(true);
-        return Mono.empty();
+        return Mono.fromRunnable(() ->  item.done(true));
     }
 
     private Mono<RabbitMQMailQueueItem> loadItem(AcknowledgableDelivery response) {
-        try {
-            MailWithEnqueueId mailWithEnqueueId = loadMail(response);
-            ThrowingConsumer<Boolean> ack = ack(response, mailWithEnqueueId);
-            return Mono.just(new RabbitMQMailQueueItem(ack, mailWithEnqueueId));
-        } catch (MailQueue.MailQueueException e) {
-            return Mono.error(e);
-        }
+       return Mono.fromCallable(() -> {
+                    MailWithEnqueueId mailWithEnqueueId = loadMail(response);
+                    ThrowingConsumer<Boolean> ack = ack(response, mailWithEnqueueId);
+                    return new RabbitMQMailQueueItem(ack, mailWithEnqueueId);
+            }
+        );
     }
 
     private ThrowingConsumer<Boolean> ack(AcknowledgableDelivery response, MailWithEnqueueId mailWithEnqueueId) {
