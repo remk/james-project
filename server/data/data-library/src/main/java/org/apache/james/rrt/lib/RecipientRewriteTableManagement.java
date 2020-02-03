@@ -69,6 +69,18 @@ public class RecipientRewriteTableManagement extends StandardMBean implements Re
     }
 
     @Override
+    public void addUserAliasMapping(String fromUser, String fromDomain, String toAddress) throws RecipientRewriteTableException {
+        MappingSource source = MappingSource.fromUser(fromUser, fromDomain);
+        rrt.addAliasMapping(source, toAddress);
+    }
+
+    @Override
+    public void removeUserAliasMapping(String fromUser, String fromDomain, String toAddress) throws RecipientRewriteTableException {
+        MappingSource source = MappingSource.fromUser(fromUser, fromDomain);
+        rrt.removeAliasMapping(source, toAddress);
+    }
+
+    @Override
     public void addErrorMapping(String user, String domain, String error) throws RecipientRewriteTableException {
         MappingSource source = MappingSource.fromUser(user, domain);
         rrt.addErrorMapping(source, error);
