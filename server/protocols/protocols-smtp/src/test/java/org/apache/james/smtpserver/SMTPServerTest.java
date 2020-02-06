@@ -95,6 +95,10 @@ import com.google.inject.TypeLiteral;
 
 public class SMTPServerTest {
 
+    public static final String LOCAL_DOMAIN = "example.local";
+    public static final String USER_LOCALHOST = "test_user_smtp@localhost";
+    public static final String USER_LOCAL_DOMAIN = "test_user_smtp@example.local";
+
     final class AlterableDNSServer implements DNSService {
 
         private InetAddress localhostByName = null;
@@ -125,7 +129,7 @@ public class SMTPServerTest {
             }
 
             if ("1.0.0.127.bl.spamcop.net.".equals(host)) {
-                return InetAddress.getByName("localhost");
+                return InetAddress.getByName(Domain.LOCALHOST.asString());
             }
 
             if ("james.apache.org".equals(host)) {
@@ -202,15 +206,15 @@ public class SMTPServerTest {
     public void setUp() throws Exception {
 
         domainList = new MemoryDomainList(new InMemoryDNSService()
-            .registerMxRecord("localhost", "127.0.0.1")
-            .registerMxRecord("example.local", "127.0.0.1")
+            .registerMxRecord(Domain.LOCALHOST.asString(), "127.0.0.1")
+            .registerMxRecord(LOCAL_DOMAIN, "127.0.0.1")
             .registerMxRecord("examplebis.local", "127.0.0.1")
             .registerMxRecord("127.0.0.1", "127.0.0.1"));
         domainList.setAutoDetect(false);
         domainList.setAutoDetectIP(false);
 
         domainList.addDomain(Domain.LOCALHOST);
-        domainList.addDomain(Domain.of("example.local"));
+        domainList.addDomain(Domain.of(LOCAL_DOMAIN));
         domainList.addDomain(Domain.of("examplebis.local"));
         usersRepository = MemoryUsersRepository.withVirtualHosting(domainList);
 
@@ -1289,9 +1293,9 @@ public class SMTPServerTest {
         // assertTrue("anouncing auth required",
         // capabilitieslist.contains("AUTH=LOGIN PLAIN"));
 
-        String userName = "test_user_smtp@localhost";
+        String userName = USER_LOCALHOST;
         String noexistUserName = "noexist_test_user_smtp";
-        String sender = "test_user_smtp@localhost";
+        String sender = USER_LOCALHOST;
         smtpProtocol.sendCommand("AUTH FOO", null);
         assertThat(smtpProtocol.getReplyCode())
             .as("expected error: unrecognized authentication type")
@@ -1363,8 +1367,8 @@ public class SMTPServerTest {
             capabilitieslist.add(capabilityRes[i].substring(4));
         }
 
-        String userName = "test_user_smtp@localhost";
-        String sender = "test_user_smtp@localhost";
+        String userName = USER_LOCALHOST;
+        String sender = USER_LOCALHOST;
 
         usersRepository.addUser(Username.of(userName), "pwd");
 
@@ -1404,7 +1408,7 @@ public class SMTPServerTest {
             capabilitieslist.add(capabilityRes[i].substring(4));
         }
 
-        String userName = "test_user_smtp@example.local";
+        String userName = USER_LOCAL_DOMAIN;
         String sender = "alias_test_user_smtp@example.local";
 
         usersRepository.addUser(Username.of(userName), "pwd");
@@ -1446,11 +1450,11 @@ public class SMTPServerTest {
             capabilitieslist.add(capabilityRes[i].substring(4));
         }
 
-        String userName = "test_user_smtp@example.local";
+        String userName = USER_LOCAL_DOMAIN;
         String sender = "test_user_smtp@examplebis.local";
 
         usersRepository.addUser(Username.of(userName), "pwd");
-        rewriteTable.addAliasDomainMapping(MappingSource.fromDomain(Domain.of("examplebis.local")), Domain.of("example.local"));
+        rewriteTable.addAliasDomainMapping(MappingSource.fromDomain(Domain.of("examplebis.local")), Domain.of(LOCAL_DOMAIN));
 
         smtpProtocol.sendCommand("AUTH PLAIN");
         smtpProtocol.sendCommand(Base64.getEncoder().encodeToString(("\0" + userName + "\0pwd\0").getBytes(UTF_8)));
@@ -1488,7 +1492,7 @@ public class SMTPServerTest {
             capabilitieslist.add(capabilityRes[i].substring(4));
         }
 
-        String userName = "test_user_smtp@example.local";
+        String userName = USER_LOCAL_DOMAIN;
         String sender = "group@example.local";
 
         usersRepository.addUser(Username.of(userName), "pwd");
@@ -1528,7 +1532,7 @@ public class SMTPServerTest {
 
         smtpProtocol.sendCommand("ehlo " + InetAddress.getLocalHost());
 
-        String userName = "test_user_smtp@localhost";
+        String userName = USER_LOCALHOST;
         usersRepository.addUser(Username.of(userName), "pwd");
 
         smtpProtocol.setSender("");
@@ -1745,8 +1749,8 @@ public class SMTPServerTest {
         // is this required or just for compatibility? assertTrue("anouncing
         // auth required", capabilitieslist.contains("AUTH=LOGIN PLAIN"));
 
-        String userName = "test_user_smtp@localhost";
-        String sender = "test_user_smtp@localhost";
+        String userName = USER_LOCALHOST;
+        String sender = USER_LOCALHOST;
 
         smtpProtocol.setSender(sender);
 
@@ -1787,7 +1791,7 @@ public class SMTPServerTest {
 
         smtpProtocol.sendCommand("ehlo", InetAddress.getLocalHost().toString());
 
-        String sender = "test_user_smtp@localhost";
+        String sender = USER_LOCALHOST;
 
         smtpProtocol.setSender(sender);
 
