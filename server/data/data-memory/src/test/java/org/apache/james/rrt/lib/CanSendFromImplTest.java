@@ -18,6 +18,8 @@
  ****************************************************************/
 package org.apache.james.rrt.lib;
 
+import static org.mockito.Mockito.mock;
+
 import org.apache.james.core.Domain;
 import org.apache.james.core.Username;
 import org.apache.james.dnsservice.api.DNSService;
@@ -26,7 +28,6 @@ import org.apache.james.domainlist.memory.MemoryDomainList;
 import org.apache.james.rrt.api.CanSendFrom;
 import org.apache.james.rrt.memory.MemoryRecipientRewriteTable;
 import org.junit.jupiter.api.BeforeEach;
-import org.mockito.Mockito;
 
 public class CanSendFromImplTest implements CanSendFromContract {
 
@@ -37,7 +38,7 @@ public class CanSendFromImplTest implements CanSendFromContract {
     void setup() throws Exception {
         recipientRewriteTable = new MemoryRecipientRewriteTable();
 
-        DNSService dnsService = Mockito.mock(DNSService.class);
+        DNSService dnsService = mock(DNSService.class);
         MemoryDomainList domainList = new MemoryDomainList(dnsService);
         domainList.configure(DomainListConfiguration.builder()
             .autoDetect(false)
