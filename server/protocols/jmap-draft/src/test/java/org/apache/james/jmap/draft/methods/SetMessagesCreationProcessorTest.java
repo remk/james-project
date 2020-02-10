@@ -406,7 +406,8 @@ public class SetMessagesCreationProcessorTest {
         DraftEmailer sender = DraftEmailer
             .builder()
             .name("other")
-            .email("other@example.com").build();
+            .email("other@example.com")
+            .build();
 
         assertThatThrownBy(() -> sut.assertUserCanSendFrom(USER, Optional.of(sender)))
             .isInstanceOf(MailboxSendingNotAllowedException.class);
@@ -417,7 +418,8 @@ public class SetMessagesCreationProcessorTest {
         DraftEmailer sender = DraftEmailer
             .builder()
             .name("user")
-            .email(USER.asString()).build();
+            .email(USER.asString())
+            .build();
 
         assertThatCode(() -> sut.assertUserCanSendFrom(USER, Optional.of(sender)))
             .doesNotThrowAnyException();
@@ -428,7 +430,8 @@ public class SetMessagesCreationProcessorTest {
         DraftEmailer sender = DraftEmailer
             .builder()
             .name("alias")
-            .email("alias@example.com").build();
+            .email("alias@example.com")
+            .build();
 
         recipientRewriteTable.addAliasMapping(MappingSource.fromUser("alias", "example.com"), OTHER_USER.asString());
 
@@ -441,7 +444,8 @@ public class SetMessagesCreationProcessorTest {
         DraftEmailer sender = DraftEmailer
             .builder()
             .name("alias")
-            .email("alias@example.com").build();
+            .email("alias@example.com")
+            .build();
 
         recipientRewriteTable.addAliasMapping(MappingSource.fromUser("alias", "example.com"), USER.asString());
 
@@ -454,7 +458,8 @@ public class SetMessagesCreationProcessorTest {
         DraftEmailer sender = DraftEmailer
             .builder()
             .name("user")
-            .email("user@other.org").build();
+            .email("user@other.org")
+            .build();
 
            recipientRewriteTable.addMapping(MappingSource.fromDomain(Domain.of("other.org")), Mapping.domain(Domain.of("example.com")));
 
@@ -467,7 +472,8 @@ public class SetMessagesCreationProcessorTest {
         DraftEmailer sender = DraftEmailer
             .builder()
             .name("group")
-            .email("group@example.com").build();
+            .email("group@example.com")
+            .build();
 
         recipientRewriteTable.addGroupMapping(MappingSource.fromUser("group", "example.com"), USER.asString());
 
