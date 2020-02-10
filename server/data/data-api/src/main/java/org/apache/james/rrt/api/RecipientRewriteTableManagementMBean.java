@@ -60,7 +60,8 @@ public interface RecipientRewriteTableManagementMBean {
      * Add address mapping that, for a user from@fromDomain would redirect
      * mails to toAddress
      *
-     * Prefer using the specific methods addUserAliasMapping, addDomainMapping... which create an alias with a more specific Mapping.Type
+     * Prefer using the specific methods addUserAliasMapping, addDomainMapping...
+     * which create an alias with a more specific Mapping.Type
      * 
      * @param fromUser
      *            the username. Null if no username should be used
