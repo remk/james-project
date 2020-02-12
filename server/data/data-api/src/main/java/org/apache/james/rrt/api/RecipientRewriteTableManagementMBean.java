@@ -85,30 +85,6 @@ public interface RecipientRewriteTableManagementMBean {
      */
     void removeAddressMapping(String fromUser, String fromDomain, String toAddress) throws Exception;
 
-    /***
-     * Add a user alias mapping that, for a user from@fromDomain would redirect
-     * mails to toAddress
-     *
-     * @param fromUser
-     *            the username. Null if no username should be used
-     * @param fromDomain
-     *            the domain. Null if no domain should be used
-     * @param toAddress
-     *            the address.
-     */
-    void addUserAliasMapping(String fromUser, String fromDomain, String toAddress) throws Exception;
-
-    /**
-     * Remove a user alias mapping. The API takes the same arguments as addUserAliasMapping
-     *
-     * @param fromUser
-     *            the username. Null if no username should be used
-     * @param fromDomain
-     *            the domain. Null if no domain should be used
-     * @param toAddress
-     */
-    void removeUserAliasMapping(String fromUser, String fromDomain, String toAddress) throws Exception;
-
     /**
      * Add error mapping
      * 
