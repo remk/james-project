@@ -80,8 +80,6 @@ public class JMAPCommonModule extends AbstractModule {
         bind(MessageHeaderViewFactory.class).in(Scopes.SINGLETON);
         bind(MessageFastViewFactory.class).in(Scopes.SINGLETON);
 
-        bind(CanSendFrom.class).to(CanSendFromImpl.class).in(Scopes.SINGLETON);
-
         bind(MessageContentExtractor.class).in(Scopes.SINGLETON);
         bind(HeadersAuthenticationExtractor.class).in(Scopes.SINGLETON);
         bind(SecurityKeyLoader.class).in(Scopes.SINGLETON);
