@@ -93,8 +93,8 @@ public class CanSendFromImpl implements CanSendFrom {
 
     private Stream<String> fetchDomains(Domain domain) throws RecipientRewriteTableException {
         return Stream.concat(
-          Stream.of(domain.asString()),
-          recipientRewriteTable.listSources(Mapping.domain(domain)).map(MappingSource::getFixedDomain)
+            Stream.of(domain.asString()),
+            recipientRewriteTable.listSources(Mapping.domain(domain)).map(MappingSource::getFixedDomain)
         );
     }
 }
