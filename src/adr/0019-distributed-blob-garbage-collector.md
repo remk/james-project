@@ -8,28 +8,28 @@ Proposed
 
 ## Context
 
-The body, headers, attachments of the mails are stored as blob on a blob store.
-In order to save space on the those stores, those blobs are de-duplicated using an hash of their content.
+The body, headers, attachments of the mails are stored as blobs in a blob store.
+In order to save space in those stores, those blobs are de-duplicated using a hash of their content.
 To attain that the current blob store will read the content of the blob before saving it, and generate its id based on
 a hash of this content. This way two blobs with the same content will share the same id and thus be saved only once.
 This makes the safe deletion of one of those blob a non trivial problem as we can't delete one blob without ensuring
 that all references to it are themselves deleted. For example if two messages share the same blob, when we delete
-one message there is at the  time being no way to tell if the blob is still referenced by another message.
+one message there is at the time being no way to tell if the blob is still referenced by another message.
 
 ## Decision
 
-To address this issue, we propose to implement a distributed blob garbage collector build upon the previously developed
+To address this issue, we propose to implement a distributed blob garbage collector built upon the previously developed
 Distributed Task Manager.
-This garbage collector will keep track of the references pointing toward a blob in a `References` table.
+The de-duplicating blobstore will keep track of the references pointing toward a blob in a `References` table.
 It will also keep track of the deletion requests for a blob in a `Deletions` table.
-When the algorithm runs it will fetch in the `Deletions` table the blobs considered to be effectively deleted,
+When the garbage collector algorithm runs it will fetch from the `Deletions` table the blobs considered to be effectively deleted,
 and will check in the `References` table if there are still some references to them. If there is no more reference to a blob,
 it will be effectively deleted from the blob store.
 
 To avoid concurrency issue, where we could garbage collect a blob at the same time a new reference to it appear,
-a `reference generation` notion will be added. At a given interval a new `reference generation` will be emitted,
-since then all new blobs will point to this new generation. And their de-duplicating id which before where constructed
-using only the hash of their content will now include this `reference generation` too.
+a `reference generation` notion will be added. The de-duplicating id of the blobs which before where constructed
+using only the hash of their content,  will now include this `reference generation` too.
+At a given interval a new `reference generation` will be emitted, since then all new blobs will point to this new generation.
 
 So a `garbage collection iteration` will run only on the `reference generation` `n-1` to avoid concurrency issue.
 
