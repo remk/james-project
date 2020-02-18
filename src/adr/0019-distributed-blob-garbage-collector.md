@@ -36,13 +36,14 @@ So a `garbage collection iteration` will run only on the `reference generation` 
 
 ## Alternatives
 
-Not de-duplicating the blobs content, this simple approach was not kept because in some cases it involves storing the same
-blob a lot of times, which is really slow and costly.
+Not de-duplicating the blobs content, this simple approach which involves storing the same
+blob a lot of times can in some scenario be really slow and costly. Albeit it can in some case be preferred for the sake of
+simplicity, data security...
 
 ## Consequences
 
 This change will necessitate to extract the base blob store responsibilities (store a blob, delete a blob, read a blob)
-from the current blob store implementation which is doing the deduplication, id generation...
+from the current blob store implementation which is doing the de-duplication, id generation...
 The garbage collector will use this low level blob store in order to effectively delete the blobs.
 
 One other consequence of this work, is the fact that there will be no  de-duplication on different `reference generation`,
