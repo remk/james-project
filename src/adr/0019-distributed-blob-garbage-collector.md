@@ -31,7 +31,10 @@ a `reference generation` notion will be added. The de-duplicating id of the blob
 using only the hash of their content,  will now include this `reference generation` too.
 At a given interval a new `reference generation` will be emitted, since then all new blobs will point to this new generation.
 
-So a `garbage collection iteration` will run only on the `reference generation` `n-1` to avoid concurrency issue.
+So a `garbage collection iteration` will run only on the `reference generation` `n-2` to avoid concurrency issue.
+
+The switch of generation will be triggered by a scheduled task running on the distributed task manager. This task will
+emit an event into the event sourcing system to increment the `reperence generation`.
 
 
 ## Alternatives
@@ -48,6 +51,12 @@ The garbage collector will use this low level blob store in order to effectively
 
 One other consequence of this work, is the fact that there will be no  de-duplication on different `reference generation`,
 i.e two blobs with the same content will be stored twice now, if they were created during two different `reference generation`.
+
+When writing a blob into the de-duplicating blob store, we will need to specify the reference to the object (MessageId, AttachmentId...) we
+store the blob for. This can make some components harder to implement as we will have to propagate the references.
+
+To increment the `reference generation` and launch periodically a `garbage collection iteration` a task scheduler build on top
+of the distributed task manager will be needed.
 
 ## Algorithm visualisation
 
