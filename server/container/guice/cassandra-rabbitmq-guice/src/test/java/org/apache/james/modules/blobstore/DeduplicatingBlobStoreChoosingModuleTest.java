@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.james.FakePropertiesProvider;
-import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
 import org.apache.james.blob.union.HybridDeduplicatingBlobStore;
 import org.apache.james.modules.blobstore.BlobStoreChoosingConfiguration.BlobStoreImplName;
@@ -36,8 +36,8 @@ import com.google.inject.Provider;
 
 class DeduplicatingBlobStoreChoosingModuleTest {
 
-    private static CassandraDeduplicatingBlobStore CASSANDRA_BLOBSTORE = mock(CassandraDeduplicatingBlobStore.class);
-    private static Provider<CassandraDeduplicatingBlobStore> CASSANDRA_BLOBSTORE_PROVIDER = () -> CASSANDRA_BLOBSTORE;
+    private static DeduplicatingBlobStore CASSANDRA_BLOBSTORE = mock(DeduplicatingBlobStore.class);
+    private static Provider<DeduplicatingBlobStore> CASSANDRA_BLOBSTORE_PROVIDER = () -> CASSANDRA_BLOBSTORE;
     private static ObjectStorageDeduplicatingBlobStore OBJECT_STORAGE_BLOBSTORE = mock(ObjectStorageDeduplicatingBlobStore.class);
     private static Provider<ObjectStorageDeduplicatingBlobStore> OBJECT_STORAGE_BLOBSTORE_PROVIDER = () -> OBJECT_STORAGE_BLOBSTORE;
 

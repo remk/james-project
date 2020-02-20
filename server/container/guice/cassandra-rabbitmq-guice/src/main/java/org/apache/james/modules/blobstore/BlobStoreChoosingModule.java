@@ -28,10 +28,12 @@ import javax.inject.Singleton;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.james.backends.cassandra.components.CassandraModule;
+import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.api.DeduplicatingBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
 import org.apache.james.blob.cassandra.CassandraBlobModule;
-import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
+import org.apache.james.blob.cassandra.CassandraBlobStore;
 import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
 import org.apache.james.blob.union.HybridDeduplicatingBlobStore;
 import org.apache.james.modules.mailbox.ConfigurationComponent;
@@ -47,6 +49,7 @@ import com.google.inject.multibindings.Multibinder;
 
 public class BlobStoreChoosingModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(BlobStoreChoosingModule.class);
+    private static final String CASSANDRA_BLOB_STORE = "cassandra";
 
     @Override
     protected void configure() {
@@ -74,7 +77,8 @@ public class BlobStoreChoosingModule extends AbstractModule {
     @Named(MetricableDeduplicatingBlobStore.BLOB_STORE_IMPLEMENTATION)
     @Singleton
     DeduplicatingBlobStore provideBlobStore(BlobStoreChoosingConfiguration choosingConfiguration,
-                                            Provider<CassandraDeduplicatingBlobStore> cassandraBlobStoreProvider,
+                                            @Named(CASSANDRA_BLOB_STORE)
+                                            Provider<DeduplicatingBlobStore> cassandraBlobStoreProvider,
                                             Provider<ObjectStorageDeduplicatingBlobStore> objectStorageBlobStoreProvider,
                                             HybridDeduplicatingBlobStore.Configuration hybridBlobStoreConfiguration) {
 
@@ -93,6 +97,13 @@ public class BlobStoreChoosingModule extends AbstractModule {
                 throw new RuntimeException(String.format("can not get the right blobstore provider with configuration %s",
                     choosingConfiguration.toString()));
         }
+    }
+
+    @Provides
+    @Named(CASSANDRA_BLOB_STORE)
+    @Singleton
+    public DeduplicatingBlobStore provideCassandraDeduplicatingBlobstore(BlobId.Factory blobIdFactory, CassandraBlobStore blobStore) {
+        return new DeduplicatingBlobStoreImpl(blobIdFactory, blobStore);
     }
 
     @Provides

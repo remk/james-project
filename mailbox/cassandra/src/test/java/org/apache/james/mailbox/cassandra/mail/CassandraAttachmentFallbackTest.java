@@ -31,9 +31,10 @@ import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.cassandra.CassandraBlobModule;
-import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
+import org.apache.james.blob.cassandra.CassandraBlobStoreFixture;
 import org.apache.james.mailbox.cassandra.ids.CassandraMessageId;
 import org.apache.james.mailbox.cassandra.modules.CassandraAttachmentModule;
 import org.apache.james.mailbox.exception.AttachmentNotFoundException;
@@ -59,7 +60,7 @@ class CassandraAttachmentFallbackTest {
     private CassandraAttachmentDAOV2 attachmentDAOV2;
     private CassandraAttachmentDAO attachmentDAO;
     private CassandraAttachmentMapper attachmentMapper;
-    private CassandraDeduplicatingBlobStore blobStore;
+    private DeduplicatingBlobStore blobStore;
     private CassandraAttachmentMessageIdDAO attachmentMessageIdDAO;
 
 
@@ -68,7 +69,7 @@ class CassandraAttachmentFallbackTest {
         attachmentDAOV2 = new CassandraAttachmentDAOV2(BLOB_ID_FACTORY, cassandra.getConf());
         attachmentDAO = new CassandraAttachmentDAO(cassandra.getConf(),
             CassandraConfiguration.DEFAULT_CONFIGURATION);
-        blobStore = CassandraDeduplicatingBlobStore.forTesting(cassandra.getConf());
+        blobStore = CassandraBlobStoreFixture.storeForTesting(cassandra.getConf());
         attachmentMessageIdDAO = new CassandraAttachmentMessageIdDAO(cassandra.getConf(), new CassandraMessageId.Factory());
         CassandraAttachmentOwnerDAO ownerDAO = new CassandraAttachmentOwnerDAO(cassandra.getConf());
         attachmentMapper = new CassandraAttachmentMapper(attachmentDAO, attachmentDAOV2, blobStore, attachmentMessageIdDAO, ownerDAO);

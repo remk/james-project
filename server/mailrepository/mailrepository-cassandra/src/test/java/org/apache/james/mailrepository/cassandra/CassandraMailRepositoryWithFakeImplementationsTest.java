@@ -33,11 +33,12 @@ import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.backends.cassandra.utils.CassandraUtils;
 import org.apache.james.backends.cassandra.versions.CassandraSchemaVersionModule;
 import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.api.Store;
 import org.apache.james.blob.cassandra.BlobTables;
 import org.apache.james.blob.cassandra.CassandraBlobModule;
-import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
+import org.apache.james.blob.cassandra.CassandraBlobStoreFixture;
 import org.apache.james.blob.mail.MimeMessagePartsId;
 import org.apache.james.blob.mail.MimeMessageStore;
 import org.apache.james.core.builder.MimeMessageBuilder;
@@ -52,7 +53,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
-
 import reactor.core.publisher.Mono;
 
 
@@ -127,7 +127,7 @@ class CassandraMailRepositoryWithFakeImplementationsTest {
             FailingMailDAO mailDAO = new FailingMailDAO();
             keysDAO = new CassandraMailRepositoryKeysDAO(cassandra.getConf(), CassandraUtils.WITH_DEFAULT_CONFIGURATION);
             CassandraMailRepositoryCountDAO countDAO = new CassandraMailRepositoryCountDAO(cassandra.getConf());
-            CassandraDeduplicatingBlobStore blobStore = CassandraDeduplicatingBlobStore.forTesting(cassandra.getConf());
+            DeduplicatingBlobStore blobStore = CassandraBlobStoreFixture.storeForTesting(cassandra.getConf());
 
             cassandraMailRepository = new CassandraMailRepository(URL,
                     keysDAO, countDAO, mailDAO, MimeMessageStore.factory(blobStore).mimeMessageStore());
@@ -212,7 +212,7 @@ class CassandraMailRepositoryWithFakeImplementationsTest {
             CassandraMailRepositoryMailDaoAPI mailDAO = new CassandraMailRepositoryMailDAO(cassandra.getConf(), BLOB_ID_FACTORY, cassandra.getTypesProvider());
             FailingKeysDAO keysDAO = new FailingKeysDAO(cassandra.getConf(), CassandraUtils.WITH_DEFAULT_CONFIGURATION);
             countDAO = new CassandraMailRepositoryCountDAO(cassandra.getConf());
-            CassandraDeduplicatingBlobStore blobStore = CassandraDeduplicatingBlobStore.forTesting(cassandra.getConf());
+            DeduplicatingBlobStore blobStore = CassandraBlobStoreFixture.storeForTesting(cassandra.getConf());
 
             cassandraMailRepository = new CassandraMailRepository(URL,
                     keysDAO, countDAO, mailDAO, MimeMessageStore.factory(blobStore).mimeMessageStore());

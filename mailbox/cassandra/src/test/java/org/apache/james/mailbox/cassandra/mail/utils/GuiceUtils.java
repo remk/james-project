@@ -25,10 +25,10 @@ import org.apache.james.backends.cassandra.CassandraCluster;
 import org.apache.james.backends.cassandra.init.CassandraTypesProvider;
 import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
 import org.apache.james.blob.cassandra.CassandraBlobStore;
 import org.apache.james.mailbox.cassandra.ids.CassandraMessageId;
 import org.apache.james.mailbox.model.MessageId;
@@ -72,7 +72,7 @@ public class GuiceUtils {
         return Modules.combine(
             binder -> binder.bind(MessageId.Factory.class).toInstance(messageIdFactory),
             binder -> binder.bind(BlobId.Factory.class).toInstance(new HashBlobId.Factory()),
-            binder -> binder.bind(DeduplicatingBlobStore.class).to(CassandraDeduplicatingBlobStore.class).in(SINGLETON),
+            binder -> binder.bind(DeduplicatingBlobStore.class).to(DeduplicatingBlobStoreImpl.class).in(SINGLETON),
             binder -> binder.bind(CassandraBlobStore.class).in(SINGLETON),
             binder -> binder.bind(BucketName.class)
                 .annotatedWith(Names.named(CassandraBlobStore.DEFAULT_BUCKET))

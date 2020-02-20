@@ -33,9 +33,10 @@ import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.cassandra.CassandraBlobModule;
-import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
+import org.apache.james.blob.cassandra.CassandraBlobStoreFixture;
 import org.apache.james.mailbox.cassandra.mail.CassandraAttachmentDAO;
 import org.apache.james.mailbox.cassandra.mail.CassandraAttachmentDAOV2;
 import org.apache.james.mailbox.cassandra.modules.CassandraAttachmentModule;
@@ -62,7 +63,7 @@ class AttachmentV2MigrationTest {
 
     private CassandraAttachmentDAO attachmentDAO;
     private CassandraAttachmentDAOV2 attachmentDAOV2;
-    private CassandraDeduplicatingBlobStore blobsStore;
+    private DeduplicatingBlobStore blobsStore;
     private AttachmentV2Migration migration;
     private Attachment attachment1;
     private Attachment attachment2;
@@ -72,7 +73,7 @@ class AttachmentV2MigrationTest {
         attachmentDAO = new CassandraAttachmentDAO(cassandra.getConf(),
             CassandraConfiguration.DEFAULT_CONFIGURATION);
         attachmentDAOV2 = new CassandraAttachmentDAOV2(BLOB_ID_FACTORY, cassandra.getConf());
-        blobsStore = CassandraDeduplicatingBlobStore.forTesting(cassandra.getConf());
+        blobsStore = CassandraBlobStoreFixture.storeForTesting(cassandra.getConf());
         migration = new AttachmentV2Migration(attachmentDAO, attachmentDAOV2, blobsStore);
 
         attachment1 = Attachment.builder()
@@ -136,7 +137,7 @@ class AttachmentV2MigrationTest {
     void runShouldReturnPartialWhenInitialReadFail() throws InterruptedException {
         CassandraAttachmentDAO attachmentDAO = mock(CassandraAttachmentDAO.class);
         CassandraAttachmentDAOV2 attachmentDAOV2 = mock(CassandraAttachmentDAOV2.class);
-        CassandraDeduplicatingBlobStore blobsStore = mock(CassandraDeduplicatingBlobStore.class);
+        DeduplicatingBlobStore blobsStore = mock(DeduplicatingBlobStore.class);
         migration = new AttachmentV2Migration(attachmentDAO, attachmentDAOV2, blobsStore);
 
         when(attachmentDAO.retrieveAll()).thenReturn(Flux.error(new RuntimeException()));
@@ -148,7 +149,7 @@ class AttachmentV2MigrationTest {
     void runShouldReturnPartialWhenSavingBlobsFails() throws InterruptedException {
         CassandraAttachmentDAO attachmentDAO = mock(CassandraAttachmentDAO.class);
         CassandraAttachmentDAOV2 attachmentDAOV2 = mock(CassandraAttachmentDAOV2.class);
-        CassandraDeduplicatingBlobStore blobsStore = mock(CassandraDeduplicatingBlobStore.class);
+        DeduplicatingBlobStore blobsStore = mock(DeduplicatingBlobStore.class);
         migration = new AttachmentV2Migration(attachmentDAO, attachmentDAOV2, blobsStore);
 
         when(attachmentDAO.retrieveAll()).thenReturn(Flux.just(
@@ -163,7 +164,7 @@ class AttachmentV2MigrationTest {
     void runShouldReturnPartialWhenSavingAttachmentV2Fail() throws InterruptedException {
         CassandraAttachmentDAO attachmentDAO = mock(CassandraAttachmentDAO.class);
         CassandraAttachmentDAOV2 attachmentDAOV2 = mock(CassandraAttachmentDAOV2.class);
-        CassandraDeduplicatingBlobStore blobsStore = mock(CassandraDeduplicatingBlobStore.class);
+        DeduplicatingBlobStore blobsStore = mock(DeduplicatingBlobStore.class);
         migration = new AttachmentV2Migration(attachmentDAO, attachmentDAOV2, blobsStore);
 
         when(attachmentDAO.retrieveAll()).thenReturn(Flux.just(
@@ -182,7 +183,7 @@ class AttachmentV2MigrationTest {
     void runShouldReturnPartialWhenDeleteV1AttachmentFail() throws InterruptedException {
         CassandraAttachmentDAO attachmentDAO = mock(CassandraAttachmentDAO.class);
         CassandraAttachmentDAOV2 attachmentDAOV2 = mock(CassandraAttachmentDAOV2.class);
-        CassandraDeduplicatingBlobStore blobsStore = mock(CassandraDeduplicatingBlobStore.class);
+        DeduplicatingBlobStore blobsStore = mock(DeduplicatingBlobStore.class);
         migration = new AttachmentV2Migration(attachmentDAO, attachmentDAOV2, blobsStore);
 
         when(attachmentDAO.retrieveAll()).thenReturn(Flux.just(
@@ -202,7 +203,7 @@ class AttachmentV2MigrationTest {
     void runShouldReturnPartialWhenAtLeastOneAttachmentMigrationFails() throws InterruptedException {
         CassandraAttachmentDAO attachmentDAO = mock(CassandraAttachmentDAO.class);
         CassandraAttachmentDAOV2 attachmentDAOV2 = mock(CassandraAttachmentDAOV2.class);
-        CassandraDeduplicatingBlobStore blobsStore = mock(CassandraDeduplicatingBlobStore.class);
+        DeduplicatingBlobStore blobsStore = mock(DeduplicatingBlobStore.class);
         migration = new AttachmentV2Migration(attachmentDAO, attachmentDAOV2, blobsStore);
 
         when(attachmentDAO.retrieveAll()).thenReturn(Flux.just(

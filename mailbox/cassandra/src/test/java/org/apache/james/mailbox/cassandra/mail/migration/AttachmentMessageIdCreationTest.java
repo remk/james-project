@@ -36,9 +36,10 @@ import org.apache.james.backends.cassandra.CassandraCluster;
 import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.backends.cassandra.versions.CassandraSchemaVersionModule;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.cassandra.CassandraBlobModule;
-import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
+import org.apache.james.blob.cassandra.CassandraBlobStoreFixture;
 import org.apache.james.mailbox.MessageUid;
 import org.apache.james.mailbox.cassandra.ids.CassandraId;
 import org.apache.james.mailbox.cassandra.ids.CassandraMessageId;
@@ -59,7 +60,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
 import reactor.core.publisher.Flux;
 
 class AttachmentMessageIdCreationTest {
@@ -73,7 +73,7 @@ class AttachmentMessageIdCreationTest {
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(
             MODULES);
 
-    private CassandraDeduplicatingBlobStore blobStore;
+    private DeduplicatingBlobStore blobStore;
     private CassandraMessageDAO cassandraMessageDAO;
     private CassandraAttachmentMessageIdDAO attachmentMessageIdDAO;
 
@@ -86,7 +86,7 @@ class AttachmentMessageIdCreationTest {
     void setUp(CassandraCluster cassandra) {
         CassandraMessageId.Factory messageIdFactory = new CassandraMessageId.Factory();
 
-        blobStore = CassandraDeduplicatingBlobStore.forTesting(cassandra.getConf());
+        blobStore = CassandraBlobStoreFixture.storeForTesting(cassandra.getConf());
         cassandraMessageDAO = new CassandraMessageDAO(cassandra.getConf(), cassandra.getTypesProvider(),
             blobStore, new HashBlobId.Factory(), messageIdFactory);
 

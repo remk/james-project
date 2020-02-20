@@ -21,9 +21,14 @@ package org.apache.james.blob.cassandra;
 
 import java.nio.charset.StandardCharsets;
 
+import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
+
+import com.datastax.driver.core.Session;
 
 public interface CassandraBlobStoreFixture {
     byte[] DATA = "anydata".getBytes(StandardCharsets.UTF_8);
@@ -36,4 +41,13 @@ public interface CassandraBlobStoreFixture {
     BlobId BLOB_ID_2 = new HashBlobId.Factory().from("05dcb33b-8382-4744-923a-bc593ad84d24");
     BucketName BUCKET_NAME = BucketName.of("aBucket");
     BucketName BUCKET_NAME_2 = BucketName.of("anotherBucket");
+
+    static DeduplicatingBlobStore storeForTesting(Session session) {
+        HashBlobId.Factory blobIdFactory = new HashBlobId.Factory();
+        CassandraBucketDAO bucketDAO = new CassandraBucketDAO(blobIdFactory, session);
+        CassandraDefaultBucketDAO defaultBucketDAO = new CassandraDefaultBucketDAO(session);
+        return new DeduplicatingBlobStoreImpl(
+            blobIdFactory,
+            new CassandraBlobStore(defaultBucketDAO, bucketDAO, CassandraConfiguration.DEFAULT_CONFIGURATION, BucketName.DEFAULT));
+    }
 }
