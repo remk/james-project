@@ -30,8 +30,8 @@ import javax.inject.Named;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
-import org.apache.james.blob.api.DumbBlobStore;
 import org.apache.james.blob.api.ObjectNotFoundException;
 import org.apache.james.blob.api.ObjectStoreIOException;
 import org.apache.james.blob.cassandra.utils.DataChunker;
@@ -44,7 +44,7 @@ import com.google.common.io.ByteSource;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class CassandraDumbBlobStore implements DumbBlobStore {
+public class CassandraBlobStore implements BlobStore {
 
     public static final String DEFAULT_BUCKET = "cassandraDefault";
     public static final boolean LAZY = false;
@@ -56,10 +56,10 @@ public class CassandraDumbBlobStore implements DumbBlobStore {
     private final BucketName defaultBucket;
 
     @Inject
-    CassandraDumbBlobStore(CassandraDefaultBucketDAO defaultBucketDAO,
-                           CassandraBucketDAO bucketDAO,
-                           CassandraConfiguration cassandraConfiguration,
-                           @Named(DEFAULT_BUCKET) BucketName defaultBucket) {
+    CassandraBlobStore(CassandraDefaultBucketDAO defaultBucketDAO,
+                       CassandraBucketDAO bucketDAO,
+                       CassandraConfiguration cassandraConfiguration,
+                       @Named(DEFAULT_BUCKET) BucketName defaultBucket) {
         this.defaultBucketDAO = defaultBucketDAO;
         this.bucketDAO = bucketDAO;
         this.configuration = cassandraConfiguration;

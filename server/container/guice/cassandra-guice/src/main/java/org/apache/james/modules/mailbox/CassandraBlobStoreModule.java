@@ -26,7 +26,7 @@ import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
 import org.apache.james.blob.cassandra.CassandraBlobModule;
 import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
 import org.apache.james.blob.cassandra.CassandraDefaultBucketDAO;
-import org.apache.james.blob.cassandra.CassandraDumbBlobStore;
+import org.apache.james.blob.cassandra.CassandraBlobStore;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
@@ -38,10 +38,10 @@ public class CassandraBlobStoreModule extends AbstractModule {
     protected void configure() {
         bind(CassandraDefaultBucketDAO.class).in(Scopes.SINGLETON);
         bind(CassandraDeduplicatingBlobStore.class).in(Scopes.SINGLETON);
-        bind(CassandraDumbBlobStore.class).in(Scopes.SINGLETON);
+        bind(CassandraBlobStore.class).in(Scopes.SINGLETON);
 
         bind(BucketName.class)
-            .annotatedWith(Names.named(CassandraDumbBlobStore.DEFAULT_BUCKET))
+            .annotatedWith(Names.named(CassandraBlobStore.DEFAULT_BUCKET))
             .toInstance(BucketName.DEFAULT);
 
         bind(DeduplicatingBlobStore.class)

@@ -73,7 +73,7 @@ public class CassandraDeduplicatingBlobStoreTest implements MetricableDeduplicat
             new CassandraDeduplicatingBlobStore(
                 blobIdFactory,
                 BucketName.DEFAULT,
-                new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, cassandraConfiguration, BucketName.DEFAULT)));
+                new CassandraBlobStore(defaultBucketDAO, bucketDAO, cassandraConfiguration, BucketName.DEFAULT)));
     }
 
     @Override

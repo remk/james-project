@@ -19,21 +19,21 @@
 
 package org.apache.james.blob.memory;
 
-import org.apache.james.blob.api.DumbBlobStore;
-import org.apache.james.blob.api.DumbBlobStoreContract;
+import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.BlobStoreContract;
 import org.junit.jupiter.api.BeforeEach;
 
-class MemoryDumbBlobStoreTest implements DumbBlobStoreContract {
+class MemoryBlobStoreTest implements BlobStoreContract {
 
-    private MemoryDumbBlobStore blobStore;
+    private MemoryBlobStore blobStore;
 
     @BeforeEach
     void setUp() {
-        blobStore = new MemoryDumbBlobStore();
+        blobStore = new MemoryBlobStore();
     }
 
     @Override
-    public DumbBlobStore testee() {
+    public BlobStore testee() {
         return blobStore;
     }
 }

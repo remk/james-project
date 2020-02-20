@@ -27,8 +27,8 @@ import javax.inject.Inject;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -38,18 +38,18 @@ import reactor.core.publisher.Mono;
 public class MemoryDeduplicatingBlobStore implements DeduplicatingBlobStore {
     private final BlobId.Factory factory;
     private final BucketName defaultBucketName;
-    private final MemoryDumbBlobStore dumbBlobStore;
+    private final MemoryBlobStore blobStore;
 
     @Inject
-    public MemoryDeduplicatingBlobStore(BlobId.Factory factory, MemoryDumbBlobStore dumbBlobStore) {
-        this(factory, BucketName.DEFAULT, dumbBlobStore);
+    public MemoryDeduplicatingBlobStore(BlobId.Factory factory, MemoryBlobStore blobStore) {
+        this(factory, BucketName.DEFAULT, blobStore);
     }
 
     @VisibleForTesting
-    public MemoryDeduplicatingBlobStore(BlobId.Factory factory, BucketName defaultBucketName, MemoryDumbBlobStore dumbBlobStore) {
+    public MemoryDeduplicatingBlobStore(BlobId.Factory factory, BucketName defaultBucketName, MemoryBlobStore blobStore) {
         this.factory = factory;
         this.defaultBucketName = defaultBucketName;
-        this.dumbBlobStore = dumbBlobStore;
+        this.blobStore = blobStore;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class MemoryDeduplicatingBlobStore implements DeduplicatingBlobStore {
 
         BlobId blobId = factory.forPayload(data);
 
-        return dumbBlobStore.save(bucketName, blobId, data)
+        return blobStore.save(bucketName, blobId, data)
             .then(Mono.just(blobId));
     }
 
@@ -93,11 +93,11 @@ public class MemoryDeduplicatingBlobStore implements DeduplicatingBlobStore {
     public Mono<Void> deleteBucket(BucketName bucketName) {
         Preconditions.checkNotNull(bucketName);
 
-        return dumbBlobStore.deleteBucket(bucketName);
+        return blobStore.deleteBucket(bucketName);
     }
 
     private Mono<byte[]> retrieveStoredValue(BucketName bucketName, BlobId blobId) {
-        return dumbBlobStore.readBytes(bucketName, blobId);
+        return blobStore.readBytes(bucketName, blobId);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class MemoryDeduplicatingBlobStore implements DeduplicatingBlobStore {
         Preconditions.checkNotNull(bucketName);
         Preconditions.checkNotNull(blobId);
 
-        return dumbBlobStore.delete(bucketName, blobId);
+        return blobStore.delete(bucketName, blobId);
     }
 
 }

@@ -35,13 +35,13 @@ import java.time.Duration;
 import org.apache.james.util.concurrency.ConcurrentTestRunner;
 import org.junit.jupiter.api.Test;
 
-public interface BucketDumbBlobStoreContract {
+public interface BucketBlobStoreContract {
 
-    DumbBlobStore testee();
+    BlobStore testee();
 
     @Test
     default void deleteBucketShouldThrowWhenNullBucketName() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.deleteBucket(null).block())
             .isInstanceOf(NullPointerException.class);
@@ -49,7 +49,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void deleteBucketShouldDeleteExistingBucketWithItsData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
         store.deleteBucket(TEST_BUCKET_NAME).block();
@@ -60,7 +60,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void deleteBucketShouldBeIdempotent() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
         store.deleteBucket(TEST_BUCKET_NAME).block();
@@ -71,7 +71,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void saveBytesShouldThrowWhenNullBucketName() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(null, TEST_BLOB_ID, SHORT_BYTEARRAY).block())
             .isInstanceOf(NullPointerException.class);
@@ -79,7 +79,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void saveStringShouldThrowWhenNullBucketName() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(null, TEST_BLOB_ID, SHORT_STRING).block())
             .isInstanceOf(NullPointerException.class);
@@ -87,7 +87,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void saveInputStreamShouldThrowWhenNullBucketName() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(null, TEST_BLOB_ID, new ByteArrayInputStream(SHORT_BYTEARRAY)).block())
             .isInstanceOf(NullPointerException.class);
@@ -95,7 +95,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void readShouldThrowWhenNullBucketName() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
         assertThatThrownBy(() -> store.read(null, TEST_BLOB_ID))
@@ -104,7 +104,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void readBytesShouldThrowWhenNullBucketName() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
         assertThatThrownBy(() -> store.readBytes(null, TEST_BLOB_ID).block())
@@ -113,7 +113,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void readStreamShouldThrowWhenBucketDoesNotExist() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
         assertThatThrownBy(() -> store.read(CUSTOM_BUCKET_NAME, TEST_BLOB_ID).read())
@@ -122,7 +122,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void readBytesShouldThrowWhenBucketDoesNotExist() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
 
@@ -132,7 +132,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void shouldBeAbleToSaveDataInMultipleBuckets() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
         store.save(CUSTOM_BUCKET_NAME, OTHER_TEST_BLOB_ID, SHORT_BYTEARRAY).block();
@@ -145,7 +145,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void saveConcurrentlyWithNonPreExistingBucketShouldNotFail() throws Exception {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         ConcurrentTestRunner.builder()
             .operation(((threadNumber, step) ->
@@ -160,7 +160,7 @@ public interface BucketDumbBlobStoreContract {
 
     @Test
     default void deleteBucketConcurrentlyShouldNotFail() throws Exception {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
 

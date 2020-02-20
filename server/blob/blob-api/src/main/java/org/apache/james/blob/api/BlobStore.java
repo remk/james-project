@@ -26,7 +26,7 @@ import com.google.common.io.ByteSource;
 
 import reactor.core.publisher.Mono;
 
-public interface DumbBlobStore {
+public interface BlobStore {
 
     /**
      * Reads a Blob based on its BucketName and its BlobId.

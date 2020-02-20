@@ -48,16 +48,16 @@ public class CassandraDeduplicatingBlobStore implements DeduplicatingBlobStore {
     public static final int FILE_THRESHOLD = 10000;
     private final HashBlobId.Factory blobIdFactory;
     private final BucketName defaultBucketName;
-    private final CassandraDumbBlobStore dumbBlobStore;
+    private final CassandraBlobStore blobStore;
 
     @Inject
     CassandraDeduplicatingBlobStore(HashBlobId.Factory blobIdFactory,
-                                    @Named(CassandraDumbBlobStore.DEFAULT_BUCKET) BucketName defaultBucketName,
-                                    CassandraDumbBlobStore dumbBlobStore) {
+                                    @Named(CassandraBlobStore.DEFAULT_BUCKET) BucketName defaultBucketName,
+                                    CassandraBlobStore blobStore) {
 
         this.blobIdFactory = blobIdFactory;
         this.defaultBucketName = defaultBucketName;
-        this.dumbBlobStore = dumbBlobStore;
+        this.blobStore = blobStore;
     }
 
     @VisibleForTesting
@@ -68,7 +68,7 @@ public class CassandraDeduplicatingBlobStore implements DeduplicatingBlobStore {
         return new CassandraDeduplicatingBlobStore(
             blobIdFactory,
             BucketName.DEFAULT,
-            new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, CassandraConfiguration.DEFAULT_CONFIGURATION, BucketName.DEFAULT));
+            new CassandraBlobStore(defaultBucketDAO, bucketDAO, CassandraConfiguration.DEFAULT_CONFIGURATION, BucketName.DEFAULT));
     }
 
     @Override
@@ -78,7 +78,7 @@ public class CassandraDeduplicatingBlobStore implements DeduplicatingBlobStore {
 
         BlobId blobId = blobIdFactory.forPayload(data);
 
-        return dumbBlobStore.save(bucketName, blobId, data)
+        return blobStore.save(bucketName, blobId, data)
             .then(Mono.just(blobId));
     }
 
@@ -99,26 +99,26 @@ public class CassandraDeduplicatingBlobStore implements DeduplicatingBlobStore {
             IOUtils.copy(hashingInputStream, fileBackedOutputStream);
             return Tuples.of(blobIdFactory.from(hashingInputStream.hash().toString()), fileBackedOutputStream.asByteSource());
         })
-            .flatMap(tuple -> dumbBlobStore.save(bucketName, tuple.getT1(), tuple.getT2()).thenReturn(tuple.getT1()));
+            .flatMap(tuple -> blobStore.save(bucketName, tuple.getT1(), tuple.getT2()).thenReturn(tuple.getT1()));
     }
 
     @Override
     public Mono<byte[]> readBytes(BucketName bucketName, BlobId blobId) {
         Preconditions.checkNotNull(bucketName);
-        return dumbBlobStore.readBytes(bucketName, blobId);
+        return blobStore.readBytes(bucketName, blobId);
     }
 
     @Override
     public InputStream read(BucketName bucketName, BlobId blobId) {
         Preconditions.checkNotNull(bucketName);
-        return dumbBlobStore.read(bucketName, blobId);
+        return blobStore.read(bucketName, blobId);
     }
 
     @Override
     public Mono<Void> deleteBucket(BucketName bucketName) {
         Preconditions.checkNotNull(bucketName);
 
-        return dumbBlobStore.deleteBucket(bucketName);
+        return blobStore.deleteBucket(bucketName);
     }
 
     @Override
@@ -131,7 +131,7 @@ public class CassandraDeduplicatingBlobStore implements DeduplicatingBlobStore {
         Preconditions.checkNotNull(bucketName);
         Preconditions.checkNotNull(blobId);
 
-        return dumbBlobStore.delete(bucketName, blobId);
+        return blobStore.delete(bucketName, blobId);
     }
 
 }

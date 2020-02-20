@@ -48,13 +48,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.google.common.io.ByteSource;
 import reactor.core.publisher.Mono;
 
-public interface ReadSaveDumbBlobStoreContract {
+public interface ReadSaveBlobStoreContract {
 
-    DumbBlobStore testee();
+    BlobStore testee();
 
     @Test
     default void saveShouldThrowWhenNullData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, (byte[]) null).block())
             .isInstanceOf(NullPointerException.class);
@@ -62,7 +62,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveShouldThrowWhenNullString() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, (String) null).block())
             .isInstanceOf(NullPointerException.class);
@@ -70,7 +70,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveShouldThrowWhenNullInputStream() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, (InputStream) null).block())
             .isInstanceOf(NullPointerException.class);
@@ -78,7 +78,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveShouldThrowWhenNullByteSource() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, (ByteSource) null).block())
             .isInstanceOf(NullPointerException.class);
@@ -86,7 +86,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveShouldSaveEmptyData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, EMPTY_BYTEARRAY).block();
         byte[] bytes = store.readBytes(TEST_BUCKET_NAME, TEST_BLOB_ID).block();
@@ -96,7 +96,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveShouldSaveEmptyString() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, "").block();
 
@@ -107,7 +107,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveShouldSaveEmptyInputStream() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, new ByteArrayInputStream(EMPTY_BYTEARRAY)).block();
 
@@ -118,7 +118,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveShouldSaveEmptyByteSource() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, ByteSource.empty()).block();
 
@@ -129,7 +129,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void readBytesShouldThrowWhenNotExisting() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.readBytes(TEST_BUCKET_NAME, new TestBlobId("unknown")).block())
             .isExactlyInstanceOf(ObjectNotFoundException.class);
@@ -137,7 +137,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void readBytesShouldReturnSavedData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
 
@@ -148,7 +148,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void readBytesShouldReturnLongSavedData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, ELEVEN_KILOBYTES).block();
 
@@ -159,7 +159,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void readBytesShouldReturnBigSavedData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, TWELVE_MEGABYTES).block();
 
@@ -170,7 +170,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void readStreamShouldThrowWhenNotExisting() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.read(TEST_BUCKET_NAME, new TestBlobId("unknown")).read())
             .isInstanceOf(ObjectNotFoundException.class);
@@ -178,7 +178,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveShouldCreateBucket() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
         BucketName nonExisting = BucketName.of("non-existing-bucket");
         store.save(nonExisting, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
 
@@ -189,7 +189,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void readShouldReturnSavedData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
 
         InputStream read = store.read(TEST_BUCKET_NAME, TEST_BLOB_ID);
@@ -199,7 +199,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void readShouldReturnLongSavedData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, ELEVEN_KILOBYTES).block();
 
         InputStream read = store.read(TEST_BUCKET_NAME, TEST_BLOB_ID);
@@ -209,7 +209,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void readShouldReturnBigSavedData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, TWELVE_MEGABYTES).block();
 
         InputStream read = store.read(TEST_BUCKET_NAME, TEST_BLOB_ID);
@@ -220,7 +220,7 @@ public interface ReadSaveDumbBlobStoreContract {
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("blobs")
     default void saveBytesShouldBeIdempotent(String description, byte[] bytes) {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, bytes).block();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, bytes).block();
 
@@ -232,7 +232,7 @@ public interface ReadSaveDumbBlobStoreContract {
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("blobs")
     default void saveByteSourceShouldBeIdempotent(String description, byte[] bytes) {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, ByteSource.wrap(bytes)).block();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, ByteSource.wrap(bytes)).block();
 
@@ -244,7 +244,7 @@ public interface ReadSaveDumbBlobStoreContract {
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("blobs")
     default void saveInputStreamShouldBeIdempotent(String description, byte[] bytes) {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, ByteSource.wrap(bytes)).block();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, new ByteArrayInputStream(bytes)).block();
 
@@ -255,7 +255,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveInputStreamShouldNotOverwritePreviousDataOnFailingInputStream() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, ByteSource.wrap(ELEVEN_KILOBYTES)).block();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, getThrowingInputStream())
@@ -269,7 +269,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveByteSourceShouldNotOverwritePreviousDataOnFailingInputStream() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, ByteSource.wrap(ELEVEN_KILOBYTES)).block();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, new ByteSource() {
@@ -288,7 +288,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveByteSourceShouldThrowOnIOException() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, new ByteSource() {
                 @Override
@@ -302,7 +302,7 @@ public interface ReadSaveDumbBlobStoreContract {
 
     @Test
     default void saveInputStreamShouldThrowOnIOException() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, getThrowingInputStream())
             .block())

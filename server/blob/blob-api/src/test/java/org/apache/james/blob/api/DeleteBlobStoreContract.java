@@ -44,13 +44,13 @@ import org.junit.jupiter.api.Test;
 
 import reactor.core.publisher.Mono;
 
-public interface DeleteDumbBlobStoreContract  {
+public interface DeleteBlobStoreContract {
 
-    DumbBlobStore testee();
+    BlobStore testee();
 
     @Test
     default void deleteShouldNotThrowWhenBlobDoesNotExist() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatCode(() -> store.delete(TEST_BUCKET_NAME, TEST_BLOB_ID).block())
             .doesNotThrowAnyException();
@@ -58,7 +58,7 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void deleteShouldNotThrowWhenBucketDoesNotExist() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         assertThatCode(() -> store.delete(BucketName.of("not_existing_bucket_name"), TEST_BLOB_ID).block())
             .doesNotThrowAnyException();
@@ -66,7 +66,7 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void deleteShouldDeleteExistingBlobData() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID,  SHORT_BYTEARRAY).block();
         store.delete(TEST_BUCKET_NAME, TEST_BLOB_ID).block();
@@ -77,7 +77,7 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void deleteShouldBeIdempotent() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
         store.delete(TEST_BUCKET_NAME, TEST_BLOB_ID).block();
@@ -88,7 +88,7 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void deleteShouldNotDeleteOtherBlobs() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
         store.save(TEST_BUCKET_NAME, OTHER_TEST_BLOB_ID, ELEVEN_KILOBYTES).block();
@@ -102,7 +102,7 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void deleteConcurrentlyShouldNotFail() throws Exception {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, TWELVE_MEGABYTES).block();
 
@@ -115,14 +115,14 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void deleteShouldThrowWhenNullBucketName() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
         assertThatThrownBy(() -> store.delete(null, TEST_BLOB_ID).block())
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     default void deleteShouldNotDeleteFromOtherBucket() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(CUSTOM_BUCKET_NAME, OTHER_TEST_BLOB_ID, "custom").block();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
@@ -136,7 +136,7 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void deleteShouldNotDeleteFromOtherBucketWhenSameBlobId() {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(CUSTOM_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, SHORT_BYTEARRAY).block();
@@ -150,7 +150,7 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void readShouldNotReadPartiallyWhenDeletingConcurrentlyBigBlob() throws Exception {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, TWELVE_MEGABYTES).block();
 
@@ -176,7 +176,7 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void readBytesShouldNotReadPartiallyWhenDeletingConcurrentlyBigBlob() throws Exception {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
 
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, TWELVE_MEGABYTES).block();
 
@@ -201,7 +201,7 @@ public interface DeleteDumbBlobStoreContract  {
 
     @Test
     default void mixingSaveReadAndDeleteShouldReturnConsistentState() throws ExecutionException, InterruptedException {
-        DumbBlobStore store = testee();
+        BlobStore store = testee();
         store.save(TEST_BUCKET_NAME, TEST_BLOB_ID, TWELVE_MEGABYTES).block();
         ConcurrentTestRunner.builder()
             .randomlyDistributedReactorOperations(

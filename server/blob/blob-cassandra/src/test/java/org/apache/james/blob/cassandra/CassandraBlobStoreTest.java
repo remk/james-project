@@ -23,20 +23,20 @@ import org.apache.james.backends.cassandra.CassandraCluster;
 import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.blob.api.BucketName;
-import org.apache.james.blob.api.DumbBlobStore;
-import org.apache.james.blob.api.DumbBlobStoreContract;
+import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.BlobStoreContract;
 import org.apache.james.blob.api.HashBlobId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class CassandraDumbBlobStoreTest implements DumbBlobStoreContract {
+public class CassandraBlobStoreTest implements BlobStoreContract {
     private static final int CHUNK_SIZE = 10240;
     private static final int MULTIPLE_CHUNK_SIZE = 3;
 
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraBlobModule.MODULE);
 
-    private DumbBlobStore testee;
+    private BlobStore testee;
     private CassandraDefaultBucketDAO defaultBucketDAO;
 
     @BeforeEach
@@ -44,7 +44,7 @@ public class CassandraDumbBlobStoreTest implements DumbBlobStoreContract {
         HashBlobId.Factory blobIdFactory = new HashBlobId.Factory();
         CassandraBucketDAO bucketDAO = new CassandraBucketDAO(blobIdFactory, cassandra.getConf());
         defaultBucketDAO = new CassandraDefaultBucketDAO(cassandra.getConf());
-        testee = new CassandraDumbBlobStore(
+        testee = new CassandraBlobStore(
             defaultBucketDAO,
                 bucketDAO,
                 CassandraConfiguration.builder()
@@ -54,7 +54,7 @@ public class CassandraDumbBlobStoreTest implements DumbBlobStoreContract {
     }
 
     @Override
-    public DumbBlobStore testee() {
+    public BlobStore testee() {
         return testee;
     }
 

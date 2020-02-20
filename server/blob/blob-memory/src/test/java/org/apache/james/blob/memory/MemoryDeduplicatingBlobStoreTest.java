@@ -33,7 +33,7 @@ public class MemoryDeduplicatingBlobStoreTest implements MetricableDeduplicating
 
     @BeforeEach
     void setUp() {
-        blobStore = new MetricableDeduplicatingBlobStore(metricsTestExtension.getMetricFactory(), new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryDumbBlobStore()));
+        blobStore = new MetricableDeduplicatingBlobStore(metricsTestExtension.getMetricFactory(), new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore()));
     }
 
     @Override

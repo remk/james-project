@@ -18,5 +18,5 @@
  ****************************************************************/
 package org.apache.james.blob.api;
 
-public interface DumbBlobStoreContract extends ReadSaveDumbBlobStoreContract, DeleteDumbBlobStoreContract, BucketDumbBlobStoreContract {
+public interface BlobStoreContract extends ReadSaveBlobStoreContract, DeleteBlobStoreContract, BucketBlobStoreContract {
 }
