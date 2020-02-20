@@ -25,21 +25,21 @@ import static org.mockito.Mockito.mock;
 
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.james.FakePropertiesProvider;
-import org.apache.james.blob.cassandra.CassandraBlobStore;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
-import org.apache.james.blob.union.HybridBlobStore;
+import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
+import org.apache.james.blob.union.HybridDeduplicatingBlobStore;
 import org.apache.james.modules.blobstore.BlobStoreChoosingConfiguration.BlobStoreImplName;
 import org.apache.james.modules.mailbox.ConfigurationComponent;
 import org.junit.jupiter.api.Test;
 
 import com.google.inject.Provider;
 
-class BlobStoreChoosingModuleTest {
+class DeduplicatingBlobStoreChoosingModuleTest {
 
-    private static CassandraBlobStore CASSANDRA_BLOBSTORE = mock(CassandraBlobStore.class);
-    private static Provider<CassandraBlobStore> CASSANDRA_BLOBSTORE_PROVIDER = () -> CASSANDRA_BLOBSTORE;
-    private static ObjectStorageBlobStore OBJECT_STORAGE_BLOBSTORE = mock(ObjectStorageBlobStore.class);
-    private static Provider<ObjectStorageBlobStore> OBJECT_STORAGE_BLOBSTORE_PROVIDER = () -> OBJECT_STORAGE_BLOBSTORE;
+    private static CassandraDeduplicatingBlobStore CASSANDRA_BLOBSTORE = mock(CassandraDeduplicatingBlobStore.class);
+    private static Provider<CassandraDeduplicatingBlobStore> CASSANDRA_BLOBSTORE_PROVIDER = () -> CASSANDRA_BLOBSTORE;
+    private static ObjectStorageDeduplicatingBlobStore OBJECT_STORAGE_BLOBSTORE = mock(ObjectStorageDeduplicatingBlobStore.class);
+    private static Provider<ObjectStorageDeduplicatingBlobStore> OBJECT_STORAGE_BLOBSTORE_PROVIDER = () -> OBJECT_STORAGE_BLOBSTORE;
 
     @Test
     void provideChoosingConfigurationShouldThrowWhenMissingPropertyField() {
@@ -153,7 +153,7 @@ class BlobStoreChoosingModuleTest {
             .build();
 
         assertThat(module.providesHybridBlobStoreConfiguration(propertyProvider))
-            .isEqualTo(new HybridBlobStore.Configuration(0));
+            .isEqualTo(new HybridDeduplicatingBlobStore.Configuration(0));
     }
 
     @Test
@@ -166,7 +166,7 @@ class BlobStoreChoosingModuleTest {
             .build();
 
         assertThat(module.providesHybridBlobStoreConfiguration(propertyProvider))
-            .isEqualTo(new HybridBlobStore.Configuration(36));
+            .isEqualTo(new HybridDeduplicatingBlobStore.Configuration(36));
     }
 
     @Test
@@ -179,7 +179,7 @@ class BlobStoreChoosingModuleTest {
             .build();
 
         assertThat(module.providesHybridBlobStoreConfiguration(propertyProvider))
-            .isEqualTo(new HybridBlobStore.Configuration(36));
+            .isEqualTo(new HybridDeduplicatingBlobStore.Configuration(36));
     }
 
     @Test
@@ -187,7 +187,7 @@ class BlobStoreChoosingModuleTest {
         BlobStoreChoosingModule module = new BlobStoreChoosingModule();
 
         assertThat(module.provideBlobStore(BlobStoreChoosingConfiguration.cassandra(),
-            CASSANDRA_BLOBSTORE_PROVIDER, OBJECT_STORAGE_BLOBSTORE_PROVIDER, HybridBlobStore.Configuration.DEFAULT))
+            CASSANDRA_BLOBSTORE_PROVIDER, OBJECT_STORAGE_BLOBSTORE_PROVIDER, HybridDeduplicatingBlobStore.Configuration.DEFAULT))
             .isEqualTo(CASSANDRA_BLOBSTORE);
     }
 
@@ -196,7 +196,7 @@ class BlobStoreChoosingModuleTest {
         BlobStoreChoosingModule module = new BlobStoreChoosingModule();
 
         assertThat(module.provideBlobStore(BlobStoreChoosingConfiguration.cassandra(),
-            CASSANDRA_BLOBSTORE_PROVIDER, OBJECT_STORAGE_BLOBSTORE_PROVIDER, HybridBlobStore.Configuration.DEFAULT))
+            CASSANDRA_BLOBSTORE_PROVIDER, OBJECT_STORAGE_BLOBSTORE_PROVIDER, HybridDeduplicatingBlobStore.Configuration.DEFAULT))
             .isEqualTo(CASSANDRA_BLOBSTORE);
     }
 
@@ -205,7 +205,7 @@ class BlobStoreChoosingModuleTest {
         BlobStoreChoosingModule module = new BlobStoreChoosingModule();
 
         assertThat(module.provideBlobStore(BlobStoreChoosingConfiguration.hybrid(),
-            CASSANDRA_BLOBSTORE_PROVIDER, OBJECT_STORAGE_BLOBSTORE_PROVIDER, HybridBlobStore.Configuration.DEFAULT))
-            .isInstanceOf(HybridBlobStore.class);
+            CASSANDRA_BLOBSTORE_PROVIDER, OBJECT_STORAGE_BLOBSTORE_PROVIDER, HybridDeduplicatingBlobStore.Configuration.DEFAULT))
+            .isInstanceOf(HybridDeduplicatingBlobStore.class);
     }
 }

@@ -66,20 +66,20 @@ public interface Store<T, I> {
     class Impl<T, I extends BlobPartsId> implements Store<T, I> {
 
         public interface ValueToSave {
-            Mono<BlobId> saveIn(BucketName bucketName, BlobStore blobStore);
+            Mono<BlobId> saveIn(BucketName bucketName, DeduplicatingBlobStore blobStore);
         }
 
         public static class BytesToSave implements ValueToSave {
             private final byte[] bytes;
-            private final BlobStore.StoragePolicy storagePolicy;
+            private final DeduplicatingBlobStore.StoragePolicy storagePolicy;
 
-            public BytesToSave(byte[] bytes, BlobStore.StoragePolicy storagePolicy) {
+            public BytesToSave(byte[] bytes, DeduplicatingBlobStore.StoragePolicy storagePolicy) {
                 this.bytes = bytes;
                 this.storagePolicy = storagePolicy;
             }
 
             @Override
-            public Mono<BlobId> saveIn(BucketName bucketName, BlobStore blobStore) {
+            public Mono<BlobId> saveIn(BucketName bucketName, DeduplicatingBlobStore blobStore) {
                 return blobStore.save(bucketName, bytes, storagePolicy);
             }
         }
@@ -95,9 +95,9 @@ public interface Store<T, I> {
         private final BlobPartsId.Factory<I> idFactory;
         private final Encoder<T> encoder;
         private final Decoder<T> decoder;
-        private final BlobStore blobStore;
+        private final DeduplicatingBlobStore blobStore;
 
-        public Impl(BlobPartsId.Factory<I> idFactory, Encoder<T> encoder, Decoder<T> decoder, BlobStore blobStore) {
+        public Impl(BlobPartsId.Factory<I> idFactory, Encoder<T> encoder, Decoder<T> decoder, DeduplicatingBlobStore blobStore) {
             this.idFactory = idFactory;
             this.encoder = encoder;
             this.decoder = decoder;

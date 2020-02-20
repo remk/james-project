@@ -29,7 +29,7 @@ import javax.inject.Inject;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.export.api.BlobExportMechanism;
 import org.apache.james.blob.export.api.ExportedFileNamesGenerator;
 import org.apache.james.blob.export.api.FileExtension;
@@ -88,13 +88,13 @@ public class LocalFileBlobExportMechanism implements BlobExportMechanism {
     }
 
     private final MailetContext mailetContext;
-    private final BlobStore blobStore;
+    private final DeduplicatingBlobStore blobStore;
     private final FileSystem fileSystem;
     private final DNSService dnsService;
     private final Configuration configuration;
 
     @Inject
-    LocalFileBlobExportMechanism(MailetContext mailetContext, BlobStore blobStore, FileSystem fileSystem, DNSService dnsService, Configuration configuration) {
+    LocalFileBlobExportMechanism(MailetContext mailetContext, DeduplicatingBlobStore blobStore, FileSystem fileSystem, DNSService dnsService, Configuration configuration) {
         this.mailetContext = mailetContext;
         this.blobStore = blobStore;
         this.fileSystem = fileSystem;

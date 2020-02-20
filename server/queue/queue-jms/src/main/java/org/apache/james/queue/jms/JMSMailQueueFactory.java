@@ -51,5 +51,5 @@ public class JMSMailQueueFactory extends AbstractMailQueueFactory<ManageableMail
     protected ManageableMailQueue createMailQueue(String name) {
         return new JMSMailQueue(connectionFactory, mailQueueItemDecoratorFactory, name, metricFactory, gaugeRegistry);
     }
-    
+
 }

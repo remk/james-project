@@ -19,7 +19,7 @@
 
 package org.apache.james.linshare;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 import static org.apache.james.linshare.LinshareExtension.LinshareAPIForTechnicalAccountTesting;
 import static org.apache.james.linshare.LinshareExtension.LinshareAPIForUserTesting;
 import static org.apache.james.linshare.LinshareFixture.USER_2;
@@ -33,7 +33,7 @@ import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.export.api.BlobExportMechanism;
 import org.apache.james.blob.export.api.FileExtension;
-import org.apache.james.blob.memory.MemoryBlobStore;
+import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
 import org.apache.james.blob.memory.MemoryDumbBlobStore;
 import org.apache.james.core.MailAddress;
 import org.apache.james.linshare.client.Document;
@@ -49,7 +49,7 @@ class LinshareBlobExportMechanismTest {
     @RegisterExtension
     static LinshareExtension linshareExtension = new LinshareExtension();
 
-    private MemoryBlobStore blobStore;
+    private MemoryDeduplicatingBlobStore blobStore;
     private LinshareBlobExportMechanism testee;
     private HashBlobId.Factory blobIdFactory;
     private LinshareAPIForUserTesting user2API;
@@ -57,7 +57,7 @@ class LinshareBlobExportMechanismTest {
     @BeforeEach
     void setUp() throws Exception {
         blobIdFactory = new HashBlobId.Factory();
-        blobStore = new MemoryBlobStore(blobIdFactory, new MemoryDumbBlobStore());
+        blobStore = new MemoryDeduplicatingBlobStore(blobIdFactory, new MemoryDumbBlobStore());
 
         testee = new LinshareBlobExportMechanism(
             linshareExtension.getDelegationAccountAPI(),

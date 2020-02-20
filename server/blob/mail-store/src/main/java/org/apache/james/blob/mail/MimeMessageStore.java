@@ -20,8 +20,8 @@
 package org.apache.james.blob.mail;
 
 import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.SIZE_BASED;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.SIZE_BASED;
 import static org.apache.james.blob.mail.MimeMessagePartsId.BODY_BLOB_TYPE;
 import static org.apache.james.blob.mail.MimeMessagePartsId.HEADER_BLOB_TYPE;
 
@@ -42,7 +42,7 @@ import javax.mail.internet.MimeMessage;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.Store;
 import org.apache.james.blob.api.Store.BlobType;
 import org.apache.james.util.BodyOffsetInputStream;
@@ -53,10 +53,10 @@ import com.google.common.collect.ImmutableMap;
 public class MimeMessageStore {
 
     public static class Factory {
-        private final BlobStore blobStore;
+        private final DeduplicatingBlobStore blobStore;
 
         @Inject
-        public Factory(BlobStore blobStore) {
+        public Factory(DeduplicatingBlobStore blobStore) {
             this.blobStore = blobStore;
         }
 
@@ -151,7 +151,7 @@ public class MimeMessageStore {
         }
     }
 
-    public static Factory factory(BlobStore blobStore) {
+    public static Factory factory(DeduplicatingBlobStore blobStore) {
         return new Factory(blobStore);
     }
 }

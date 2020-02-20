@@ -19,7 +19,7 @@
 
 package org.apache.james.blob.api;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,18 +31,18 @@ import java.time.Duration;
 import org.apache.james.util.concurrency.ConcurrentTestRunner;
 import org.junit.jupiter.api.Test;
 
-public interface BucketBlobStoreContract {
+public interface BucketDeduplicatingBlobStoreContract {
     String SHORT_STRING = "toto";
     byte[] SHORT_BYTEARRAY = SHORT_STRING.getBytes(StandardCharsets.UTF_8);
     BucketName CUSTOM = BucketName.of("custom");
 
-    BlobStore testee();
+    DeduplicatingBlobStore testee();
 
     BlobId.Factory blobIdFactory();
 
     @Test
     default void deleteBucketShouldThrowWhenNullBucketName() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         assertThatThrownBy(() -> store.deleteBucket(null).block())
             .isInstanceOf(NullPointerException.class);
@@ -50,7 +50,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void deleteBucketShouldDeleteExistingBucketWithItsData() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BlobId blobId = store.save(CUSTOM, SHORT_BYTEARRAY, LOW_COST).block();
         store.deleteBucket(CUSTOM).block();
@@ -61,7 +61,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void deleteBucketShouldBeIdempotent() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         store.save(CUSTOM, SHORT_BYTEARRAY, LOW_COST).block();
         store.deleteBucket(CUSTOM).block();
@@ -72,7 +72,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void saveBytesShouldThrowWhenNullBucketName() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(null, SHORT_BYTEARRAY, LOW_COST).block())
             .isInstanceOf(NullPointerException.class);
@@ -80,7 +80,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void saveStringShouldThrowWhenNullBucketName() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(null, SHORT_STRING, LOW_COST).block())
             .isInstanceOf(NullPointerException.class);
@@ -88,7 +88,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void saveInputStreamShouldThrowWhenNullBucketName() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         assertThatThrownBy(() -> store.save(null, new ByteArrayInputStream(SHORT_BYTEARRAY), LOW_COST).block())
             .isInstanceOf(NullPointerException.class);
@@ -96,7 +96,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void readShouldThrowWhenNullBucketName() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BlobId blobId = store.save(BucketName.DEFAULT, SHORT_BYTEARRAY, LOW_COST).block();
         assertThatThrownBy(() -> store.read(null, blobId))
@@ -105,7 +105,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void readBytesStreamShouldThrowWhenNullBucketName() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BlobId blobId = store.save(BucketName.DEFAULT, SHORT_BYTEARRAY, LOW_COST).block();
         assertThatThrownBy(() -> store.readBytes(null, blobId).block())
@@ -114,7 +114,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void readStringShouldThrowWhenBucketDoesNotExist() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BlobId blobId = store.save(BucketName.DEFAULT, SHORT_BYTEARRAY, LOW_COST).block();
         assertThatThrownBy(() -> store.read(CUSTOM, blobId).read())
@@ -123,7 +123,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void readBytesStreamShouldThrowWhenBucketDoesNotExist() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BlobId blobId = store.save(BucketName.DEFAULT, SHORT_BYTEARRAY, LOW_COST).block();
         assertThatThrownBy(() -> store.readBytes(CUSTOM, blobId).block())
@@ -132,7 +132,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void shouldBeAbleToSaveDataInMultipleBuckets() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BlobId blobIdDefault = store.save(BucketName.DEFAULT, SHORT_BYTEARRAY, LOW_COST).block();
         BlobId blobIdCustom = store.save(CUSTOM, SHORT_BYTEARRAY, LOW_COST).block();
@@ -145,7 +145,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void saveConcurrentlyWithNonPreExistingBucketShouldNotFail() throws Exception {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         ConcurrentTestRunner.builder()
             .operation(((threadNumber, step) -> store.save(CUSTOM, SHORT_STRING + threadNumber + step, LOW_COST).block()))
@@ -156,7 +156,7 @@ public interface BucketBlobStoreContract {
 
     @Test
     default void deleteBucketConcurrentlyShouldNotFail() throws Exception {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         store.save(CUSTOM, SHORT_BYTEARRAY, LOW_COST).block();
 

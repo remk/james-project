@@ -20,9 +20,9 @@
 package org.apache.james.modules.mailbox;
 
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.api.MetricableBlobStore;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
@@ -34,7 +34,7 @@ public class BlobStoreAPIModule extends AbstractModule {
         bind(HashBlobId.Factory.class).in(Scopes.SINGLETON);
         bind(BlobId.Factory.class).to(HashBlobId.Factory.class);
 
-        bind(MetricableBlobStore.class).in(Scopes.SINGLETON);
-        bind(BlobStore.class).to(MetricableBlobStore.class);
+        bind(MetricableDeduplicatingBlobStore.class).in(Scopes.SINGLETON);
+        bind(DeduplicatingBlobStore.class).to(MetricableDeduplicatingBlobStore.class);
     }
 }

@@ -93,7 +93,7 @@ public class ObjectStorageBlobStoreBuilder {
             return this;
         }
 
-        public ObjectStorageBlobStore build() {
+        public ObjectStorageDeduplicatingBlobStore build() {
             Preconditions.checkState(blobIdFactory != null);
 
             BlobStore blobStore = supplier.get();
@@ -103,7 +103,7 @@ public class ObjectStorageBlobStoreBuilder {
                 .namespace(namespace)
                 .build();
 
-            return new ObjectStorageBlobStore(namespace.orElse(BucketName.DEFAULT),
+            return new ObjectStorageDeduplicatingBlobStore(namespace.orElse(BucketName.DEFAULT),
                 blobIdFactory,
                 blobStore,
                 blobPutter.orElseGet(() -> defaultPutBlob(blobStore)),

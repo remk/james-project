@@ -23,5 +23,5 @@ import org.apache.james.jmap.draft.JmapJamesServerContract;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(WithCassandraBlobStore.class)
-public class WithCassandraBlobStoreTest implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
+public class WithCassandraDeduplicatingBlobStoreTest implements JmapJamesServerContract, MailsShouldBeWellReceived, JamesServerContract {
 }

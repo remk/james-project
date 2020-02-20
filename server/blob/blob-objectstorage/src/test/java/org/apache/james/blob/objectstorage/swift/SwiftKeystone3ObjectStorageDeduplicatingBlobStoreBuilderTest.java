@@ -28,7 +28,7 @@ import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.objectstorage.DockerSwift;
 import org.apache.james.blob.objectstorage.DockerSwiftExtension;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreBuilder;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreContract;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +38,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 @ExtendWith(DockerSwiftExtension.class)
-class SwiftKeystone3ObjectStorageBlobStoreBuilderTest implements ObjectStorageBlobStoreContract {
+class SwiftKeystone3ObjectStorageDeduplicatingBlobStoreBuilderTest implements ObjectStorageBlobStoreContract {
 
     private static final DomainName DOMAIN_NAME = DomainName.of("Default");
     private static final DomainId DOMAIN_ID = DomainId.of("default");
@@ -96,7 +96,7 @@ class SwiftKeystone3ObjectStorageBlobStoreBuilderTest implements ObjectStorageBl
 
     @Test
     void blobIdFactoryIsMandatoryToBuildBlobStore() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageDeduplicatingBlobStore
             .builder(testConfig)
             .blobIdFactory(null)
             .namespace(defaultBucketName);
@@ -109,7 +109,7 @@ class SwiftKeystone3ObjectStorageBlobStoreBuilderTest implements ObjectStorageBl
     void builtBlobStoreCanStoreAndRetrieve(String key) {
         SwiftKeystone3ObjectStorage.Configuration config =
             configBuilders.get(key).endpoint(dockerSwift.keystoneV3Endpoint()).build();
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageDeduplicatingBlobStore
             .builder(config)
             .blobIdFactory(new HashBlobId.Factory())
             .namespace(defaultBucketName);

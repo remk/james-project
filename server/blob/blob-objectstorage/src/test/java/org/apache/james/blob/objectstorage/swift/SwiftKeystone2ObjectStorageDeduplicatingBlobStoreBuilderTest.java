@@ -27,7 +27,7 @@ import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.objectstorage.DockerSwift;
 import org.apache.james.blob.objectstorage.DockerSwiftExtension;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreBuilder;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreContract;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(DockerSwiftExtension.class)
-class SwiftKeystone2ObjectStorageBlobStoreBuilderTest implements ObjectStorageBlobStoreContract {
+class SwiftKeystone2ObjectStorageDeduplicatingBlobStoreBuilderTest implements ObjectStorageBlobStoreContract {
 
     private static final TenantName TENANT_NAME = TenantName.of("test");
     private static final UserName USER_NAME = UserName.of("demo");
@@ -63,7 +63,7 @@ class SwiftKeystone2ObjectStorageBlobStoreBuilderTest implements ObjectStorageBl
 
     @Test
     void blobIdFactoryIsMandatoryToBuildBlobStore() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageDeduplicatingBlobStore
             .builder(testConfig)
             .blobIdFactory(null)
             .namespace(defaultBucketName);
@@ -73,7 +73,7 @@ class SwiftKeystone2ObjectStorageBlobStoreBuilderTest implements ObjectStorageBl
 
     @Test
     void builtBlobStoreCanStoreAndRetrieve() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageDeduplicatingBlobStore
             .builder(testConfig)
             .blobIdFactory(new HashBlobId.Factory())
             .namespace(defaultBucketName);

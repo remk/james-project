@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreBuilder;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreContract;
 import org.junit.jupiter.api.AfterEach;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(DockerAwsS3Extension.class)
-class AwsS3ObjectStorageBlobStoreBuilderTest implements ObjectStorageBlobStoreContract {
+class AwsS3ObjectStorageDeduplicatingBlobStoreBuilderTest implements ObjectStorageBlobStoreContract {
 
     private BucketName defaultBucketName;
     private AwsS3AuthConfiguration configuration;
@@ -61,7 +61,7 @@ class AwsS3ObjectStorageBlobStoreBuilderTest implements ObjectStorageBlobStoreCo
 
     @Test
     void blobIdFactoryIsMandatoryToBuildBlobStore() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageDeduplicatingBlobStore
             .builder(configuration)
             .blobIdFactory(null)
             .namespace(defaultBucketName);
@@ -71,7 +71,7 @@ class AwsS3ObjectStorageBlobStoreBuilderTest implements ObjectStorageBlobStoreCo
 
     @Test
     void builtBlobStoreCanStoreAndRetrieve() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageDeduplicatingBlobStore
             .builder(configuration)
             .blobIdFactory(new HashBlobId.Factory())
             .namespace(defaultBucketName)

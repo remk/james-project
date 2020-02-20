@@ -23,8 +23,8 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.SIZE_BASED;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.SIZE_BASED;
 import static org.apache.james.mailbox.cassandra.table.CassandraMessageIds.MESSAGE_ID;
 import static org.apache.james.mailbox.cassandra.table.CassandraMessageV2Table.ATTACHMENTS;
 import static org.apache.james.mailbox.cassandra.table.CassandraMessageV2Table.BODY;
@@ -58,7 +58,7 @@ import org.apache.james.backends.cassandra.init.CassandraTypesProvider;
 import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.backends.cassandra.utils.CassandraAsyncExecutor;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.mailbox.cassandra.ids.CassandraMessageId;
 import org.apache.james.mailbox.cassandra.table.CassandraMessageV2Table;
 import org.apache.james.mailbox.cassandra.table.CassandraMessageV2Table.Attachments;
@@ -102,7 +102,7 @@ public class CassandraMessageDAO {
 
     private final CassandraAsyncExecutor cassandraAsyncExecutor;
     private final CassandraTypesProvider typesProvider;
-    private final BlobStore blobStore;
+    private final DeduplicatingBlobStore blobStore;
     private final BlobId.Factory blobIdFactory;
     private final CassandraConfiguration configuration;
     private final CassandraMessageId.Factory messageIdFactory;
@@ -116,7 +116,7 @@ public class CassandraMessageDAO {
     private final Cid.CidParser cidParser;
 
     @Inject
-    public CassandraMessageDAO(Session session, CassandraTypesProvider typesProvider, BlobStore blobStore,
+    public CassandraMessageDAO(Session session, CassandraTypesProvider typesProvider, DeduplicatingBlobStore blobStore,
             BlobId.Factory blobIdFactory, CassandraConfiguration cassandraConfiguration,
             CassandraMessageId.Factory messageIdFactory) {
         this.cassandraAsyncExecutor = new CassandraAsyncExecutor(session);
@@ -137,7 +137,7 @@ public class CassandraMessageDAO {
     }
 
     @VisibleForTesting
-    public CassandraMessageDAO(Session session, CassandraTypesProvider typesProvider, BlobStore blobStore,
+    public CassandraMessageDAO(Session session, CassandraTypesProvider typesProvider, DeduplicatingBlobStore blobStore,
                                BlobId.Factory blobIdFactory, CassandraMessageId.Factory messageIdFactory) {
         this(session, typesProvider, blobStore,  blobIdFactory, CassandraConfiguration.DEFAULT_CONFIGURATION, messageIdFactory);
     }

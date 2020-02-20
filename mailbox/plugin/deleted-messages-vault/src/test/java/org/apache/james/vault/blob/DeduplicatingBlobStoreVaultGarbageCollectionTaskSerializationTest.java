@@ -41,7 +41,7 @@ import com.google.common.collect.ImmutableSet;
 
 import reactor.core.publisher.Flux;
 
-class BlobStoreVaultGarbageCollectionTaskSerializationTest {
+class DeduplicatingBlobStoreVaultGarbageCollectionTaskSerializationTest {
    private static final BlobStoreDeletedMessageVault DELETED_MESSAGE_VAULT = Mockito.mock(BlobStoreDeletedMessageVault.class);
    private static final BlobStoreVaultGarbageCollectionTask.Factory TASK_FACTORY = new BlobStoreVaultGarbageCollectionTask.Factory(DELETED_MESSAGE_VAULT);
 

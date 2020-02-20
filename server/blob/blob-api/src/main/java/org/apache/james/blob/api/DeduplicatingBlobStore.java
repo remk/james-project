@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 
 import reactor.core.publisher.Mono;
 
-public interface BlobStore {
+public interface DeduplicatingBlobStore {
 
     enum StoragePolicy {
         SIZE_BASED,

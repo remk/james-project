@@ -26,7 +26,7 @@ import org.apache.james.backends.cassandra.utils.CassandraUtils;
 import org.apache.james.backends.cassandra.versions.CassandraSchemaVersionModule;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.cassandra.CassandraBlobModule;
-import org.apache.james.blob.cassandra.CassandraBlobStore;
+import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
 import org.apache.james.blob.mail.MimeMessageStore;
 import org.apache.james.mailrepository.MailRepositoryContract;
 import org.apache.james.mailrepository.api.MailRepository;
@@ -57,7 +57,7 @@ class CassandraMailRepositoryTest implements MailRepositoryContract {
         CassandraMailRepositoryMailDaoAPI mailDAO = new MergingCassandraMailRepositoryMailDao(v1, v2);
         CassandraMailRepositoryKeysDAO keysDAO = new CassandraMailRepositoryKeysDAO(cassandra.getConf(), CassandraUtils.WITH_DEFAULT_CONFIGURATION);
         CassandraMailRepositoryCountDAO countDAO = new CassandraMailRepositoryCountDAO(cassandra.getConf());
-        CassandraBlobStore blobStore = CassandraBlobStore.forTesting(cassandra.getConf());
+        CassandraDeduplicatingBlobStore blobStore = CassandraDeduplicatingBlobStore.forTesting(cassandra.getConf());
 
         cassandraMailRepository = new CassandraMailRepository(URL,
             keysDAO, countDAO, mailDAO, MimeMessageStore.factory(blobStore).mimeMessageStore());

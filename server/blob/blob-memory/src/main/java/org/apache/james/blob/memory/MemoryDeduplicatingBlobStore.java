@@ -27,7 +27,7 @@ import javax.inject.Inject;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.BucketName;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -35,18 +35,18 @@ import com.google.common.base.Preconditions;
 
 import reactor.core.publisher.Mono;
 
-public class MemoryBlobStore implements BlobStore {
+public class MemoryDeduplicatingBlobStore implements DeduplicatingBlobStore {
     private final BlobId.Factory factory;
     private final BucketName defaultBucketName;
     private final MemoryDumbBlobStore dumbBlobStore;
 
     @Inject
-    public MemoryBlobStore(BlobId.Factory factory, MemoryDumbBlobStore dumbBlobStore) {
+    public MemoryDeduplicatingBlobStore(BlobId.Factory factory, MemoryDumbBlobStore dumbBlobStore) {
         this(factory, BucketName.DEFAULT, dumbBlobStore);
     }
 
     @VisibleForTesting
-    public MemoryBlobStore(BlobId.Factory factory, BucketName defaultBucketName, MemoryDumbBlobStore dumbBlobStore) {
+    public MemoryDeduplicatingBlobStore(BlobId.Factory factory, BucketName defaultBucketName, MemoryDumbBlobStore dumbBlobStore) {
         this.factory = factory;
         this.defaultBucketName = defaultBucketName;
         this.dumbBlobStore = dumbBlobStore;

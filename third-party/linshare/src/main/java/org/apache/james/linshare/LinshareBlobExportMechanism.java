@@ -27,7 +27,7 @@ import javax.inject.Inject;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.export.api.BlobExportMechanism;
 import org.apache.james.blob.export.api.ExportedFileNamesGenerator;
 import org.apache.james.blob.export.api.FileExtension;
@@ -40,11 +40,11 @@ import com.google.common.io.Files;
 public class LinshareBlobExportMechanism implements BlobExportMechanism {
 
     private final LinshareAPI linshareAPI;
-    private final BlobStore blobStore;
+    private final DeduplicatingBlobStore blobStore;
     private final File tempDir;
 
     @Inject
-    LinshareBlobExportMechanism(LinshareAPI linshareAPI, BlobStore blobStore) {
+    LinshareBlobExportMechanism(LinshareAPI linshareAPI, DeduplicatingBlobStore blobStore) {
         this.linshareAPI = linshareAPI;
         this.blobStore = blobStore;
         this.tempDir = Files.createTempDir();

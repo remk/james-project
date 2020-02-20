@@ -19,12 +19,12 @@
 
 package org.apache.james.mailbox.cassandra.mail.migration;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 
 import javax.inject.Inject;
 
 import org.apache.james.backends.cassandra.migration.Migration;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.mailbox.cassandra.mail.CassandraAttachmentDAO;
 import org.apache.james.mailbox.cassandra.mail.CassandraAttachmentDAOV2;
 import org.apache.james.mailbox.model.Attachment;
@@ -37,12 +37,12 @@ public class AttachmentV2Migration implements Migration {
     private static final Logger LOGGER = LoggerFactory.getLogger(AttachmentV2Migration.class);
     private final CassandraAttachmentDAO attachmentDAOV1;
     private final CassandraAttachmentDAOV2 attachmentDAOV2;
-    private final BlobStore blobStore;
+    private final DeduplicatingBlobStore blobStore;
 
     @Inject
     public AttachmentV2Migration(CassandraAttachmentDAO attachmentDAOV1,
                                  CassandraAttachmentDAOV2 attachmentDAOV2,
-                                 BlobStore blobStore) {
+                                 DeduplicatingBlobStore blobStore) {
         this.attachmentDAOV1 = attachmentDAOV1;
         this.attachmentDAOV2 = attachmentDAOV2;
         this.blobStore = blobStore;

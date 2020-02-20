@@ -19,9 +19,9 @@
 
 package org.apache.james.blob.api;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.HIGH_PERFORMANCE;
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.SIZE_BASED;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.HIGH_PERFORMANCE;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.SIZE_BASED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -37,7 +37,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import com.google.common.base.Strings;
 
-public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobStoreContract {
+public interface DeduplicatingBlobStoreContract extends DeleteDeduplicatingBlobStoreContract, BucketDeduplicatingBlobStoreContract {
 
     static Stream<Arguments> storagePolicies() {
         return Stream.of(
@@ -52,14 +52,14 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
     byte[] ELEVEN_KILOBYTES = Strings.repeat("0123456789\n", 1000).getBytes(StandardCharsets.UTF_8);
     byte[] TWELVE_MEGABYTES = Strings.repeat("0123456789\r\n", 1024 * 1024).getBytes(StandardCharsets.UTF_8);
 
-    BlobStore testee();
+    DeduplicatingBlobStore testee();
 
     BlobId.Factory blobIdFactory();
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void saveShouldThrowWhenNullData(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void saveShouldThrowWhenNullData(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         assertThatThrownBy(() -> store.save(defaultBucketName, (byte[]) null, storagePolicy).block())
@@ -68,8 +68,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void saveShouldThrowWhenNullString(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void saveShouldThrowWhenNullString(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         assertThatThrownBy(() -> store.save(defaultBucketName, (String) null, storagePolicy).block())
@@ -78,8 +78,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void saveShouldThrowWhenNullInputStream(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void saveShouldThrowWhenNullInputStream(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         assertThatThrownBy(() -> store.save(defaultBucketName, (InputStream) null, storagePolicy).block())
@@ -88,8 +88,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void saveShouldSaveEmptyData(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void saveShouldSaveEmptyData(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, EMPTY_BYTEARRAY, storagePolicy).block();
@@ -101,8 +101,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void saveShouldSaveEmptyString(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void saveShouldSaveEmptyString(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, new String(), storagePolicy).block();
@@ -114,8 +114,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void saveShouldSaveEmptyInputStream(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void saveShouldSaveEmptyInputStream(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, new ByteArrayInputStream(EMPTY_BYTEARRAY), storagePolicy).block();
@@ -127,8 +127,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void saveShouldReturnBlobId(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void saveShouldReturnBlobId(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, SHORT_BYTEARRAY, storagePolicy).block();
@@ -138,8 +138,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void saveShouldReturnBlobIdOfString(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void saveShouldReturnBlobIdOfString(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, SHORT_STRING, storagePolicy).block();
@@ -149,8 +149,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void saveShouldReturnBlobIdOfInputStream(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void saveShouldReturnBlobIdOfInputStream(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, new ByteArrayInputStream(SHORT_BYTEARRAY), storagePolicy).block();
@@ -160,7 +160,7 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @Test
     default void readBytesShouldThrowWhenNoExisting() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         assertThatThrownBy(() -> store.readBytes(defaultBucketName, blobIdFactory().from("unknown")).block())
@@ -169,8 +169,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void readBytesShouldReturnSavedData(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void readBytesShouldReturnSavedData(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, SHORT_BYTEARRAY, storagePolicy).block();
@@ -182,8 +182,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void readBytesShouldReturnLongSavedData(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void readBytesShouldReturnLongSavedData(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, ELEVEN_KILOBYTES, storagePolicy).block();
@@ -195,8 +195,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void readBytesShouldReturnBigSavedData(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void readBytesShouldReturnBigSavedData(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, TWELVE_MEGABYTES, storagePolicy).block();
@@ -208,7 +208,7 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @Test
     default void readShouldThrowWhenNoExistingStream() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         assertThatThrownBy(() -> store.read(defaultBucketName, blobIdFactory().from("unknown")).read())
@@ -217,8 +217,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void readShouldReturnSavedData(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void readShouldReturnSavedData(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, SHORT_BYTEARRAY, storagePolicy).block();
@@ -230,8 +230,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void readShouldReturnLongSavedData(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void readShouldReturnLongSavedData(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, ELEVEN_KILOBYTES, storagePolicy).block();
@@ -243,8 +243,8 @@ public interface BlobStoreContract extends DeleteBlobStoreContract, BucketBlobSt
 
     @ParameterizedTest
     @MethodSource("storagePolicies")
-    default void readShouldReturnBigSavedData(BlobStore.StoragePolicy storagePolicy) {
-        BlobStore store = testee();
+    default void readShouldReturnBigSavedData(DeduplicatingBlobStore.StoragePolicy storagePolicy) {
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         // 12 MB of text

@@ -26,7 +26,7 @@ import javax.inject.Inject;
 import org.apache.james.GuiceModuleTestRule;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.objectstorage.DockerAwsS3Singleton;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
 import org.apache.james.blob.objectstorage.PayloadCodec;
 import org.apache.james.blob.objectstorage.aws.AwsS3AuthConfiguration;
 import org.apache.james.blob.objectstorage.aws.DockerAwsS3Container;
@@ -44,10 +44,10 @@ public class DockerAwsS3TestRule implements GuiceModuleTestRule {
 
     public static class TestAwsS3BlobStoreProbe implements GuiceProbe {
 
-        private final ObjectStorageBlobStore awss3BlobStore;
+        private final ObjectStorageDeduplicatingBlobStore awss3BlobStore;
 
         @Inject
-        TestAwsS3BlobStoreProbe(ObjectStorageBlobStore awss3BlobStore) {
+        TestAwsS3BlobStoreProbe(ObjectStorageDeduplicatingBlobStore awss3BlobStore) {
             this.awss3BlobStore = awss3BlobStore;
         }
 

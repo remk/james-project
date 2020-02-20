@@ -19,7 +19,7 @@
 
 package org.apache.james.webadmin.vault.routes;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -29,7 +29,7 @@ import javax.inject.Inject;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.export.api.BlobExportMechanism;
 import org.apache.james.blob.export.api.FileExtension;
 import org.apache.james.core.MailAddress;
@@ -56,13 +56,13 @@ class ExportService {
         throwable -> throwable instanceof DeletedMessageContentNotFoundException;
 
     private final BlobExportMechanism blobExport;
-    private final BlobStore blobStore;
+    private final DeduplicatingBlobStore blobStore;
     private final DeletedMessageZipper zipper;
     private final DeletedMessageVault vault;
 
     @Inject
     @VisibleForTesting
-    ExportService(BlobExportMechanism blobExport, BlobStore blobStore, DeletedMessageZipper zipper, DeletedMessageVault vault) {
+    ExportService(BlobExportMechanism blobExport, DeduplicatingBlobStore blobStore, DeletedMessageZipper zipper, DeletedMessageVault vault) {
         this.blobExport = blobExport;
         this.blobStore = blobStore;
         this.zipper = zipper;

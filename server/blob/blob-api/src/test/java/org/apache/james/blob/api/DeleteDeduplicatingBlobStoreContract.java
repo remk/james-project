@@ -19,7 +19,7 @@
 
 package org.apache.james.blob.api;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import com.google.common.base.Strings;
 
-public interface DeleteBlobStoreContract {
+public interface DeleteDeduplicatingBlobStoreContract {
 
     String SHORT_STRING = "toto";
     byte[] SHORT_BYTEARRAY = SHORT_STRING.getBytes(StandardCharsets.UTF_8);
@@ -44,13 +44,13 @@ public interface DeleteBlobStoreContract {
     byte[] TWELVE_MEGABYTES = TWELVE_MEGABYTES_STRING.getBytes(StandardCharsets.UTF_8);
     BucketName CUSTOM = BucketName.of("custom");
 
-    BlobStore testee();
+    DeduplicatingBlobStore testee();
 
     BlobId.Factory blobIdFactory();
 
     @Test
     default void deleteShouldNotThrowWhenBlobDoesNotExist() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         assertThatCode(() -> store.delete(defaultBucketName, blobIdFactory().randomId()).block())
@@ -59,7 +59,7 @@ public interface DeleteBlobStoreContract {
 
     @Test
     default void deleteShouldDeleteExistingBlobData() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, SHORT_BYTEARRAY, LOW_COST).block();
@@ -71,7 +71,7 @@ public interface DeleteBlobStoreContract {
 
     @Test
     default void deleteShouldBeIdempotent() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, SHORT_BYTEARRAY, LOW_COST).block();
@@ -83,7 +83,7 @@ public interface DeleteBlobStoreContract {
 
     @Test
     default void deleteShouldNotDeleteOtherBlobs() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobIdToDelete = store.save(defaultBucketName, SHORT_BYTEARRAY, LOW_COST).block();
@@ -98,7 +98,7 @@ public interface DeleteBlobStoreContract {
 
     @Test
     default void deleteConcurrentlyShouldNotFail() throws Exception {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, TWELVE_MEGABYTES, LOW_COST).block();
@@ -112,14 +112,14 @@ public interface DeleteBlobStoreContract {
 
     @Test
     default void deleteShouldThrowWhenNullBucketName() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         assertThatThrownBy(() -> store.delete(null, blobIdFactory().randomId()).block())
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     default void deleteShouldNotDeleteFromOtherBucket() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId customBlobId = store.save(CUSTOM, "custom_string", LOW_COST).block();
@@ -134,7 +134,7 @@ public interface DeleteBlobStoreContract {
 
     @Test
     default void deleteShouldNotDeleteFromOtherBucketWhenSameBlobId() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         store.save(CUSTOM, SHORT_BYTEARRAY, LOW_COST).block();
@@ -149,7 +149,7 @@ public interface DeleteBlobStoreContract {
 
     @Test
     default void readShouldNotReadPartiallyWhenDeletingConcurrentlyBigBlob() throws Exception {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, TWELVE_MEGABYTES, LOW_COST).block();
@@ -176,7 +176,7 @@ public interface DeleteBlobStoreContract {
 
     @Test
     default void readBytesShouldNotReadPartiallyWhenDeletingConcurrentlyBigBlob() throws Exception {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
         BucketName defaultBucketName = store.getDefaultBucketName();
 
         BlobId blobId = store.save(defaultBucketName, TWELVE_MEGABYTES, LOW_COST).block();

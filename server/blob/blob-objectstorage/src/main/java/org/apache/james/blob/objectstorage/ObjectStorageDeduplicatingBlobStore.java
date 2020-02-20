@@ -29,8 +29,8 @@ import javax.annotation.PreDestroy;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.ObjectNotFoundException;
 import org.apache.james.blob.api.ObjectStoreException;
 import org.apache.james.blob.objectstorage.aws.AwsS3AuthConfiguration;
@@ -51,7 +51,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-public class ObjectStorageBlobStore implements BlobStore {
+public class ObjectStorageDeduplicatingBlobStore implements DeduplicatingBlobStore {
     private static final int BUFFERED_SIZE = 256 * 1024;
 
     private final BlobId.Factory blobIdFactory;
@@ -62,10 +62,10 @@ public class ObjectStorageBlobStore implements BlobStore {
     private final PayloadCodec payloadCodec;
     private final ObjectStorageBucketNameResolver bucketNameResolver;
 
-    ObjectStorageBlobStore(BucketName defaultBucketName, BlobId.Factory blobIdFactory,
-                           org.jclouds.blobstore.BlobStore blobStore,
-                           BlobPutter blobPutter,
-                           PayloadCodec payloadCodec, ObjectStorageBucketNameResolver bucketNameResolver) {
+    ObjectStorageDeduplicatingBlobStore(BucketName defaultBucketName, BlobId.Factory blobIdFactory,
+                                        org.jclouds.blobstore.BlobStore blobStore,
+                                        BlobPutter blobPutter,
+                                        PayloadCodec payloadCodec, ObjectStorageBucketNameResolver bucketNameResolver) {
         this.blobIdFactory = blobIdFactory;
         this.defaultBucketName = defaultBucketName;
         this.blobStore = blobStore;

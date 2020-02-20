@@ -19,7 +19,7 @@
 
 package org.apache.james.blob.cassandra;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.spy;
@@ -34,11 +34,11 @@ import org.apache.james.backends.cassandra.CassandraCluster;
 import org.apache.james.backends.cassandra.CassandraClusterExtension;
 import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.api.MetricableBlobStore;
-import org.apache.james.blob.api.MetricableBlobStoreContract;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStoreContract;
 import org.apache.james.blob.api.ObjectStoreException;
 import org.apache.james.util.ZeroedInputStream;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,14 +50,14 @@ import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingInputStream;
 import reactor.core.publisher.Mono;
 
-public class CassandraBlobStoreTest implements MetricableBlobStoreContract {
+public class CassandraDeduplicatingBlobStoreTest implements MetricableDeduplicatingBlobStoreContract {
     private static final int CHUNK_SIZE = 10240;
     private static final int MULTIPLE_CHUNK_SIZE = 3;
 
     @RegisterExtension
     static CassandraClusterExtension cassandraCluster = new CassandraClusterExtension(CassandraBlobModule.MODULE);
 
-    private BlobStore testee;
+    private DeduplicatingBlobStore testee;
     private CassandraDefaultBucketDAO defaultBucketDAO;
 
     @BeforeEach
@@ -68,16 +68,16 @@ public class CassandraBlobStoreTest implements MetricableBlobStoreContract {
         CassandraConfiguration cassandraConfiguration = CassandraConfiguration.builder()
             .blobPartSize(CHUNK_SIZE)
             .build();
-        testee = new MetricableBlobStore(
+        testee = new MetricableDeduplicatingBlobStore(
             metricsTestExtension.getMetricFactory(),
-            new CassandraBlobStore(
+            new CassandraDeduplicatingBlobStore(
                 blobIdFactory,
                 BucketName.DEFAULT,
                 new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, cassandraConfiguration, BucketName.DEFAULT)));
     }
 
     @Override
-    public BlobStore testee() {
+    public DeduplicatingBlobStore testee() {
         return testee;
     }
 

@@ -19,16 +19,16 @@
 
 package org.apache.james.modules.objectstorage.swift;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.BucketName;
-import org.apache.james.blob.api.MetricableBlobStore;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
 import org.apache.james.blob.objectstorage.DockerSwift;
 import org.apache.james.blob.objectstorage.DockerSwiftExtension;
 import org.apache.james.blob.objectstorage.swift.Credentials;
@@ -62,13 +62,13 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 
 @ExtendWith(DockerSwiftExtension.class)
-class ObjectStorageBlobStoreModuleTest {
+class ObjectStorageDeduplicatingBlobStoreModuleTest {
 
     private static DockerSwift dockerSwift;
 
     @BeforeAll
     static void setUp(DockerSwift dockerSwift) throws Exception {
-        ObjectStorageBlobStoreModuleTest.dockerSwift = dockerSwift;
+        ObjectStorageDeduplicatingBlobStoreModuleTest.dockerSwift = dockerSwift;
     }
 
     static class BlobStorageBlobConfigurationProvider implements ArgumentsProvider {
@@ -136,7 +136,7 @@ class ObjectStorageBlobStoreModuleTest {
                 .override(new ObjectStorageBlobStoreModule())
                 .with(binder -> binder.bind(ObjectStorageBlobConfiguration.class).toInstance(configuration)));
 
-        BlobStore blobStore = injector.getInstance(Key.get(BlobStore.class, Names.named(MetricableBlobStore.BLOB_STORE_IMPLEMENTATION)));
+        DeduplicatingBlobStore blobStore = injector.getInstance(Key.get(DeduplicatingBlobStore.class, Names.named(MetricableDeduplicatingBlobStore.BLOB_STORE_IMPLEMENTATION)));
 
         assertThatCode(() -> blobStore.save(blobStore.getDefaultBucketName(), new byte[] {0x00}, LOW_COST)).doesNotThrowAnyException();
     }

@@ -22,34 +22,27 @@ package org.apache.james.blob.objectstorage;
 import java.io.IOException;
 
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.api.MetricableBlobStore;
-import org.apache.james.blob.api.MetricableBlobStoreContract;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStoreContract;
 import org.apache.james.blob.objectstorage.aws.AwsS3AuthConfiguration;
 import org.apache.james.blob.objectstorage.aws.AwsS3ObjectStorage;
 import org.apache.james.blob.objectstorage.aws.DockerAwsS3Container;
 import org.apache.james.blob.objectstorage.aws.DockerAwsS3Extension;
-import org.apache.james.blob.objectstorage.crypto.CryptoConfig;
-import org.apache.james.blob.objectstorage.swift.Credentials;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(DockerAwsS3Extension.class)
-public class ObjectStorageBlobStoreAWSCryptoTest implements MetricableBlobStoreContract {
-    private static final HashBlobId.Factory BLOB_ID_FACTORY = new HashBlobId.Factory();
-    private static final Credentials PASSWORD = Credentials.of("testing");
-    private static final String SAMPLE_SALT = "c603a7327ee3dcbc031d8d34b1096c605feca5e1";
-    private static final CryptoConfig CRYPTO_CONFIG = CryptoConfig.builder()
-        .salt(SAMPLE_SALT)
-        .password(PASSWORD.value().toCharArray())
-        .build();
+public class ObjectStorageDeduplicatingBlobStoreAWSTest implements MetricableDeduplicatingBlobStoreContract {
 
-    private ObjectStorageBlobStore objectStorageBlobStore;
-    private BlobStore testee;
+    private static final HashBlobId.Factory BLOB_ID_FACTORY = new HashBlobId.Factory();
+
+    private ObjectStorageDeduplicatingBlobStore objectStorageBlobStore;
     private AwsS3ObjectStorage awsS3ObjectStorage;
+    private DeduplicatingBlobStore testee;
 
     @BeforeEach
     void setUp(DockerAwsS3Container dockerAwsS3) {
@@ -60,14 +53,13 @@ public class ObjectStorageBlobStoreAWSCryptoTest implements MetricableBlobStoreC
             .secretKey(DockerAwsS3Container.SECRET_ACCESS_KEY)
             .build();
 
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageDeduplicatingBlobStore
             .builder(configuration)
             .blobIdFactory(BLOB_ID_FACTORY)
-            .payloadCodec(new AESPayloadCodec(CRYPTO_CONFIG))
             .blobPutter(awsS3ObjectStorage.putBlob(configuration));
 
         objectStorageBlobStore = builder.build();
-        testee = new MetricableBlobStore(metricsTestExtension.getMetricFactory(), objectStorageBlobStore);
+        testee = new MetricableDeduplicatingBlobStore(metricsTestExtension.getMetricFactory(), objectStorageBlobStore);
     }
 
     @AfterEach
@@ -78,7 +70,7 @@ public class ObjectStorageBlobStoreAWSCryptoTest implements MetricableBlobStoreC
     }
 
     @Override
-    public BlobStore testee() {
+    public DeduplicatingBlobStore testee() {
         return testee;
     }
 

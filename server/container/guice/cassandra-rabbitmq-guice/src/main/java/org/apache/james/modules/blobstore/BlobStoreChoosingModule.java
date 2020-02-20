@@ -28,12 +28,12 @@ import javax.inject.Singleton;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.james.backends.cassandra.components.CassandraModule;
-import org.apache.james.blob.api.BlobStore;
-import org.apache.james.blob.api.MetricableBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
 import org.apache.james.blob.cassandra.CassandraBlobModule;
-import org.apache.james.blob.cassandra.CassandraBlobStore;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
-import org.apache.james.blob.union.HybridBlobStore;
+import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
+import org.apache.james.blob.union.HybridDeduplicatingBlobStore;
 import org.apache.james.modules.mailbox.ConfigurationComponent;
 import org.apache.james.modules.objectstorage.ObjectStorageDependenciesModule;
 import org.apache.james.utils.PropertiesProvider;
@@ -71,12 +71,12 @@ public class BlobStoreChoosingModule extends AbstractModule {
 
     @VisibleForTesting
     @Provides
-    @Named(MetricableBlobStore.BLOB_STORE_IMPLEMENTATION)
+    @Named(MetricableDeduplicatingBlobStore.BLOB_STORE_IMPLEMENTATION)
     @Singleton
-    BlobStore provideBlobStore(BlobStoreChoosingConfiguration choosingConfiguration,
-                               Provider<CassandraBlobStore> cassandraBlobStoreProvider,
-                               Provider<ObjectStorageBlobStore> objectStorageBlobStoreProvider,
-                               HybridBlobStore.Configuration hybridBlobStoreConfiguration) {
+    DeduplicatingBlobStore provideBlobStore(BlobStoreChoosingConfiguration choosingConfiguration,
+                                            Provider<CassandraDeduplicatingBlobStore> cassandraBlobStoreProvider,
+                                            Provider<ObjectStorageDeduplicatingBlobStore> objectStorageBlobStoreProvider,
+                                            HybridDeduplicatingBlobStore.Configuration hybridBlobStoreConfiguration) {
 
         switch (choosingConfiguration.getImplementation()) {
             case OBJECTSTORAGE:
@@ -84,7 +84,7 @@ public class BlobStoreChoosingModule extends AbstractModule {
             case CASSANDRA:
                 return cassandraBlobStoreProvider.get();
             case HYBRID:
-                return HybridBlobStore.builder()
+                return HybridDeduplicatingBlobStore.builder()
                     .lowCost(objectStorageBlobStoreProvider.get())
                     .highPerformance(cassandraBlobStoreProvider.get())
                     .configuration(hybridBlobStoreConfiguration)
@@ -98,12 +98,12 @@ public class BlobStoreChoosingModule extends AbstractModule {
     @Provides
     @Singleton
     @VisibleForTesting
-    HybridBlobStore.Configuration providesHybridBlobStoreConfiguration(PropertiesProvider propertiesProvider) {
+    HybridDeduplicatingBlobStore.Configuration providesHybridBlobStoreConfiguration(PropertiesProvider propertiesProvider) {
         try {
             Configuration configuration = propertiesProvider.getConfigurations(ConfigurationComponent.NAMES);
-            return HybridBlobStore.Configuration.from(configuration);
+            return HybridDeduplicatingBlobStore.Configuration.from(configuration);
         } catch (FileNotFoundException | ConfigurationException e) {
-            return HybridBlobStore.Configuration.DEFAULT;
+            return HybridDeduplicatingBlobStore.Configuration.DEFAULT;
         }
     }
 }

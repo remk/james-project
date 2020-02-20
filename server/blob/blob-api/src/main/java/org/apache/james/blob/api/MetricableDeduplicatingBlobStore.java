@@ -27,7 +27,7 @@ import org.apache.james.metrics.api.MetricFactory;
 
 import reactor.core.publisher.Mono;
 
-public class MetricableBlobStore implements BlobStore {
+public class MetricableDeduplicatingBlobStore implements DeduplicatingBlobStore {
 
     public static final String BLOB_STORE_IMPLEMENTATION = "blobStoreImplementation";
 
@@ -40,11 +40,11 @@ public class MetricableBlobStore implements BlobStore {
     static final String DELETE_BUCKET_TIMER_NAME = BLOB_STORE_METRIC_PREFIX + "deleteBucket";
 
     private final MetricFactory metricFactory;
-    private final BlobStore blobStoreImpl;
+    private final DeduplicatingBlobStore blobStoreImpl;
 
     @Inject
-    public MetricableBlobStore(MetricFactory metricFactory,
-                               @Named(BLOB_STORE_IMPLEMENTATION) BlobStore blobStoreImpl) {
+    public MetricableDeduplicatingBlobStore(MetricFactory metricFactory,
+                                            @Named(BLOB_STORE_IMPLEMENTATION) DeduplicatingBlobStore blobStoreImpl) {
         this.metricFactory = metricFactory;
         this.blobStoreImpl = blobStoreImpl;
     }

@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 
-class BlobStoreChoosingConfigurationTest {
+class DeduplicatingBlobStoreChoosingConfigurationTest {
 
     private static final String OBJECT_STORAGE = "objectstorage";
     private static final String CASSANDRA = "cassandra";

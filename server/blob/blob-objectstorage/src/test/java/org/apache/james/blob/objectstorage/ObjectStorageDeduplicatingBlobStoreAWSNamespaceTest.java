@@ -22,11 +22,11 @@ package org.apache.james.blob.objectstorage;
 import java.io.IOException;
 
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.api.MetricableBlobStore;
-import org.apache.james.blob.api.MetricableBlobStoreContract;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStoreContract;
 import org.apache.james.blob.objectstorage.aws.AwsS3AuthConfiguration;
 import org.apache.james.blob.objectstorage.aws.AwsS3ObjectStorage;
 import org.apache.james.blob.objectstorage.aws.DockerAwsS3Container;
@@ -37,11 +37,11 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(DockerAwsS3Extension.class)
-public class ObjectStorageBlobStoreAWSPrefixAndNamespaceTest implements MetricableBlobStoreContract {
+public class ObjectStorageDeduplicatingBlobStoreAWSNamespaceTest implements MetricableDeduplicatingBlobStoreContract {
     private static final HashBlobId.Factory BLOB_ID_FACTORY = new HashBlobId.Factory();
 
-    private BlobStore testee;
-    private ObjectStorageBlobStore objectStorageBlobStore;
+    private DeduplicatingBlobStore testee;
+    private ObjectStorageDeduplicatingBlobStore objectStorageBlobStore;
     private AwsS3ObjectStorage awsS3ObjectStorage;
 
     @BeforeEach
@@ -53,15 +53,14 @@ public class ObjectStorageBlobStoreAWSPrefixAndNamespaceTest implements Metricab
             .secretKey(DockerAwsS3Container.SECRET_ACCESS_KEY)
             .build();
 
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageDeduplicatingBlobStore
             .builder(configuration)
             .blobIdFactory(BLOB_ID_FACTORY)
-            .bucketPrefix("prefix")
             .namespace(BucketName.of("namespace"))
             .blobPutter(awsS3ObjectStorage.putBlob(configuration));
 
         objectStorageBlobStore = builder.build();
-        testee = new MetricableBlobStore(metricsTestExtension.getMetricFactory(), objectStorageBlobStore);
+        testee = new MetricableDeduplicatingBlobStore(metricsTestExtension.getMetricFactory(), objectStorageBlobStore);
     }
 
     @AfterEach
@@ -72,7 +71,7 @@ public class ObjectStorageBlobStoreAWSPrefixAndNamespaceTest implements Metricab
     }
 
     @Override
-    public BlobStore testee() {
+    public DeduplicatingBlobStore testee() {
         return testee;
     }
 

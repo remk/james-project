@@ -27,8 +27,8 @@ import javax.inject.Named;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.HashBlobId;
 
 import com.datastax.driver.core.Session;
@@ -42,7 +42,7 @@ import com.google.common.io.FileBackedOutputStream;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-public class CassandraBlobStore implements BlobStore {
+public class CassandraDeduplicatingBlobStore implements DeduplicatingBlobStore {
 
     public static final boolean LAZY_RESSOURCE_CLEANUP = false;
     public static final int FILE_THRESHOLD = 10000;
@@ -51,9 +51,9 @@ public class CassandraBlobStore implements BlobStore {
     private final CassandraDumbBlobStore dumbBlobStore;
 
     @Inject
-    CassandraBlobStore(HashBlobId.Factory blobIdFactory,
-                       @Named(CassandraDumbBlobStore.DEFAULT_BUCKET) BucketName defaultBucketName,
-                       CassandraDumbBlobStore dumbBlobStore) {
+    CassandraDeduplicatingBlobStore(HashBlobId.Factory blobIdFactory,
+                                    @Named(CassandraDumbBlobStore.DEFAULT_BUCKET) BucketName defaultBucketName,
+                                    CassandraDumbBlobStore dumbBlobStore) {
 
         this.blobIdFactory = blobIdFactory;
         this.defaultBucketName = defaultBucketName;
@@ -61,11 +61,11 @@ public class CassandraBlobStore implements BlobStore {
     }
 
     @VisibleForTesting
-    public static CassandraBlobStore forTesting(Session session) {
+    public static CassandraDeduplicatingBlobStore forTesting(Session session) {
         HashBlobId.Factory blobIdFactory = new HashBlobId.Factory();
         CassandraBucketDAO bucketDAO = new CassandraBucketDAO(blobIdFactory, session);
         CassandraDefaultBucketDAO defaultBucketDAO = new CassandraDefaultBucketDAO(session);
-        return new CassandraBlobStore(
+        return new CassandraDeduplicatingBlobStore(
             blobIdFactory,
             BucketName.DEFAULT,
             new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, CassandraConfiguration.DEFAULT_CONFIGURATION, BucketName.DEFAULT));

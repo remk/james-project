@@ -19,7 +19,7 @@
 
 package org.apache.james.vault.blob;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 
 import java.io.InputStream;
 import java.time.Clock;
@@ -28,8 +28,8 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 
-import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.ObjectNotFoundException;
 import org.apache.james.core.Username;
 import org.apache.james.mailbox.model.MessageId;
@@ -66,7 +66,7 @@ public class BlobStoreDeletedMessageVault implements DeletedMessageVault {
 
     private final MetricFactory metricFactory;
     private final DeletedMessageMetadataVault messageMetadataVault;
-    private final BlobStore blobStore;
+    private final DeduplicatingBlobStore blobStore;
     private final BucketNameGenerator nameGenerator;
     private final Clock clock;
     private final RetentionConfiguration retentionConfiguration;
@@ -74,7 +74,7 @@ public class BlobStoreDeletedMessageVault implements DeletedMessageVault {
 
     @Inject
     public BlobStoreDeletedMessageVault(MetricFactory metricFactory, DeletedMessageMetadataVault messageMetadataVault,
-                                        BlobStore blobStore, BucketNameGenerator nameGenerator,
+                                        DeduplicatingBlobStore blobStore, BucketNameGenerator nameGenerator,
                                         Clock clock,
                                         RetentionConfiguration retentionConfiguration) {
         this.metricFactory = metricFactory;

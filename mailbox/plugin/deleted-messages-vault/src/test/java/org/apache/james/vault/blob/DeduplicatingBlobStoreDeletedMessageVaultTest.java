@@ -40,7 +40,7 @@ import java.time.ZonedDateTime;
 
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.memory.MemoryBlobStore;
+import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
 import org.apache.james.blob.memory.MemoryDumbBlobStore;
 import org.apache.james.metrics.tests.RecordingMetricFactory;
 import org.apache.james.utils.UpdatableTickingClock;
@@ -55,7 +55,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 
-class BlobStoreDeletedMessageVaultTest implements DeletedMessageVaultContract, DeletedMessageVaultSearchContract.AllContracts {
+class DeduplicatingBlobStoreDeletedMessageVaultTest implements DeletedMessageVaultContract, DeletedMessageVaultSearchContract.AllContracts {
     private BlobStoreDeletedMessageVault messageVault;
     private UpdatableTickingClock clock;
     private RecordingMetricFactory metricFactory;
@@ -65,7 +65,7 @@ class BlobStoreDeletedMessageVaultTest implements DeletedMessageVaultContract, D
         clock = new UpdatableTickingClock(NOW.toInstant());
         metricFactory = new RecordingMetricFactory();
         messageVault = new BlobStoreDeletedMessageVault(metricFactory, new MemoryDeletedMessageMetadataVault(),
-            new MemoryBlobStore(new HashBlobId.Factory(), new MemoryDumbBlobStore()),
+            new MemoryDeduplicatingBlobStore(new HashBlobId.Factory(), new MemoryDumbBlobStore()),
             new BucketNameGenerator(clock), clock, RetentionConfiguration.DEFAULT);
     }
 

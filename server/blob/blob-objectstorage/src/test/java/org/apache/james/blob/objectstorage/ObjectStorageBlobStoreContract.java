@@ -19,7 +19,7 @@
 
 package org.apache.james.blob.objectstorage;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.InputStream;
@@ -37,7 +37,7 @@ public interface ObjectStorageBlobStoreContract {
     BucketName defaultBucketName();
 
     default void assertBlobStoreCanStoreAndRetrieve(ObjectStorageBlobStoreBuilder.ReadyToBuild builder) {
-        ObjectStorageBlobStore blobStore = builder.build();
+        ObjectStorageDeduplicatingBlobStore blobStore = builder.build();
 
         BlobId blobId = blobStore.save(blobStore.getDefaultBucketName(), CONTENT, LOW_COST).block();
 

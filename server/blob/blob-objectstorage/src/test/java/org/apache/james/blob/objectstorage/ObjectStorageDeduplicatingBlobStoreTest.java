@@ -19,7 +19,7 @@
 
 package org.apache.james.blob.objectstorage;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
@@ -29,11 +29,11 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.api.MetricableBlobStore;
-import org.apache.james.blob.api.MetricableBlobStoreContract;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStoreContract;
 import org.apache.james.blob.objectstorage.crypto.CryptoConfig;
 import org.apache.james.blob.objectstorage.swift.Credentials;
 import org.apache.james.blob.objectstorage.swift.Identity;
@@ -56,7 +56,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @ExtendWith(DockerSwiftExtension.class)
-public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
+public class ObjectStorageDeduplicatingBlobStoreTest implements MetricableDeduplicatingBlobStoreContract {
 
     private static final String BIG_STRING = Strings.repeat("big blob content", 10 * 1024);
     private static final TenantName TENANT_NAME = TenantName.of("test");
@@ -72,8 +72,8 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
     private BucketName defaultBucketName;
     private org.jclouds.blobstore.BlobStore blobStore;
     private SwiftTempAuthObjectStorage.Configuration testConfig;
-    private ObjectStorageBlobStore objectStorageBlobStore;
-    private BlobStore testee;
+    private ObjectStorageDeduplicatingBlobStore objectStorageBlobStore;
+    private DeduplicatingBlobStore testee;
 
     @BeforeEach
     void setUp(DockerSwift dockerSwift) {
@@ -86,13 +86,13 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
             .tempAuthHeaderPassName(PassHeaderName.of("X-Storage-Pass"))
             .build();
         BlobId.Factory blobIdFactory = blobIdFactory();
-        ObjectStorageBlobStoreBuilder.ReadyToBuild blobStoreBuilder = ObjectStorageBlobStore
+        ObjectStorageBlobStoreBuilder.ReadyToBuild blobStoreBuilder = ObjectStorageDeduplicatingBlobStore
             .builder(testConfig)
             .blobIdFactory(blobIdFactory)
             .namespace(defaultBucketName);
         blobStore = blobStoreBuilder.getSupplier().get();
         objectStorageBlobStore = blobStoreBuilder.build();
-        testee = new MetricableBlobStore(metricsTestExtension.getMetricFactory(), objectStorageBlobStore);
+        testee = new MetricableDeduplicatingBlobStore(metricsTestExtension.getMetricFactory(), objectStorageBlobStore);
     }
 
     @AfterEach
@@ -102,7 +102,7 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
     }
 
     @Override
-    public BlobStore testee() {
+    public DeduplicatingBlobStore testee() {
         return testee;
     }
 
@@ -113,7 +113,7 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
 
     @Test
     void supportsEncryptionWithCustomPayloadCodec() throws IOException {
-        ObjectStorageBlobStore encryptedBlobStore = ObjectStorageBlobStore
+        ObjectStorageDeduplicatingBlobStore encryptedBlobStore = ObjectStorageDeduplicatingBlobStore
             .builder(testConfig)
             .blobIdFactory(blobIdFactory())
             .payloadCodec(new AESPayloadCodec(CRYPTO_CONFIG))
@@ -129,7 +129,7 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
 
     @Test
     void encryptionWithCustomPayloadCodeCannotBeReadFromUnencryptedBlobStore() throws Exception {
-        ObjectStorageBlobStore encryptedBlobStore = ObjectStorageBlobStore
+        ObjectStorageDeduplicatingBlobStore encryptedBlobStore = ObjectStorageDeduplicatingBlobStore
             .builder(testConfig)
             .blobIdFactory(blobIdFactory())
             .payloadCodec(new AESPayloadCodec(CRYPTO_CONFIG))

@@ -20,11 +20,11 @@
 package org.apache.james.modules.mailbox;
 
 import org.apache.james.backends.cassandra.components.CassandraModule;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.BucketName;
-import org.apache.james.blob.api.MetricableBlobStore;
+import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
 import org.apache.james.blob.cassandra.CassandraBlobModule;
-import org.apache.james.blob.cassandra.CassandraBlobStore;
+import org.apache.james.blob.cassandra.CassandraDeduplicatingBlobStore;
 import org.apache.james.blob.cassandra.CassandraDefaultBucketDAO;
 import org.apache.james.blob.cassandra.CassandraDumbBlobStore;
 
@@ -37,16 +37,16 @@ public class CassandraBlobStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CassandraDefaultBucketDAO.class).in(Scopes.SINGLETON);
-        bind(CassandraBlobStore.class).in(Scopes.SINGLETON);
+        bind(CassandraDeduplicatingBlobStore.class).in(Scopes.SINGLETON);
         bind(CassandraDumbBlobStore.class).in(Scopes.SINGLETON);
 
         bind(BucketName.class)
             .annotatedWith(Names.named(CassandraDumbBlobStore.DEFAULT_BUCKET))
             .toInstance(BucketName.DEFAULT);
 
-        bind(BlobStore.class)
-            .annotatedWith(Names.named(MetricableBlobStore.BLOB_STORE_IMPLEMENTATION))
-            .to(CassandraBlobStore.class);
+        bind(DeduplicatingBlobStore.class)
+            .annotatedWith(Names.named(MetricableDeduplicatingBlobStore.BLOB_STORE_IMPLEMENTATION))
+            .to(CassandraDeduplicatingBlobStore.class);
 
         Multibinder<CassandraModule> cassandraDataDefinitions = Multibinder.newSetBinder(binder(), CassandraModule.class);
         cassandraDataDefinitions.addBinding().toInstance(CassandraBlobModule.MODULE);

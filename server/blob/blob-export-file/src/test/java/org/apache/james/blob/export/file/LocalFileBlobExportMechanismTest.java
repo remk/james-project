@@ -19,7 +19,7 @@
 
 package org.apache.james.blob.export.file;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -37,12 +37,12 @@ import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.api.ObjectStoreException;
 import org.apache.james.blob.export.api.FileExtension;
 import org.apache.james.blob.export.file.LocalFileBlobExportMechanism.Configuration;
-import org.apache.james.blob.memory.MemoryBlobStore;
+import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
 import org.apache.james.blob.memory.MemoryDumbBlobStore;
 import org.apache.james.dnsservice.api.DNSService;
 import org.apache.james.filesystem.api.FileSystem;
@@ -61,14 +61,14 @@ class LocalFileBlobExportMechanismTest {
     private static final String BLOB_CONTENT = "blob_content";
     private static final String JAMES_HOST = "james-host";
 
-    private BlobStore blobStore;
+    private DeduplicatingBlobStore blobStore;
     private FakeMailContext mailetContext;
     private LocalFileBlobExportMechanism testee;
 
     @BeforeEach
     void setUp(FileSystem fileSystem) throws Exception {
         mailetContext = FakeMailContext.builder().postmaster(MailAddressFixture.POSTMASTER_AT_JAMES).build();
-        blobStore = new MemoryBlobStore(new HashBlobId.Factory(), new MemoryDumbBlobStore());
+        blobStore = new MemoryDeduplicatingBlobStore(new HashBlobId.Factory(), new MemoryDumbBlobStore());
 
         InetAddress localHost = mock(InetAddress.class);
         when(localHost.getHostName()).thenReturn(JAMES_HOST);

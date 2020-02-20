@@ -19,8 +19,8 @@
 
 package org.apache.james.modules.objectstorage.swift;
 
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreBuilder;
+import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
 import org.apache.james.blob.objectstorage.swift.SwiftKeystone2ObjectStorage;
 import org.apache.james.blob.objectstorage.swift.SwiftKeystone3ObjectStorage;
 import org.apache.james.blob.objectstorage.swift.SwiftTempAuthObjectStorage;
@@ -37,15 +37,15 @@ public class SwiftObjectStorage {
         switch (authConfiguration.getAuthApiName()) {
             case SwiftTempAuthObjectStorage.AUTH_API_NAME:
                 return authConfiguration.getTempAuth()
-                                    .map(ObjectStorageBlobStore::builder)
+                                    .map(ObjectStorageDeduplicatingBlobStore::builder)
                                     .orElseThrow(() -> new IllegalArgumentException("No TempAuth configuration found for tmpauth API"));
             case SwiftKeystone2ObjectStorage.AUTH_API_NAME:
                 return authConfiguration.getKeystone2Configuration()
-                                    .map(ObjectStorageBlobStore::builder)
+                                    .map(ObjectStorageDeduplicatingBlobStore::builder)
                                     .orElseThrow(() -> new IllegalArgumentException("No Keystone2 configuration found for keystone2 API"));
             case SwiftKeystone3ObjectStorage.AUTH_API_NAME:
                 return authConfiguration.getKeystone3Configuration()
-                                    .map(ObjectStorageBlobStore::builder)
+                                    .map(ObjectStorageDeduplicatingBlobStore::builder)
                                     .orElseThrow(() -> new IllegalArgumentException("No Keystone3 configuration found for keystone3 API"));
             default:
                 throw new IllegalArgumentException("unknown auth api " + authConfiguration.getAuthApiName());

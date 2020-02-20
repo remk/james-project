@@ -26,8 +26,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.ObjectNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,15 +37,15 @@ import com.google.common.base.Preconditions;
 
 import reactor.core.publisher.Mono;
 
-public class HybridBlobStore implements BlobStore {
+public class HybridDeduplicatingBlobStore implements DeduplicatingBlobStore {
     @FunctionalInterface
     public interface RequireLowCost {
-        RequireHighPerformance lowCost(BlobStore blobStore);
+        RequireHighPerformance lowCost(DeduplicatingBlobStore blobStore);
     }
 
     @FunctionalInterface
     public interface RequireHighPerformance {
-        RequireConfiguration highPerformance(BlobStore blobStore);
+        RequireConfiguration highPerformance(DeduplicatingBlobStore blobStore);
     }
 
     @FunctionalInterface
@@ -54,18 +54,18 @@ public class HybridBlobStore implements BlobStore {
     }
 
     public static class Builder {
-        private final BlobStore lowCostBlobStore;
-        private final BlobStore highPerformanceBlobStore;
+        private final DeduplicatingBlobStore lowCostBlobStore;
+        private final DeduplicatingBlobStore highPerformanceBlobStore;
         private final Configuration configuration;
 
-        Builder(BlobStore lowCostBlobStore, BlobStore highPerformanceBlobStore, Configuration configuration) {
+        Builder(DeduplicatingBlobStore lowCostBlobStore, DeduplicatingBlobStore highPerformanceBlobStore, Configuration configuration) {
             this.lowCostBlobStore = lowCostBlobStore;
             this.highPerformanceBlobStore = highPerformanceBlobStore;
             this.configuration = configuration;
         }
 
-        public HybridBlobStore build() {
-            return new HybridBlobStore(
+        public HybridDeduplicatingBlobStore build() {
+            return new HybridDeduplicatingBlobStore(
                 lowCostBlobStore,
                 highPerformanceBlobStore,
                 configuration);
@@ -110,17 +110,17 @@ public class HybridBlobStore implements BlobStore {
         }
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HybridBlobStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HybridDeduplicatingBlobStore.class);
 
     public static RequireLowCost builder() {
         return lowCost -> highPerformance -> configuration -> new Builder(lowCost, highPerformance, configuration);
     }
 
-    private final BlobStore lowCostBlobStore;
-    private final BlobStore highPerformanceBlobStore;
+    private final DeduplicatingBlobStore lowCostBlobStore;
+    private final DeduplicatingBlobStore highPerformanceBlobStore;
     private final Configuration configuration;
 
-    private HybridBlobStore(BlobStore lowCostBlobStore, BlobStore highPerformanceBlobStore, Configuration configuration) {
+    private HybridDeduplicatingBlobStore(DeduplicatingBlobStore lowCostBlobStore, DeduplicatingBlobStore highPerformanceBlobStore, Configuration configuration) {
         this.lowCostBlobStore = lowCostBlobStore;
         this.highPerformanceBlobStore = highPerformanceBlobStore;
         this.configuration = configuration;
@@ -141,7 +141,7 @@ public class HybridBlobStore implements BlobStore {
             .flatMap(blobStore -> blobStore.save(bucketName, bufferedInputStream, storagePolicy));
     }
 
-    private Mono<BlobStore> selectBlobStore(StoragePolicy storagePolicy, Mono<Boolean> largeData) {
+    private Mono<DeduplicatingBlobStore> selectBlobStore(StoragePolicy storagePolicy, Mono<Boolean> largeData) {
         switch (storagePolicy) {
             case LOW_COST:
                 return Mono.just(lowCostBlobStore);

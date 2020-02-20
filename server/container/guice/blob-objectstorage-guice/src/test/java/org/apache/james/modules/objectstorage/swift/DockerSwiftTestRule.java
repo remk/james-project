@@ -27,7 +27,7 @@ import javax.inject.Inject;
 import org.apache.james.GuiceModuleTestRule;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.objectstorage.DockerSwiftRule;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDeduplicatingBlobStore;
 import org.apache.james.blob.objectstorage.PayloadCodec;
 import org.apache.james.blob.objectstorage.swift.Credentials;
 import org.apache.james.blob.objectstorage.swift.SwiftKeystone2ObjectStorage;
@@ -47,10 +47,10 @@ public class DockerSwiftTestRule implements GuiceModuleTestRule {
 
     public static class TestSwiftBlobStoreProbe implements GuiceProbe {
 
-        private final ObjectStorageBlobStore swiftBlobStore;
+        private final ObjectStorageDeduplicatingBlobStore swiftBlobStore;
 
         @Inject
-        TestSwiftBlobStoreProbe(ObjectStorageBlobStore swiftBlobStore) {
+        TestSwiftBlobStoreProbe(ObjectStorageDeduplicatingBlobStore swiftBlobStore) {
             this.swiftBlobStore = swiftBlobStore;
         }
 

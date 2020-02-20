@@ -112,7 +112,7 @@ public abstract class AbstractMailQueueFactory<T extends MailQueue> implements M
 
     /**
      * Create a {@link MailQueue} for the given name
-     * 
+     *
      * @param name
      * @return queue
      */

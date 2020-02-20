@@ -27,10 +27,10 @@ import java.nio.charset.StandardCharsets;
 import javax.mail.internet.MimeMessage;
 
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.api.Store;
-import org.apache.james.blob.memory.MemoryBlobStore;
+import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
 import org.apache.james.blob.memory.MemoryDumbBlobStore;
 import org.apache.james.core.builder.MimeMessageBuilder;
 import org.apache.james.util.MimeMessageUtil;
@@ -42,11 +42,11 @@ class MimeMessageStoreTest {
     private static final HashBlobId.Factory BLOB_ID_FACTORY = new HashBlobId.Factory();
 
     private Store<MimeMessage, MimeMessagePartsId> testee;
-    private BlobStore blobStore;
+    private DeduplicatingBlobStore blobStore;
 
     @BeforeEach
     void setUp() {
-        blobStore = new MemoryBlobStore(BLOB_ID_FACTORY, new MemoryDumbBlobStore());
+        blobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryDumbBlobStore());
         testee = MimeMessageStore.factory(blobStore).mimeMessageStore();
     }
 

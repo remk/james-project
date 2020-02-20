@@ -19,13 +19,13 @@
 
 package org.apache.james.blob.api;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
-import static org.apache.james.blob.api.MetricableBlobStore.DELETE_BUCKET_TIMER_NAME;
-import static org.apache.james.blob.api.MetricableBlobStore.DELETE_TIMER_NAME;
-import static org.apache.james.blob.api.MetricableBlobStore.READ_BYTES_TIMER_NAME;
-import static org.apache.james.blob.api.MetricableBlobStore.READ_TIMER_NAME;
-import static org.apache.james.blob.api.MetricableBlobStore.SAVE_BYTES_TIMER_NAME;
-import static org.apache.james.blob.api.MetricableBlobStore.SAVE_INPUT_STREAM_TIMER_NAME;
+import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.MetricableDeduplicatingBlobStore.DELETE_BUCKET_TIMER_NAME;
+import static org.apache.james.blob.api.MetricableDeduplicatingBlobStore.DELETE_TIMER_NAME;
+import static org.apache.james.blob.api.MetricableDeduplicatingBlobStore.READ_BYTES_TIMER_NAME;
+import static org.apache.james.blob.api.MetricableDeduplicatingBlobStore.READ_TIMER_NAME;
+import static org.apache.james.blob.api.MetricableDeduplicatingBlobStore.SAVE_BYTES_TIMER_NAME;
+import static org.apache.james.blob.api.MetricableDeduplicatingBlobStore.SAVE_INPUT_STREAM_TIMER_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
@@ -38,7 +38,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 
-public interface MetricableBlobStoreContract extends BlobStoreContract {
+public interface MetricableDeduplicatingBlobStoreContract extends DeduplicatingBlobStoreContract {
 
     class MetricableBlobStoreExtension implements BeforeEachCallback {
         private RecordingMetricFactory metricFactory;
@@ -60,7 +60,7 @@ public interface MetricableBlobStoreContract extends BlobStoreContract {
 
     @Test
     default void saveBytesShouldPublishSaveBytesTimerMetrics() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         store.save(store.getDefaultBucketName(), BYTES_CONTENT, LOW_COST).block();
         store.save(store.getDefaultBucketName(), BYTES_CONTENT, LOW_COST).block();
@@ -71,7 +71,7 @@ public interface MetricableBlobStoreContract extends BlobStoreContract {
 
     @Test
     default void saveStringShouldPublishSaveBytesTimerMetrics() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         store.save(store.getDefaultBucketName(), STRING_CONTENT, LOW_COST).block();
         store.save(store.getDefaultBucketName(), STRING_CONTENT, LOW_COST).block();
@@ -82,7 +82,7 @@ public interface MetricableBlobStoreContract extends BlobStoreContract {
 
     @Test
     default void saveInputStreamShouldPublishSaveInputStreamTimerMetrics() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         store.save(store.getDefaultBucketName(), new ByteArrayInputStream(BYTES_CONTENT), LOW_COST).block();
         store.save(store.getDefaultBucketName(), new ByteArrayInputStream(BYTES_CONTENT), LOW_COST).block();
@@ -93,7 +93,7 @@ public interface MetricableBlobStoreContract extends BlobStoreContract {
 
     @Test
     default void readBytesShouldPublishReadBytesTimerMetrics() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BlobId blobId = store.save(store.getDefaultBucketName(), BYTES_CONTENT, LOW_COST).block();
         store.readBytes(store.getDefaultBucketName(), blobId).block();
@@ -105,7 +105,7 @@ public interface MetricableBlobStoreContract extends BlobStoreContract {
 
     @Test
     default void readShouldPublishReadTimerMetrics() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BlobId blobId = store.save(store.getDefaultBucketName(), BYTES_CONTENT, LOW_COST).block();
         store.read(store.getDefaultBucketName(), blobId);
@@ -117,7 +117,7 @@ public interface MetricableBlobStoreContract extends BlobStoreContract {
 
     @Test
     default void deleteBucketShouldPublishDeleteBucketTimerMetrics() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BucketName bucketName = BucketName.of("custom");
         store.save(BucketName.DEFAULT, BYTES_CONTENT, LOW_COST).block();
@@ -131,7 +131,7 @@ public interface MetricableBlobStoreContract extends BlobStoreContract {
 
     @Test
     default void deleteShouldPublishDeleteTimerMetrics() {
-        BlobStore store = testee();
+        DeduplicatingBlobStore store = testee();
 
         BlobId blobId1 = store.save(store.getDefaultBucketName(), BYTES_CONTENT, LOW_COST).block();
         BlobId blobId2 = store.save(store.getDefaultBucketName(), BYTES_CONTENT, LOW_COST).block();
