@@ -30,13 +30,13 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.DeduplicatingBlobStoreContract;
-import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.api.ObjectNotFoundException;
 import org.apache.james.blob.api.ObjectStoreException;
-import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
 import org.apache.james.blob.memory.MemoryBlobStore;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +45,6 @@ import org.junit.jupiter.api.Test;
 
 import com.github.fge.lambdas.Throwing;
 import com.google.common.base.MoreObjects;
-
 import nl.jqno.equalsverifier.EqualsVerifier;
 import reactor.core.publisher.Mono;
 
@@ -152,14 +151,14 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
     private static final String STRING_CONTENT = "blob content";
     private static final byte [] BLOB_CONTENT = STRING_CONTENT.getBytes();
 
-    private MemoryDeduplicatingBlobStore lowCostBlobStore;
-    private MemoryDeduplicatingBlobStore highPerformanceBlobStore;
+    private DeduplicatingBlobStore lowCostBlobStore;
+    private DeduplicatingBlobStore highPerformanceBlobStore;
     private HybridDeduplicatingBlobStore hybridBlobStore;
 
     @BeforeEach
     void setup() {
-        lowCostBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
-        highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
+        lowCostBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
+        highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
         hybridBlobStore = HybridDeduplicatingBlobStore.builder()
             .lowCost(lowCostBlobStore)
             .highPerformance(highPerformanceBlobStore)
@@ -280,7 +279,7 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
     class LowCostSaveThrowsExceptionDirectly {
         @Test
         void saveShouldFailWhenException() {
-            MemoryDeduplicatingBlobStore highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
+            DeduplicatingBlobStore highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
             HybridDeduplicatingBlobStore hybridBlobStore = HybridDeduplicatingBlobStore.builder()
                 .lowCost(new ThrowingDeduplicatingBlobStore())
                 .highPerformance(highPerformanceBlobStore)
@@ -293,7 +292,7 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
 
         @Test
         void saveInputStreamShouldFailWhenException() {
-            MemoryDeduplicatingBlobStore highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
+            DeduplicatingBlobStore highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
             HybridDeduplicatingBlobStore hybridBlobStore = HybridDeduplicatingBlobStore.builder()
                 .lowCost(new ThrowingDeduplicatingBlobStore())
                 .highPerformance(highPerformanceBlobStore)
@@ -310,7 +309,7 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
 
         @Test
         void saveShouldFailWhenLowCostCompletedExceptionally() {
-            MemoryDeduplicatingBlobStore highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
+            DeduplicatingBlobStore highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
             HybridDeduplicatingBlobStore hybridBlobStore = HybridDeduplicatingBlobStore.builder()
                 .lowCost(new FailingDeduplicatingBlobStore())
                 .highPerformance(highPerformanceBlobStore)
@@ -323,7 +322,7 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
 
         @Test
         void saveInputStreamShouldFallBackToPerformingWhenLowCostCompletedExceptionally() {
-            MemoryDeduplicatingBlobStore highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
+            DeduplicatingBlobStore highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
             HybridDeduplicatingBlobStore hybridBlobStore = HybridDeduplicatingBlobStore.builder()
                 .lowCost(new FailingDeduplicatingBlobStore())
                 .highPerformance(highPerformanceBlobStore)
@@ -341,7 +340,7 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
 
         @Test
         void readShouldReturnFallbackToPerformingWhenLowCostGotException() {
-            MemoryDeduplicatingBlobStore highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
+            DeduplicatingBlobStore highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
             HybridDeduplicatingBlobStore hybridBlobStore = HybridDeduplicatingBlobStore.builder()
                 .lowCost(new ThrowingDeduplicatingBlobStore())
                 .highPerformance(highPerformanceBlobStore)
@@ -355,7 +354,7 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
 
         @Test
         void readBytesShouldReturnFallbackToPerformingWhenLowCostGotException() {
-            MemoryDeduplicatingBlobStore highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
+            DeduplicatingBlobStore highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
 
             HybridDeduplicatingBlobStore hybridBlobStore = HybridDeduplicatingBlobStore.builder()
                 .lowCost(new ThrowingDeduplicatingBlobStore())
@@ -375,7 +374,7 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
 
         @Test
         void readShouldReturnFallbackToPerformingWhenLowCostCompletedExceptionally() {
-            MemoryDeduplicatingBlobStore highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
+            DeduplicatingBlobStore highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
             HybridDeduplicatingBlobStore hybridBlobStore = HybridDeduplicatingBlobStore.builder()
                 .lowCost(new FailingDeduplicatingBlobStore())
                 .highPerformance(highPerformanceBlobStore)
@@ -389,7 +388,7 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
 
         @Test
         void readBytesShouldReturnFallbackToPerformingWhenLowCostCompletedExceptionally() {
-            MemoryDeduplicatingBlobStore highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore());
+            DeduplicatingBlobStore highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName());
             HybridDeduplicatingBlobStore hybridBlobStore = HybridDeduplicatingBlobStore.builder()
                 .lowCost(new FailingDeduplicatingBlobStore())
                 .highPerformance(highPerformanceBlobStore)
@@ -475,8 +474,8 @@ class HybridDeduplicatingBlobStoreTest implements DeduplicatingBlobStoreContract
 
     @Test
     void getDefaultBucketNameShouldThrowWhenBlobStoreDontShareTheSameDefaultBucketName() {
-        lowCostBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, BucketName.of("lowCost"), new MemoryBlobStore());
-        highPerformanceBlobStore = new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, BucketName.of("highPerformance"), new MemoryBlobStore());
+        lowCostBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, new MemoryBlobStore(BucketName.of("lowCost")));
+        highPerformanceBlobStore = new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, new MemoryBlobStore(BucketName.of("highPerformance")));
         hybridBlobStore = HybridDeduplicatingBlobStore.builder()
             .lowCost(lowCostBlobStore)
             .highPerformance(highPerformanceBlobStore)

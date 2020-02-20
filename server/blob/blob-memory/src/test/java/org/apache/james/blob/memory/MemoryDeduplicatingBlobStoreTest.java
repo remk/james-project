@@ -21,6 +21,7 @@ package org.apache.james.blob.memory;
 
 import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.api.DeduplicatingBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.api.MetricableDeduplicatingBlobStore;
 import org.apache.james.blob.api.MetricableDeduplicatingBlobStoreContract;
@@ -33,7 +34,7 @@ public class MemoryDeduplicatingBlobStoreTest implements MetricableDeduplicating
 
     @BeforeEach
     void setUp() {
-        blobStore = new MetricableDeduplicatingBlobStore(metricsTestExtension.getMetricFactory(), new MemoryDeduplicatingBlobStore(BLOB_ID_FACTORY, new MemoryBlobStore()));
+        blobStore = new MetricableDeduplicatingBlobStore(metricsTestExtension.getMetricFactory(), new DeduplicatingBlobStoreImpl(BLOB_ID_FACTORY, MemoryBlobStore.withDefaultBucketName()));
     }
 
     @Override

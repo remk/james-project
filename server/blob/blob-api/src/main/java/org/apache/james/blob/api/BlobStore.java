@@ -99,4 +99,9 @@ public interface BlobStore {
      *  otherwise an IOObjectStoreException in its error channel
      */
     Mono<Void> deleteBucket(BucketName bucketName);
+
+    /**
+     * The default bucket of the blob store
+     */
+    BucketName getDefaultBucketName();
 }

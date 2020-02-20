@@ -29,8 +29,9 @@ import java.time.Clock;
 import java.time.ZoneOffset;
 import java.util.List;
 
+import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
 import org.apache.james.blob.memory.MemoryBlobStore;
 import org.apache.james.core.MailAddress;
 import org.apache.james.core.MaybeSender;
@@ -60,7 +61,6 @@ import org.junit.jupiter.api.Test;
 
 import com.github.steveash.guavate.Guavate;
 import com.google.common.collect.ImmutableList;
-
 import reactor.core.publisher.Flux;
 
 class DeletedMessageVaultHookTest {
@@ -109,7 +109,7 @@ class DeletedMessageVaultHookTest {
     void setUp() throws Exception {
         clock = Clock.fixed(DELETION_DATE.toInstant(), ZoneOffset.UTC);
         messageVault = new BlobStoreDeletedMessageVault(new RecordingMetricFactory(), new MemoryDeletedMessageMetadataVault(),
-            new MemoryDeduplicatingBlobStore(new HashBlobId.Factory(), new MemoryBlobStore()), new BucketNameGenerator(clock), clock,
+            new DeduplicatingBlobStoreImpl(new HashBlobId.Factory(), MemoryBlobStore.withDefaultBucketName()), new BucketNameGenerator(clock), clock,
             RetentionConfiguration.DEFAULT);
 
         DeletedMessageConverter deletedMessageConverter = new DeletedMessageConverter();

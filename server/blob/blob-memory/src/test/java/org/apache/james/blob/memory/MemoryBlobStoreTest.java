@@ -29,7 +29,7 @@ class MemoryBlobStoreTest implements BlobStoreContract {
 
     @BeforeEach
     void setUp() {
-        blobStore = new MemoryBlobStore();
+        blobStore = MemoryBlobStore.withDefaultBucketName();
     }
 
     @Override

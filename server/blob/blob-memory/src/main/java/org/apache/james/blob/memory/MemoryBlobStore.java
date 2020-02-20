@@ -23,10 +23,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.ObjectNotFoundException;
 import org.apache.james.blob.api.ObjectStoreIOException;
 
@@ -38,11 +41,19 @@ import com.google.common.io.ByteSource;
 import reactor.core.publisher.Mono;
 
 public class MemoryBlobStore implements BlobStore {
+    public static final String DEFAULT_BUCKET = "cassandraDefault";
+
+    public static MemoryBlobStore withDefaultBucketName() {
+        return new MemoryBlobStore(BucketName.DEFAULT);
+    }
 
     private final Table<BucketName, BlobId, byte[]> blobs;
+    private final BucketName defaultBucketName;
 
-    public MemoryBlobStore() {
+    @Inject
+    public MemoryBlobStore(@Named(DEFAULT_BUCKET) BucketName defaultBucketName) {
         blobs = HashBasedTable.create();
+        this.defaultBucketName = defaultBucketName;
     }
 
     @Override
@@ -108,5 +119,10 @@ public class MemoryBlobStore implements BlobStore {
                 blobs.row(bucketName).clear();
             }
         });
+    }
+
+    @Override
+    public BucketName getDefaultBucketName() {
+        return defaultBucketName;
     }
 }

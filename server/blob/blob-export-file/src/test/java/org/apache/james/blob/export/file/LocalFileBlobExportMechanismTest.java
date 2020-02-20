@@ -37,12 +37,13 @@ import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.DeduplicatingBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.api.ObjectStoreException;
 import org.apache.james.blob.export.api.FileExtension;
 import org.apache.james.blob.export.file.LocalFileBlobExportMechanism.Configuration;
-import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
 import org.apache.james.blob.memory.MemoryBlobStore;
 import org.apache.james.dnsservice.api.DNSService;
 import org.apache.james.filesystem.api.FileSystem;
@@ -68,7 +69,7 @@ class LocalFileBlobExportMechanismTest {
     @BeforeEach
     void setUp(FileSystem fileSystem) throws Exception {
         mailetContext = FakeMailContext.builder().postmaster(MailAddressFixture.POSTMASTER_AT_JAMES).build();
-        blobStore = new MemoryDeduplicatingBlobStore(new HashBlobId.Factory(), new MemoryBlobStore());
+        blobStore = new DeduplicatingBlobStoreImpl(new HashBlobId.Factory(), MemoryBlobStore.withDefaultBucketName());
 
         InetAddress localHost = mock(InetAddress.class);
         when(localHost.getHostName()).thenReturn(JAMES_HOST);

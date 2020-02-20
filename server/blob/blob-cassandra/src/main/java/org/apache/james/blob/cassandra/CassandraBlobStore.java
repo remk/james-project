@@ -105,6 +105,11 @@ public class CassandraBlobStore implements BlobStore {
             LAZY);
     }
 
+    @Override
+    public BucketName getDefaultBucketName() {
+        return defaultBucket;
+    }
+
     private Mono<Void> save(BucketName bucketName, BlobId blobId, Flux<ByteBuffer> chunksAsFlux) {
         return saveBlobParts(bucketName, blobId, chunksAsFlux)
             .flatMap(numberOfChunk -> saveBlobPartReference(bucketName, blobId, numberOfChunk));

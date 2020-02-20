@@ -74,9 +74,10 @@ import java.util.stream.Stream;
 import org.apache.commons.configuration2.BaseHierarchicalConfiguration;
 import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.export.api.BlobExportMechanism;
-import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
 import org.apache.james.blob.memory.MemoryBlobStore;
 import org.apache.james.core.Domain;
 import org.apache.james.core.MailAddress;
@@ -164,7 +165,7 @@ class DeletedMessagesVaultRoutesTest {
     private InMemoryMailboxManager mailboxManager;
     private MemoryTaskManager taskManager;
     private NoopBlobExporting blobExporting;
-    private MemoryDeduplicatingBlobStore blobStore;
+    private DeduplicatingBlobStore blobStore;
     private DeletedMessageZipper zipper;
     private MemoryUsersRepository usersRepository;
     private ExportService exportService;
@@ -174,7 +175,7 @@ class DeletedMessagesVaultRoutesTest {
     @BeforeEach
     void beforeEach() throws Exception {
         blobIdFactory = new HashBlobId.Factory();
-        blobStore = spy(new MemoryDeduplicatingBlobStore(blobIdFactory, new MemoryBlobStore()));
+        blobStore = spy(new DeduplicatingBlobStoreImpl(blobIdFactory, MemoryBlobStore.withDefaultBucketName()));
         clock = new UpdatableTickingClock(OLD_DELETION_DATE.toInstant());
         vault = spy(new BlobStoreDeletedMessageVault(new RecordingMetricFactory(), new MemoryDeletedMessageMetadataVault(),
             blobStore, new BucketNameGenerator(clock), clock,

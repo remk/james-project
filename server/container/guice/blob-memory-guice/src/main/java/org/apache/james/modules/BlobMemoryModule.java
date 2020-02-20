@@ -20,12 +20,16 @@
 package org.apache.james.modules;
 
 import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.BlobStore;
+import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.DeduplicatingBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
+import org.apache.james.blob.memory.MemoryBlobStore;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 
 public class BlobMemoryModule extends AbstractModule {
 
@@ -33,8 +37,12 @@ public class BlobMemoryModule extends AbstractModule {
     protected void configure() {
         bind(HashBlobId.Factory.class).in(Scopes.SINGLETON);
         bind(BlobId.Factory.class).to(HashBlobId.Factory.class);
+        bind(BucketName.class)
+            .annotatedWith(Names.named(MemoryBlobStore.DEFAULT_BUCKET))
+            .toInstance(BucketName.DEFAULT);
+        bind(BlobStore.class).to(MemoryBlobStore.class);
 
-        bind(MemoryDeduplicatingBlobStore.class).in(Scopes.SINGLETON);
-        bind(DeduplicatingBlobStore.class).to(MemoryDeduplicatingBlobStore.class);
+        bind(DeduplicatingBlobStoreImpl.class).in(Scopes.SINGLETON);
+        bind(DeduplicatingBlobStore.class).to(DeduplicatingBlobStoreImpl.class);
     }
 }

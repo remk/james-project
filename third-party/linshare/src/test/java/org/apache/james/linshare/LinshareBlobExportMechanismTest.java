@@ -30,10 +30,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.BucketName;
+import org.apache.james.blob.api.DeduplicatingBlobStore;
+import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.export.api.BlobExportMechanism;
 import org.apache.james.blob.export.api.FileExtension;
-import org.apache.james.blob.memory.MemoryDeduplicatingBlobStore;
 import org.apache.james.blob.memory.MemoryBlobStore;
 import org.apache.james.core.MailAddress;
 import org.apache.james.linshare.client.Document;
@@ -49,7 +51,7 @@ class LinshareBlobExportMechanismTest {
     @RegisterExtension
     static LinshareExtension linshareExtension = new LinshareExtension();
 
-    private MemoryDeduplicatingBlobStore blobStore;
+    private DeduplicatingBlobStore blobStore;
     private LinshareBlobExportMechanism testee;
     private HashBlobId.Factory blobIdFactory;
     private LinshareAPIForUserTesting user2API;
@@ -57,7 +59,7 @@ class LinshareBlobExportMechanismTest {
     @BeforeEach
     void setUp() throws Exception {
         blobIdFactory = new HashBlobId.Factory();
-        blobStore = new MemoryDeduplicatingBlobStore(blobIdFactory, new MemoryBlobStore());
+        blobStore = new DeduplicatingBlobStoreImpl(blobIdFactory, MemoryBlobStore.withDefaultBucketName());
 
         testee = new LinshareBlobExportMechanism(
             linshareExtension.getDelegationAccountAPI(),
