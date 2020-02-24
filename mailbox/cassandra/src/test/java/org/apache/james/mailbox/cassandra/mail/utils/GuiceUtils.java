@@ -25,6 +25,7 @@ import org.apache.james.backends.cassandra.CassandraCluster;
 import org.apache.james.backends.cassandra.init.CassandraTypesProvider;
 import org.apache.james.backends.cassandra.init.configuration.CassandraConfiguration;
 import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
@@ -73,7 +74,7 @@ public class GuiceUtils {
             binder -> binder.bind(MessageId.Factory.class).toInstance(messageIdFactory),
             binder -> binder.bind(BlobId.Factory.class).toInstance(new HashBlobId.Factory()),
             binder -> binder.bind(DeduplicatingBlobStore.class).to(DeduplicatingBlobStoreImpl.class).in(SINGLETON),
-            binder -> binder.bind(CassandraBlobStore.class).in(SINGLETON),
+            binder -> binder.bind(BlobStore.class).to(CassandraBlobStore.class).in(SINGLETON),
             binder -> binder.bind(BucketName.class)
                 .annotatedWith(Names.named(CassandraBlobStore.DEFAULT_BUCKET))
                 .toInstance(BucketName.DEFAULT),
