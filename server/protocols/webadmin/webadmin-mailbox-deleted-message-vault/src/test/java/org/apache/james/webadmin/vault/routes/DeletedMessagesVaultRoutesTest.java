@@ -165,7 +165,8 @@ class DeletedMessagesVaultRoutesTest {
     private InMemoryMailboxManager mailboxManager;
     private MemoryTaskManager taskManager;
     private NoopBlobExporting blobExporting;
-    private DeduplicatingBlobStore blobStore;
+    private MemoryBlobStore blobStore;
+    private DeduplicatingBlobStore deduplicatingBlobStore;
     private DeletedMessageZipper zipper;
     private MemoryUsersRepository usersRepository;
     private ExportService exportService;
@@ -175,10 +176,11 @@ class DeletedMessagesVaultRoutesTest {
     @BeforeEach
     void beforeEach() throws Exception {
         blobIdFactory = new HashBlobId.Factory();
-        blobStore = spy(new DeduplicatingBlobStoreImpl(blobIdFactory, MemoryBlobStore.withDefaultBucketName()));
+        blobStore = spy(MemoryBlobStore.withDefaultBucketName());
+        deduplicatingBlobStore = spy(new DeduplicatingBlobStoreImpl(blobIdFactory, blobStore));
         clock = new UpdatableTickingClock(OLD_DELETION_DATE.toInstant());
         vault = spy(new BlobStoreDeletedMessageVault(new RecordingMetricFactory(), new MemoryDeletedMessageMetadataVault(),
-            blobStore, new BucketNameGenerator(clock), clock,
+            blobStore, new BucketNameGenerator(clock), blobIdFactory, clock,
             RetentionConfiguration.DEFAULT));
         InMemoryIntegrationResources inMemoryResource = InMemoryIntegrationResources.defaultResources();
         mailboxManager = spy(inMemoryResource.getMailboxManager());
@@ -189,7 +191,7 @@ class DeletedMessagesVaultRoutesTest {
         RestoreService vaultRestore = new RestoreService(vault, mailboxManager);
         blobExporting = spy(new NoopBlobExporting());
         zipper = new DeletedMessageZipper();
-        exportService = new ExportService(blobExporting, blobStore, zipper, vault);
+        exportService = new ExportService(blobExporting, deduplicatingBlobStore, zipper, vault);
         QueryTranslator queryTranslator = new QueryTranslator(new InMemoryId.Factory());
         usersRepository = createUsersRepository();
         MessageId.Factory messageIdFactory = new InMemoryMessageId.Factory();

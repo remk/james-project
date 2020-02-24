@@ -39,7 +39,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 
 import org.apache.james.blob.api.BucketName;
-import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.memory.MemoryBlobStore;
 import org.apache.james.metrics.tests.RecordingMetricFactory;
@@ -65,8 +64,8 @@ class DeduplicatingBlobStoreDeletedMessageVaultTest implements DeletedMessageVau
         clock = new UpdatableTickingClock(NOW.toInstant());
         metricFactory = new RecordingMetricFactory();
         messageVault = new BlobStoreDeletedMessageVault(metricFactory, new MemoryDeletedMessageMetadataVault(),
-            new DeduplicatingBlobStoreImpl(new HashBlobId.Factory(), MemoryBlobStore.withDefaultBucketName()),
-            new BucketNameGenerator(clock), clock, RetentionConfiguration.DEFAULT);
+            MemoryBlobStore.withDefaultBucketName(),
+            new BucketNameGenerator(clock), new HashBlobId.Factory(), clock, RetentionConfiguration.DEFAULT);
     }
 
     @Override

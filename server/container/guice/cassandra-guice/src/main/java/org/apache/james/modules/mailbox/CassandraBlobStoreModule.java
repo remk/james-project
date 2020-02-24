@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 
 import org.apache.james.backends.cassandra.components.CassandraModule;
 import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.DeduplicatingBlobStoreImpl;
@@ -42,7 +43,7 @@ public class CassandraBlobStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CassandraDefaultBucketDAO.class).in(Scopes.SINGLETON);
-        bind(CassandraBlobStore.class).in(Scopes.SINGLETON);
+        bind(BlobStore.class).to(CassandraBlobStore.class).in(Scopes.SINGLETON);
 
         bind(BucketName.class)
             .annotatedWith(Names.named(CassandraBlobStore.DEFAULT_BUCKET))
@@ -55,7 +56,7 @@ public class CassandraBlobStoreModule extends AbstractModule {
     @Provides
     @Named(MetricableDeduplicatingBlobStore.BLOB_STORE_IMPLEMENTATION)
     @Singleton
-    public DeduplicatingBlobStore provideDeduplicatingBlobstore(BlobId.Factory blobIdFactory, CassandraBlobStore blobStore) {
+    public DeduplicatingBlobStore provideDeduplicatingBlobstore(BlobId.Factory blobIdFactory, BlobStore blobStore) {
         return new DeduplicatingBlobStoreImpl(blobIdFactory, blobStore);
 
     }

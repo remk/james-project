@@ -19,8 +19,6 @@
 
 package org.apache.james.vault.blob;
 
-import static org.apache.james.blob.api.DeduplicatingBlobStore.StoragePolicy.LOW_COST;
-
 import java.io.InputStream;
 import java.time.Clock;
 import java.time.ZonedDateTime;
@@ -28,8 +26,9 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 
+import org.apache.james.blob.api.BlobId;
+import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
-import org.apache.james.blob.api.DeduplicatingBlobStore;
 import org.apache.james.blob.api.ObjectNotFoundException;
 import org.apache.james.core.Username;
 import org.apache.james.mailbox.model.MessageId;
@@ -66,21 +65,24 @@ public class BlobStoreDeletedMessageVault implements DeletedMessageVault {
 
     private final MetricFactory metricFactory;
     private final DeletedMessageMetadataVault messageMetadataVault;
-    private final DeduplicatingBlobStore blobStore;
+    private final BlobStore blobStore;
     private final BucketNameGenerator nameGenerator;
+    private final BlobId.Factory blobIdFactory;
     private final Clock clock;
     private final RetentionConfiguration retentionConfiguration;
     private final BlobStoreVaultGarbageCollectionTask.Factory taskFactory;
 
     @Inject
     public BlobStoreDeletedMessageVault(MetricFactory metricFactory, DeletedMessageMetadataVault messageMetadataVault,
-                                        DeduplicatingBlobStore blobStore, BucketNameGenerator nameGenerator,
+                                        BlobStore blobStore, BucketNameGenerator nameGenerator,
+                                        BlobId.Factory blobIdFactory,
                                         Clock clock,
                                         RetentionConfiguration retentionConfiguration) {
         this.metricFactory = metricFactory;
         this.messageMetadataVault = messageMetadataVault;
         this.blobStore = blobStore;
         this.nameGenerator = nameGenerator;
+        this.blobIdFactory = blobIdFactory;
         this.clock = clock;
         this.retentionConfiguration = retentionConfiguration;
         this.taskFactory = new BlobStoreVaultGarbageCollectionTask.Factory(this);
@@ -98,10 +100,12 @@ public class BlobStoreDeletedMessageVault implements DeletedMessageVault {
     }
 
     private Mono<Void> appendMessage(DeletedMessage deletedMessage, InputStream mimeMessage, BucketName bucketName) {
-        return blobStore.save(bucketName, mimeMessage, LOW_COST)
-            .map(blobId -> StorageInformation.builder()
-                .bucketName(bucketName)
-                .blobId(blobId))
+        return Mono.fromCallable(blobIdFactory::randomId)
+            .flatMap(blobId ->
+                blobStore.save(bucketName, blobId, mimeMessage)
+                    .then(Mono.fromCallable(() -> StorageInformation.builder()
+                        .bucketName(bucketName)
+                        .blobId(blobId))))
             .map(storageInformation -> new DeletedMessageWithStorageInformation(deletedMessage, storageInformation))
             .flatMap(message -> Mono.from(messageMetadataVault.store(message)))
             .then();
