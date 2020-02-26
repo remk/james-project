@@ -39,7 +39,7 @@ emit an event into the event sourcing system to increment the `reference generat
 
 ## Alternatives
 
-Not de-duplicating the blobs content, this simple approach which involves storing the same
+Not de-duplicating the blobs' content, this simple approach which involves storing the same
 blob a lot of times can in some scenario be really slow and costly. Albeit it can in some case be preferred for the sake of
 simplicity, data security...
 
