@@ -18,6 +18,7 @@
  ****************************************************************/
 package org.apache.james.backends.rabbitmq;
 
+import static com.rabbitmq.client.MessageProperties.PERSISTENT_TEXT_PLAIN;
 import static org.apache.james.backends.rabbitmq.Constants.AUTO_ACK;
 import static org.apache.james.backends.rabbitmq.Constants.AUTO_DELETE;
 import static org.apache.james.backends.rabbitmq.Constants.DIRECT_EXCHANGE;
@@ -39,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -57,6 +59,7 @@ import com.github.steveash.guavate.Guavate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.CancelCallback;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -79,6 +82,7 @@ class RabbitMQTest {
         @BeforeEach
         void setup(DockerRabbitMQ rabbitMQ) throws IOException, TimeoutException {
             connectionFactory = rabbitMQ.connectionFactory();
+            connectionFactory.setNetworkRecoveryInterval(1000);
             connection = connectionFactory.newConnection();
             channel = connection.createChannel();
         }
@@ -101,9 +105,12 @@ class RabbitMQTest {
             String queueName = createQueue(channel);
             publishAMessage(channel);
 
+            //wait for message to be effectively published
+            Thread.sleep(200);
             rabbitMQ.restart();
-
             awaitAtMostOneMinute.until(() -> containerIsRestarted(rabbitMQ));
+
+            Thread.sleep(connectionFactory.getNetworkRecoveryInterval());
             assertThat(channel.basicGet(queueName, !AUTO_ACK)).isNotNull();
         }
 
@@ -118,13 +125,19 @@ class RabbitMQTest {
 
         private String createQueue(Channel channel) throws IOException {
             channel.exchangeDeclare(EXCHANGE_NAME, DIRECT_EXCHANGE, DURABLE);
-            String queueName = channel.queueDeclare().getQueue();
+            String queueName = channel.queueDeclare(UUID.randomUUID().toString(), DURABLE, !EXCLUSIVE, AUTO_DELETE, ImmutableMap.of()).getQueue();
             channel.queueBind(queueName, EXCHANGE_NAME, ROUTING_KEY);
             return queueName;
         }
 
         private void publishAMessage(Channel channel) throws IOException {
-            channel.basicPublish(EXCHANGE_NAME, ROUTING_KEY, NO_PROPERTIES, asBytes("Hello, world!"));
+            AMQP.BasicProperties basicProperties = new AMQP.BasicProperties.Builder()
+                .deliveryMode(PERSISTENT_TEXT_PLAIN.getDeliveryMode())
+                .priority(PERSISTENT_TEXT_PLAIN.getPriority())
+                .contentType(PERSISTENT_TEXT_PLAIN.getContentType())
+                .build();
+
+            channel.basicPublish(EXCHANGE_NAME, ROUTING_KEY, basicProperties, asBytes("Hello, world!"));
         }
 
         private Boolean messageReceived(Channel channel, String queueName) {
