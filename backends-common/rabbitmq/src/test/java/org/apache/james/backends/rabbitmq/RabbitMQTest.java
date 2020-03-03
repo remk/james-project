@@ -69,6 +69,7 @@ import com.rabbitmq.client.Delivery;
 
 class RabbitMQTest {
 
+    public static final ImmutableMap<String, Object> NO_QUEUE_DECLARE_ARGUMENTS = ImmutableMap.of();
     @RegisterExtension
     static RabbitMQExtension rabbitMQExtension = RabbitMQExtension.singletonRabbitMQ();
 
@@ -125,7 +126,8 @@ class RabbitMQTest {
 
         private String createQueue(Channel channel) throws IOException {
             channel.exchangeDeclare(EXCHANGE_NAME, DIRECT_EXCHANGE, DURABLE);
-            String queueName = channel.queueDeclare(UUID.randomUUID().toString(), DURABLE, !EXCLUSIVE, AUTO_DELETE, ImmutableMap.of()).getQueue();
+            String queueName = UUID.randomUUID().toString();
+            channel.queueDeclare(queueName, DURABLE, !EXCLUSIVE, AUTO_DELETE, NO_QUEUE_DECLARE_ARGUMENTS).getQueue();
             channel.queueBind(queueName, EXCHANGE_NAME, ROUTING_KEY);
             return queueName;
         }
