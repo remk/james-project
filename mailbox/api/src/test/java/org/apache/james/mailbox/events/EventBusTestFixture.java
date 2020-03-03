@@ -125,4 +125,11 @@ public interface EventBusTestFixture {
         when(listener.isHandling(any(MailboxListener.MailboxAdded.class))).thenReturn(true);
         return listener;
     }
+
+    static MailboxListener newAsyncListener() {
+        MailboxListener listener = mock(MailboxListener.class);
+        when(listener.getExecutionMode()).thenReturn(MailboxListener.ExecutionMode.ASYNCHRONOUS);
+        when(listener.isHandling(any(MailboxListener.MailboxAdded.class))).thenReturn(true);
+        return listener;
+    }
 }
