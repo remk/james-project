@@ -81,6 +81,7 @@ class KeyRegistrationHandler {
         this.retryBackoff = retryBackoff;
         this.registrationQueue = new RegistrationQueueName();
         this.registrationBinder = new RegistrationBinder(sender, registrationQueue);
+        this.receiverSubscriber = Optional.empty();
 
     }
 

@@ -627,6 +627,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 eventBus.stop();
                 eventBus2.stop();
                 eventBus3.stop();
+                eventBusWithKeyHandlerNotStarted.stop();
 
                 assertThat(rabbitManagementAPI.listExchanges())
                     .anySatisfy(exchange -> assertThat(exchange.getName()).isEqualTo(MAILBOX_EVENT_EXCHANGE_NAME));
@@ -639,6 +640,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 eventBus.stop();
                 eventBus2.stop();
                 eventBus3.stop();
+                eventBusWithKeyHandlerNotStarted.stop();
 
                 assertThat(rabbitManagementAPI.listQueues())
                     .anySatisfy(queue -> assertThat(queue.getName()).contains(GroupA.class.getName()));
@@ -649,6 +651,7 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
                 eventBus.stop();
                 eventBus2.stop();
                 eventBus3.stop();
+                eventBusWithKeyHandlerNotStarted.stop();
 
                 assertThat(rabbitManagementAPI.listQueues())
                     .filteredOn(queue -> !queue.getName().startsWith(MAILBOX_EVENT_WORK_QUEUE_PREFIX))
