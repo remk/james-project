@@ -104,15 +104,19 @@ public class RabbitMQWorkQueue implements WorkQueue {
 
     @VisibleForTesting
     void declareQueue() {
-        channelPool.getSender()
+        Mono<AMQP.Exchange.DeclareOk> declareExchange = channelPool.getSender()
             .declareExchange(ExchangeSpecification.exchange(EXCHANGE_NAME))
-            .retryBackoff(NUM_RETRIES, FIRST_BACKOFF, FOREVER)
-            .then(channelPool.getSender()
-                .declare(QueueSpecification.queue(QUEUE_NAME).durable(true).arguments(Constants.WITH_SINGLE_ACTIVE_CONSUMER))
-                .retryBackoff(NUM_RETRIES, FIRST_BACKOFF, FOREVER))
-            .then(channelPool.getSender()
-                .bind(BindingSpecification.binding(EXCHANGE_NAME, ROUTING_KEY, QUEUE_NAME))
-                .retryBackoff(NUM_RETRIES, FIRST_BACKOFF, FOREVER))
+            .retryBackoff(NUM_RETRIES, FIRST_BACKOFF, FOREVER);
+        Mono<AMQP.Queue.DeclareOk> declareQueue = channelPool.getSender()
+            .declare(QueueSpecification.queue(QUEUE_NAME).durable(true).arguments(Constants.WITH_SINGLE_ACTIVE_CONSUMER))
+            .retryBackoff(NUM_RETRIES, FIRST_BACKOFF, FOREVER);
+        Mono<AMQP.Queue.BindOk> bindQueueToExchange = channelPool.getSender()
+            .bind(BindingSpecification.binding(EXCHANGE_NAME, ROUTING_KEY, QUEUE_NAME))
+            .retryBackoff(NUM_RETRIES, FIRST_BACKOFF, FOREVER);
+
+        declareExchange
+            .then(declareQueue)
+            .then(bindQueueToExchange)
             .block();
     }
 
