@@ -27,8 +27,9 @@ import static org.apache.james.mailbox.events.EventBusTestFixture.GROUP_A;
 import static org.apache.james.mailbox.events.EventBusTestFixture.KEY_1;
 import static org.apache.james.mailbox.events.EventBusTestFixture.NO_KEYS;
 import static org.apache.james.mailbox.events.EventBusTestFixture.RETRY_BACKOFF_CONFIGURATION;
-import static org.apache.james.mailbox.events.EventBusTestFixture.WAIT_CONDITION;
-import static org.apache.james.mailbox.events.EventBusTestFixture.WAIT_CONDITION_LONG;
+
+import static org.apache.james.mailbox.events.EventBusTestFixture.waitCondition;
+import static org.apache.james.mailbox.events.EventBusTestFixture.waitConditionLong;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -103,7 +104,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        WAIT_CONDITION
+        waitCondition(getSpeedProfile())
             .untilAsserted(() -> assertThat(eventCollector.getEvents()).hasSize(1));
     }
 
@@ -125,7 +126,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        WAIT_CONDITION_LONG
+        waitConditionLong(getSpeedProfile())
             .untilAsserted(() -> assertThat(eventCollector.getEvents()).hasSize(1));
     }
 
@@ -161,10 +162,9 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(throwingListener, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        TimeUnit.MINUTES.sleep(1);
+        Thread.sleep(getSpeedProfile().getLongWaitTime().toMillis());
         int numberOfCallsAfterExceedMaxRetries = throwingListener.timeElapsed.size();
-        TimeUnit.MINUTES.sleep(1);
-
+        Thread.sleep(getSpeedProfile().getLongWaitTime().toMillis());
 
         assertThat(throwingListener.timeElapsed.size())
             .isEqualTo(numberOfCallsAfterExceedMaxRetries);
@@ -177,7 +177,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(throwingListener, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        TimeUnit.MINUTES.sleep(1);
+        Thread.sleep(getSpeedProfile().getLongWaitTime().toMillis());
         SoftAssertions.assertSoftly(softly -> {
             List<Instant> timeElapsed = throwingListener.timeElapsed;
             softly.assertThat(timeElapsed).hasSize(RETRY_BACKOFF_CONFIGURATION.getMaxRetries() + 1);
@@ -215,7 +215,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(listener, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        WAIT_CONDITION.until(successfulRetry::get);
+        waitCondition(getSpeedProfile()).until(successfulRetry::get);
     }
 
     @Test
@@ -258,7 +258,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, new EventBusTestFixture.GroupA());
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        WAIT_CONDITION
+        waitCondition(getSpeedProfile())
             .untilAsserted(() -> assertThat(eventCollector.getEvents()).hasSize(1));
 
         assertThat(deadLetter().groupsWithFailedEvents().toIterable())
@@ -284,7 +284,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        WAIT_CONDITION_LONG.untilAsserted(() -> assertThat(deadLetter().failedIds(GROUP_A)
+        waitConditionLong(getSpeedProfile()).untilAsserted(() -> assertThat(deadLetter().failedIds(GROUP_A)
                 .flatMap(insertionId -> deadLetter().failedEvent(GROUP_A, insertionId))
                 .toIterable())
             .containsOnly(EVENT));
@@ -312,7 +312,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().reDeliver(GROUP_A, EVENT).block();
 
-        WAIT_CONDITION_LONG.untilAsserted(() ->
+        waitConditionLong(getSpeedProfile()).untilAsserted(() ->
                 assertThat(
                         deadLetter()
                             .failedIds(GROUP_A)
@@ -343,7 +343,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().reDeliver(GROUP_A, EVENT).block();
 
-        WAIT_CONDITION_LONG.untilAsserted(() -> assertThat(eventCollector.getEvents()).isNotEmpty());
+        waitConditionLong(getSpeedProfile()).untilAsserted(() -> assertThat(eventCollector.getEvents()).isNotEmpty());
     }
 
     @Test
@@ -355,7 +355,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector2, KEY_1);
         eventBus().reDeliver(GROUP_A, EVENT).block();
 
-        WAIT_CONDITION
+        waitCondition(getSpeedProfile())
             .untilAsserted(() -> assertThat(eventCollector.getEvents()).hasSize(1));
         assertThat(eventCollector2.getEvents()).isEmpty();
     }

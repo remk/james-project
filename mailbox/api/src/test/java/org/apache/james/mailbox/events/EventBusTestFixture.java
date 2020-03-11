@@ -27,6 +27,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.james.core.Username;
@@ -118,8 +119,14 @@ public interface EventBusTestFixture {
     GroupC GROUP_C = new GroupC();
     List<Group> ALL_GROUPS = ImmutableList.of(GROUP_A, GROUP_B, GROUP_C);
 
-    ConditionFactory WAIT_CONDITION = await().timeout(Duration.FIVE_SECONDS);
-    ConditionFactory WAIT_CONDITION_LONG = await().timeout(Duration.ONE_MINUTE);
+
+    static ConditionFactory waitCondition(EventBusContract.EnvironmentSpeedProfile speedProfile) {
+        return await().timeout(new Duration(speedProfile.getShortWaitTime().toMillis(), TimeUnit.MILLISECONDS));
+    }
+
+    static ConditionFactory waitConditionLong(EventBusContract.EnvironmentSpeedProfile speedProfile) {
+        return await().timeout(new Duration(speedProfile.getLongWaitTime().toMillis(), TimeUnit.MILLISECONDS));
+    }
 
     java.time.Duration DEFAULT_FIRST_BACKOFF = java.time.Duration.ofMillis(20);
     //Retry backoff configuration for testing with a shorter first backoff to accommodate the shorter retry interval in tests

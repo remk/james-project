@@ -19,7 +19,32 @@
 
 package org.apache.james.mailbox.events;
 
+import java.time.Duration;
+
 public interface EventBusContract {
+
+    enum EnvironmentSpeedProfile {
+        SLOW(Duration.ofSeconds(5), Duration.ofSeconds(30)),
+        FAST(Duration.ofMillis(200), Duration.ofSeconds(5));
+
+        private final Duration shortWaitTime;
+        private final Duration longWaitTime;
+
+        EnvironmentSpeedProfile(Duration shortWaitTime, Duration longWaitTime) {
+            this.shortWaitTime = shortWaitTime;
+            this.longWaitTime = longWaitTime;
+        }
+
+        public Duration getShortWaitTime() {
+            return shortWaitTime;
+        }
+
+        public Duration getLongWaitTime() {
+            return longWaitTime;
+        }
+    }
+
+    EnvironmentSpeedProfile getSpeedProfile();
 
     interface MultipleEventBusContract extends EventBusContract {
 
