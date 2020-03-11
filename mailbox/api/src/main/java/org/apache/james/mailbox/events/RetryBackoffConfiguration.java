@@ -22,6 +22,7 @@ package org.apache.james.mailbox.events;
 import java.time.Duration;
 import java.util.Objects;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
