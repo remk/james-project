@@ -19,8 +19,8 @@
 
 package org.apache.james.transport.mailets;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
@@ -63,21 +63,24 @@ public class RemoveMimeHeader extends GenericMailet {
 
     @Override
     public void service(Mail mail) throws MessagingException {
-        MimeMessage  message = mail.getMessage();
-        
+        MimeMessage message = mail.getMessage();
+
+        boolean headersToRemove = message.getMatchingHeaderLines(headers.toArray(new String[headers.size()]))
+            .hasMoreElements();
+
         for (String header : headers) {
             message.removeHeader(header);
         }
-        
+
         removeSpecific(mail);
 
-        message.saveChanges();
+        if (headersToRemove) {
+            message.saveChanges();
+        }
     }
 
     protected void removeSpecific(Mail mail) {
-        mail.getPerRecipientSpecificHeaders().getRecipientsWithSpecificHeaders() 
-                .stream()
-                .collect(Collectors.toList()) // Streaming for concurrent modifications
+        new ArrayList<>(mail.getPerRecipientSpecificHeaders().getRecipientsWithSpecificHeaders()) // Streaming for concurrent modifications
                 .forEach(recipient -> {
                     mail.getPerRecipientSpecificHeaders()
                         .getHeadersForRecipient(recipient)
