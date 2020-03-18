@@ -65,7 +65,7 @@ public class RemoveMimeHeader extends GenericMailet {
     public void service(Mail mail) throws MessagingException {
         MimeMessage message = mail.getMessage();
 
-        boolean headersToRemove = message.getMatchingHeaderLines(headers.toArray(new String[headers.size()]))
+        boolean hasHeadersToRemove = message.getMatchingHeaderLines(headers.toArray(new String[0]))
             .hasMoreElements();
 
         for (String header : headers) {
@@ -74,13 +74,13 @@ public class RemoveMimeHeader extends GenericMailet {
 
         removeSpecific(mail);
 
-        if (headersToRemove) {
+        if (hasHeadersToRemove) {
             message.saveChanges();
         }
     }
 
     protected void removeSpecific(Mail mail) {
-        new ArrayList<>(mail.getPerRecipientSpecificHeaders().getRecipientsWithSpecificHeaders()) // Streaming for concurrent modifications
+        new ArrayList<>(mail.getPerRecipientSpecificHeaders().getRecipientsWithSpecificHeaders()) // Copying to avoid concurrent modifications
                 .forEach(recipient -> {
                     mail.getPerRecipientSpecificHeaders()
                         .getHeadersForRecipient(recipient)
