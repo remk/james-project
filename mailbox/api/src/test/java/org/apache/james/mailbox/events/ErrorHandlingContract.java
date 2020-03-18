@@ -27,9 +27,6 @@ import static org.apache.james.mailbox.events.EventBusTestFixture.GROUP_A;
 import static org.apache.james.mailbox.events.EventBusTestFixture.KEY_1;
 import static org.apache.james.mailbox.events.EventBusTestFixture.NO_KEYS;
 import static org.apache.james.mailbox.events.EventBusTestFixture.RETRY_BACKOFF_CONFIGURATION;
-
-import static org.apache.james.mailbox.events.EventBusTestFixture.waitCondition;
-import static org.apache.james.mailbox.events.EventBusTestFixture.waitConditionLong;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -104,7 +101,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        waitCondition(getSpeedProfile())
+        getSpeedProfile().shortWaitCondition()
             .untilAsserted(() -> assertThat(eventCollector.getEvents()).hasSize(1));
     }
 
@@ -126,7 +123,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        waitConditionLong(getSpeedProfile())
+        getSpeedProfile().longWaitCondition()
             .untilAsserted(() -> assertThat(eventCollector.getEvents()).hasSize(1));
     }
 
@@ -215,7 +212,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(listener, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        waitCondition(getSpeedProfile()).until(successfulRetry::get);
+        getSpeedProfile().shortWaitCondition().until(successfulRetry::get);
     }
 
     @Test
@@ -258,7 +255,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, new EventBusTestFixture.GroupA());
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        waitCondition(getSpeedProfile())
+        getSpeedProfile().shortWaitCondition()
             .untilAsserted(() -> assertThat(eventCollector.getEvents()).hasSize(1));
 
         assertThat(deadLetter().groupsWithFailedEvents().toIterable())
@@ -284,7 +281,8 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().dispatch(EVENT, NO_KEYS).block();
 
-        waitConditionLong(getSpeedProfile()).untilAsserted(() -> assertThat(deadLetter().failedIds(GROUP_A)
+        getSpeedProfile().longWaitCondition()
+            .untilAsserted(() -> assertThat(deadLetter().failedIds(GROUP_A)
                 .flatMap(insertionId -> deadLetter().failedEvent(GROUP_A, insertionId))
                 .toIterable())
             .containsOnly(EVENT));
@@ -312,7 +310,8 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().reDeliver(GROUP_A, EVENT).block();
 
-        waitConditionLong(getSpeedProfile()).untilAsserted(() ->
+        getSpeedProfile().longWaitCondition()
+            .untilAsserted(() ->
                 assertThat(
                         deadLetter()
                             .failedIds(GROUP_A)
@@ -343,7 +342,8 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector, GROUP_A);
         eventBus().reDeliver(GROUP_A, EVENT).block();
 
-        waitConditionLong(getSpeedProfile()).untilAsserted(() -> assertThat(eventCollector.getEvents()).isNotEmpty());
+        getSpeedProfile().longWaitCondition()
+            .untilAsserted(() -> assertThat(eventCollector.getEvents()).isNotEmpty());
     }
 
     @Test
@@ -355,7 +355,7 @@ interface ErrorHandlingContract extends EventBusContract {
         eventBus().register(eventCollector2, KEY_1);
         eventBus().reDeliver(GROUP_A, EVENT).block();
 
-        waitCondition(getSpeedProfile())
+        getSpeedProfile().longWaitCondition()
             .untilAsserted(() -> assertThat(eventCollector.getEvents()).hasSize(1));
         assertThat(eventCollector2.getEvents()).isEmpty();
     }

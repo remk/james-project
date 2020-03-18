@@ -21,13 +21,11 @@ package org.apache.james.mailbox.events;
 
 import static org.apache.james.mailbox.events.RetryBackoffConfiguration.DEFAULT_JITTER_FACTOR;
 import static org.apache.james.mailbox.events.RetryBackoffConfiguration.DEFAULT_MAX_RETRIES;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.james.core.Username;
@@ -36,8 +34,6 @@ import org.apache.james.mailbox.model.MailboxConstants;
 import org.apache.james.mailbox.model.MailboxId;
 import org.apache.james.mailbox.model.MailboxPath;
 import org.apache.james.mailbox.model.TestId;
-import org.awaitility.Duration;
-import org.awaitility.core.ConditionFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -118,15 +114,6 @@ public interface EventBusTestFixture {
     GroupB GROUP_B = new GroupB();
     GroupC GROUP_C = new GroupC();
     List<Group> ALL_GROUPS = ImmutableList.of(GROUP_A, GROUP_B, GROUP_C);
-
-
-    static ConditionFactory waitCondition(EventBusContract.EnvironmentSpeedProfile speedProfile) {
-        return await().timeout(new Duration(speedProfile.getShortWaitTime().toMillis(), TimeUnit.MILLISECONDS));
-    }
-
-    static ConditionFactory waitConditionLong(EventBusContract.EnvironmentSpeedProfile speedProfile) {
-        return await().timeout(new Duration(speedProfile.getLongWaitTime().toMillis(), TimeUnit.MILLISECONDS));
-    }
 
     java.time.Duration DEFAULT_FIRST_BACKOFF = java.time.Duration.ofMillis(20);
     //Retry backoff configuration for testing with a shorter first backoff to accommodate the shorter retry interval in tests

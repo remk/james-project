@@ -19,7 +19,12 @@
 
 package org.apache.james.mailbox.events;
 
+import static org.awaitility.Awaitility.await;
+
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
+import org.awaitility.core.ConditionFactory;
 
 public interface EventBusContract {
 
@@ -41,6 +46,14 @@ public interface EventBusContract {
 
         public Duration getLongWaitTime() {
             return longWaitTime;
+        }
+
+        public ConditionFactory shortWaitCondition() {
+            return await().timeout(new org.awaitility.Duration(this.getShortWaitTime().toMillis(), TimeUnit.MILLISECONDS));
+        }
+
+        public ConditionFactory longWaitCondition() {
+            return await().timeout(new org.awaitility.Duration(this.getLongWaitTime().toMillis(), TimeUnit.MILLISECONDS));
         }
     }
 

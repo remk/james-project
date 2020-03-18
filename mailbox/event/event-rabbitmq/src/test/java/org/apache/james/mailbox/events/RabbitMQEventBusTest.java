@@ -31,7 +31,6 @@ import static org.apache.james.mailbox.events.EventBusTestFixture.EVENT;
 import static org.apache.james.mailbox.events.EventBusTestFixture.GROUP_A;
 import static org.apache.james.mailbox.events.EventBusTestFixture.KEY_1;
 import static org.apache.james.mailbox.events.EventBusTestFixture.NO_KEYS;
-import static org.apache.james.mailbox.events.EventBusTestFixture.waitCondition;
 import static org.apache.james.mailbox.events.EventBusTestFixture.newAsyncListener;
 import static org.apache.james.mailbox.events.EventBusTestFixture.newListener;
 import static org.apache.james.mailbox.events.GroupRegistration.WorkQueueName.MAILBOX_EVENT_WORK_QUEUE_PREFIX;
@@ -77,7 +76,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.stubbing.Answer;
 
 import com.google.common.collect.ImmutableSet;
-
 import reactor.core.publisher.Mono;
 import reactor.rabbitmq.BindingSpecification;
 import reactor.rabbitmq.ExchangeSpecification;
@@ -253,15 +251,15 @@ class RabbitMQEventBusTest implements GroupContract.SingleEventBusGroupContract,
             eventBus3.register(eventBus3Listener, GROUP_A);
 
             eventBus.dispatch(EVENT, NO_KEYS).block();
-            waitCondition(getSpeedProfile())
+            getSpeedProfile().shortWaitCondition()
                 .untilAsserted(() -> assertThat(eventBusListener.numberOfEventCalls()).isEqualTo(1));
             eventBus.stop();
 
-            waitCondition(getSpeedProfile())
+            getSpeedProfile().shortWaitCondition()
                 .untilAsserted(() -> assertThat(eventBus2Listener.numberOfEventCalls()).isEqualTo(1));
             eventBus2.stop();
 
-            waitCondition(getSpeedProfile())
+            getSpeedProfile().shortWaitCondition()
                 .untilAsserted(() -> assertThat(eventBus3Listener.numberOfEventCalls()).isEqualTo(1));
         }
     }
