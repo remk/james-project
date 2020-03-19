@@ -19,7 +19,6 @@
 
 package org.apache.james.transport.mailets;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.mail.MessagingException;
@@ -80,7 +79,7 @@ public class RemoveMimeHeader extends GenericMailet {
     }
 
     protected void removeSpecific(Mail mail) {
-        new ArrayList<>(mail.getPerRecipientSpecificHeaders().getRecipientsWithSpecificHeaders()) // Copying to avoid concurrent modifications
+        ImmutableList.copyOf(mail.getPerRecipientSpecificHeaders().getRecipientsWithSpecificHeaders()) // Copying to avoid concurrent modifications
                 .forEach(recipient -> {
                     mail.getPerRecipientSpecificHeaders()
                         .getHeadersForRecipient(recipient)
