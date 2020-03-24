@@ -19,9 +19,8 @@
 
 package org.apache.james.jmap.model
 
+import eu.timepit.refined.api.RefType
 import eu.timepit.refined.auto._
-import eu.timepit.refined.refineV
-import org.apache.james.jmap.model.Id.idTypeValidate
 import org.scalatest.{Matchers, WordSpec}
 
 class IdTest extends WordSpec with Matchers {
@@ -33,33 +32,24 @@ class IdTest extends WordSpec with Matchers {
    *
    * Macros can only validate literals because their values are known at
    * compile-time. To validate arbitrary (runtime) values we can use the
-   * refineV function
+   * RefType.applyRef function
    */
   "apply" when {
     "in Runtime" should {
-      "return left(error message) when null value" in {
-        val nullString: String = null
-        val maybeId: Option[String] = refineV[IdType](nullString) match {
-          case Left(errorMessage) => Option(errorMessage)
-          case Right(validValue) => Option.empty
-        }
-
-        maybeId.get should equal("Predicate failed: value does not meet Id requirements.")
-      }
 
       "return left(error message) when empty value" in {
-        val maybeId: Option[String] = refineV[IdType]("") match {
+        val maybeId: Option[String] = RefType.applyRef[Id.Id]("") match {
           case Left(errorMessage) => Option(errorMessage)
-          case Right(validValue) => Option.empty
+          case Right(_) => Option.empty
         }
 
         maybeId.get should equal("Predicate failed: value does not meet Id requirements.")
       }
 
       "return left(error message) when too long value" in {
-        val maybeId: Option[String] = refineV[IdType]("a" * 256) match {
+        val maybeId: Option[String] = RefType.applyRef[Id.Id]("a" * 256) match {
           case Left(errorMessage) => Option(errorMessage)
-          case Right(validValue) => Option.empty
+          case Right(_) => Option.empty
         }
 
         maybeId.get should equal("Predicate failed: value does not meet Id requirements.")
@@ -67,9 +57,9 @@ class IdTest extends WordSpec with Matchers {
 
       "return left(error message) when containing invalid characters" in {
         INVALID_CHARACTERS.foreach { invalidChar =>
-          val maybeId: Option[String] = refineV[IdType](invalidChar) match {
+          val maybeId: Option[String] = RefType.applyRef[Id.Id](invalidChar) match {
             case Left(errorMessage) => Option(errorMessage)
-            case Right(validValue) => Option.empty
+            case Right(_) => Option.empty
           }
 
           maybeId.get should equal("Predicate failed: value does not meet Id requirements.")
@@ -77,12 +67,14 @@ class IdTest extends WordSpec with Matchers {
       }
 
       "return right when valid value" in {
-        val maybeId: Option[Id] = refineV[IdType]("myId") match {
-          case Left(errorMessage) => Option.empty
-          case Right(validValue) => Option(Id(validValue))
+        val myId : Id.Id = "myId"
+
+        val maybeId: Option[Id.Id] = RefType.applyRef[Id.Id]("myId") match {
+          case Left(_) => Option.empty
+          case Right(validValue) => Option(validValue)
         }
 
-        maybeId.get should equal(Id("myId"))
+        maybeId.get should equal(myId)
       }
     }
   }

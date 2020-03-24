@@ -18,18 +18,15 @@
  * ***************************************************************/
 
 package org.apache.james.jmap.model
-
-import eu.timepit.refined.api.{Refined, Validate}
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.boolean._
+import eu.timepit.refined.collection._
+import eu.timepit.refined.numeric._
+import eu.timepit.refined.string._
 
 object Id {
-  implicit val idTypeValidate: Validate.Plain[String, IdType] =
-    Validate.fromPredicate(
-      idAsString => idAsString != null
-        && idAsString.length > 0 && idAsString.length < 256
-        && idAsString.matches("^[a-zA-Z0-9-_]*"),
-      _ => "value does not meet Id requirements",
-      IdType())
+  type Id = String Refined And[
+    Size[Interval.Closed[1, 255]],
+    MatchesRegex["^[a-zA-Z0-9-_]*$"]]
 }
 
-final case class IdType()
-final case class Id(value: String Refined IdType)
