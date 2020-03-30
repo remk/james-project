@@ -38,6 +38,8 @@ import org.apache.mailet.Attribute;
 import org.apache.mailet.AttributeValue;
 import org.apache.mailet.Mail;
 
+import reactor.core.publisher.Mono;
+
 /**
  * Handler which set a configured {@link Mail} priority for the mail.
  * 
@@ -49,7 +51,7 @@ public class MailPriorityHandler implements JamesMessageHook, ProtocolHandler {
     private final Map<Domain, Integer> prioMap = new HashMap<>();
 
     @Override
-    public HookResult onMessage(SMTPSession session, Mail mail) {
+    public Mono<HookResult> onMessage(SMTPSession session, Mail mail) {
         Iterator<MailAddress> rcpts = mail.getRecipients().iterator();
 
         Integer p = null;
@@ -76,7 +78,7 @@ public class MailPriorityHandler implements JamesMessageHook, ProtocolHandler {
         if (p != null) {
             mail.setAttribute(new Attribute(MailPrioritySupport.MAIL_PRIORITY, AttributeValue.of(p)));
         }
-        return HookResult.DECLINED;
+        return Mono.just(HookResult.DECLINED);
     }
 
     @Override

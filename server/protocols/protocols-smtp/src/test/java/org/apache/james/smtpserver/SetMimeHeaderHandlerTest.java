@@ -69,7 +69,7 @@ class SetMimeHeaderHandlerTest {
         header.setHeaderName(HEADER_NAME);
         header.setHeaderValue(HEADER_VALUE);
 
-        header.onMessage(fakeSMTPSession, mail);
+        header.onMessage(fakeSMTPSession, mail).block();
 
         assertThat(mail.getMessage().getHeader(HEADER_NAME)).containsOnly(HEADER_VALUE);
     }
@@ -94,7 +94,7 @@ class SetMimeHeaderHandlerTest {
         header.setHeaderName(HEADER_NAME);
         header.setHeaderValue(HEADER_VALUE);
 
-        header.onMessage(fakeSMTPSession, mail);
+        header.onMessage(fakeSMTPSession, mail).block();
 
         assertThat(mail.getMessage().getHeader(HEADER_NAME)).containsOnly(HEADER_VALUE);
     }

@@ -56,6 +56,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 
+import reactor.core.publisher.Mono;
+
 /**
  * Handles the calling of JamesMessageHooks
  */
@@ -170,7 +172,7 @@ public class DataLineJamesMessageHookHandler implements DataLineFilter, Extensib
                 for (JamesMessageHook messageHandler : messageHandlers) {
                     LOGGER.debug("executing james message handler {}", messageHandler);
                     long start = System.currentTimeMillis();
-                    HookResult hRes = messageHandler.onMessage(session, mail);
+                    HookResult hRes = Mono.from(messageHandler.onMessage(session, mail)).block();
                     long executionTime = System.currentTimeMillis() - start;
                     if (rHooks != null) {
                         for (HookResultHook rHook : rHooks) {

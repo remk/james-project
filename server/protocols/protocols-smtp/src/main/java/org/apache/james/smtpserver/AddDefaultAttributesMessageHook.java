@@ -25,6 +25,8 @@ import org.apache.mailet.Attribute;
 import org.apache.mailet.AttributeValue;
 import org.apache.mailet.Mail;
 
+import reactor.core.publisher.Mono;
+
 /**
  * This hook adds the default attributes to the just created Mail
  */
@@ -36,21 +38,23 @@ public class AddDefaultAttributesMessageHook implements JamesMessageHook {
     public static final String SMTP_AUTH_NETWORK_NAME = "org.apache.james.SMTPIsAuthNetwork";
 
     @Override
-    public HookResult onMessage(SMTPSession session, Mail mail) {
-        if (mail instanceof MailImpl) {
+    public Mono<HookResult> onMessage(SMTPSession session, Mail mail) {
+        return Mono.fromCallable(() -> {
+            if (mail instanceof MailImpl) {
 
-            final MailImpl mailImpl = (MailImpl) mail;
-            mailImpl.setRemoteHost(session.getRemoteAddress().getHostName());
-            mailImpl.setRemoteAddr(session.getRemoteAddress().getAddress().getHostAddress());
-            if (session.getUsername() != null) {
-                mail.setAttribute(new Attribute(Mail.SMTP_AUTH_USER, AttributeValue.of(session.getUsername().asString())));
-            }
+                final MailImpl mailImpl = (MailImpl) mail;
+                mailImpl.setRemoteHost(session.getRemoteAddress().getHostName());
+                mailImpl.setRemoteAddr(session.getRemoteAddress().getAddress().getHostAddress());
+                if (session.getUsername() != null) {
+                    mail.setAttribute(new Attribute(Mail.SMTP_AUTH_USER, AttributeValue.of(session.getUsername().asString())));
+                }
 
-            if (session.isRelayingAllowed()) {
-                mail.setAttribute(Attribute.convertToAttribute(SMTP_AUTH_NETWORK_NAME, true));
+                if (session.isRelayingAllowed()) {
+                    mail.setAttribute(Attribute.convertToAttribute(SMTP_AUTH_NETWORK_NAME, true));
+                }
             }
-        }
-        return HookResult.DECLINED;
+            return HookResult.DECLINED;
+        });
     }
 
 }
