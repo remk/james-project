@@ -35,6 +35,10 @@ import org.apache.mailet.Mail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.fge.lambdas.Throwing;
+
+import reactor.core.publisher.Mono;
+
 /**
  * Queue the message
  */
@@ -67,23 +71,24 @@ public class SendMailHandler implements JamesMessageHook {
      * Adds header to the message
      */
     @Override
-    public HookResult onMessage(SMTPSession session, Mail mail) {
-        LOGGER.debug("sending mail");
-
-        try {
-            queue.enQueue(mail);
+    public Mono<HookResult> onMessage(SMTPSession session, Mail mail) {
+       return Mono.fromRunnable(Throwing.runnable(() -> {
+           LOGGER.debug("sending mail");
+           queue.enQueue(mail);
+       }).sneakyThrow())
+        .then(Mono.fromCallable(() -> {
             LOGGER.info("Successfully spooled mail {} from {} on {} for {}", mail.getName(), mail.getMaybeSender(), session.getRemoteAddress().getAddress(), mail.getRecipients());
-        } catch (MessagingException me) {
+              return HookResult.builder()
+                    .hookReturnCode(HookReturnCode.ok())
+                    .smtpDescription(DSNStatus.getStatus(DSNStatus.SUCCESS, DSNStatus.CONTENT_OTHER) + " Message received")
+                    .build();
+            }))
+        .onErrorResume(MessagingException.class, me -> {
             LOGGER.error("Unknown error occurred while processing DATA.", me);
-            return HookResult.builder()
+            return Mono.just(HookResult.builder()
                 .hookReturnCode(HookReturnCode.denySoft())
                 .smtpDescription(DSNStatus.getStatus(DSNStatus.TRANSIENT, DSNStatus.UNDEFINED_STATUS) + " Error processing message.")
-                .build();
-        }
-        return HookResult.builder()
-            .hookReturnCode(HookReturnCode.ok())
-            .smtpDescription(DSNStatus.getStatus(DSNStatus.SUCCESS, DSNStatus.CONTENT_OTHER) + " Message received")
-            .build();
+                .build());
+        });
     }
-
 }

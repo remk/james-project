@@ -141,7 +141,7 @@ public class SpamAssassinHandlerTest {
         handler.setSpamdHost(SPAMD_HOST);
         handler.setSpamdPort(spamd.getPort());
         handler.setSpamdRejectionHits(200.0);
-        HookResult response = handler.onMessage(session, mockedMail);
+        HookResult response = handler.onMessage(session, mockedMail).block();
 
         assertThat(HookReturnCode.declined()).describedAs("Email was not rejected").isEqualTo(response.getResult());
         assertThat(mockedMail.getAttribute(SpamAssassinResult.FLAG_MAIL)).describedAs("email was not spam").contains(FLAG_MAIL_ATTRIBUTE_NO);
@@ -158,7 +158,7 @@ public class SpamAssassinHandlerTest {
         handler.setSpamdHost(SPAMD_HOST);
         handler.setSpamdPort(spamd.getPort());
         handler.setSpamdRejectionHits(2000.0);
-        HookResult response = handler.onMessage(session, mockedMail);
+        HookResult response = handler.onMessage(session, mockedMail).block();
 
         assertThat(HookReturnCode.declined()).describedAs("Email was not rejected").isEqualTo(response.getResult());
         assertThat(mockedMail.getAttribute(SpamAssassinResult.FLAG_MAIL)).describedAs("email was spam").contains(FLAG_MAIL_ATTRIBUTE_YES);
@@ -174,7 +174,7 @@ public class SpamAssassinHandlerTest {
         handler.setSpamdHost(SPAMD_HOST);
         handler.setSpamdPort(spamd.getPort());
         handler.setSpamdRejectionHits(200.0);
-        HookResult response = handler.onMessage(session, mockedMail);
+        HookResult response = handler.onMessage(session, mockedMail).block();
 
         assertThat(HookReturnCode.deny()).describedAs("Email was rejected").isEqualTo(response.getResult());
         assertThat(mockedMail.getAttribute(SpamAssassinResult.FLAG_MAIL)).describedAs("email was spam").contains(FLAG_MAIL_ATTRIBUTE_YES);

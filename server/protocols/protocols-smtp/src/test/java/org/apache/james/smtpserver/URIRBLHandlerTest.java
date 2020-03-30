@@ -187,7 +187,7 @@ public class URIRBLHandlerTest {
 
         handler.setDNSService(setupMockedDnsServer());
         handler.setUriRblServer(servers);
-        HookResult response = handler.onMessage(session, mockedMail);
+        HookResult response = handler.onMessage(session, mockedMail).block();
 
         assertThat(HookReturnCode.declined()).describedAs("Email was not rejected").isEqualTo(response.getResult());
     }
@@ -205,7 +205,7 @@ public class URIRBLHandlerTest {
 
         handler.setDNSService(setupMockedDnsServer());
         handler.setUriRblServer(servers);
-        HookResult response = handler.onMessage(session, mockedMail);
+        HookResult response = handler.onMessage(session, mockedMail).block();
 
         assertThat(HookReturnCode.deny()).describedAs("Email was rejected").isEqualTo(response.getResult());
     }
@@ -223,7 +223,7 @@ public class URIRBLHandlerTest {
 
         handler.setDNSService(setupMockedDnsServer());
         handler.setUriRblServer(servers);
-        HookResult response = handler.onMessage(session, mockedMail);
+        HookResult response = handler.onMessage(session, mockedMail).block();
 
         assertThat(HookReturnCode.deny()).describedAs("Email was rejected").isEqualTo(response.getResult());
     }
@@ -244,7 +244,7 @@ public class URIRBLHandlerTest {
      * handler.setDnsServer(setupMockedDnsServer());
      * handler.setUriRblServer(servers); handler.setAction("junkScore");
      * handler.setScore(20); HookResult response = handler.onMessage(session,
-     * mockedMail);
+     * mockedMail).block();
      * 
      * assertNull("Email was not rejected", response);
      * assertEquals("JunkScore added", ((JunkScore)

@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import com.github.fge.lambdas.Throwing;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+
 import reactor.core.publisher.Mono;
 
 /**
@@ -110,7 +111,7 @@ public class SpamAssassinInvoker {
     }
 
     private Mono<SpamAssassinResult> scanMailWithAdditionalHeaders(MimeMessage message, String... additionalHeaders) {
-       return Mono.fromCallable( () -> {
+       return Mono.fromCallable(() -> {
             try (Socket socket = new Socket(spamdHost, spamdPort);
                  OutputStream out = socket.getOutputStream();
                  BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(out);
