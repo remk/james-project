@@ -48,6 +48,8 @@ import org.apache.mailet.Mail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.publisher.Mono;
+
 /**
  * Extract domains from message and check against URIRBLServer. For more
  * information see <a href="http://www.surbl.org">www.surbl.org</a>
@@ -108,39 +110,41 @@ public class URIRBLHandler implements JamesMessageHook, ProtocolHandler {
     }
 
     @Override
-    public HookResult onMessage(SMTPSession session, Mail mail) {
-        if (check(session, mail)) {
-            Optional<String> uRblServer = session.getAttachment(URBLSERVER, State.Transaction);
-            Optional<String> target = session.getAttachment(LISTED_DOMAIN, State.Transaction);
-            String detail = null;
+    public Mono<HookResult> onMessage(SMTPSession session, Mail mail) {
+        return Mono.fromCallable(() -> {
+            if (check(session, mail)) {
+                Optional<String> uRblServer = session.getAttachment(URBLSERVER, State.Transaction);
+                Optional<String> target = session.getAttachment(LISTED_DOMAIN, State.Transaction);
+                String detail = null;
 
-            // we should try to retrieve details
-            if (uRblServer.isPresent() && target.isPresent() && getDetail) {
-                Collection<String> txt = dnsService.findTXTRecords(target.get() + "." + uRblServer.get());
+                // we should try to retrieve details
+                if (uRblServer.isPresent() && target.isPresent() && getDetail) {
+                    Collection<String> txt = dnsService.findTXTRecords(target.get() + "." + uRblServer.get());
 
-                // Check if we found a txt record
-                if (!txt.isEmpty()) {
-                    // Set the detail
-                    detail = txt.iterator().next();
+                    // Check if we found a txt record
+                    if (!txt.isEmpty()) {
+                        // Set the detail
+                        detail = txt.iterator().next();
 
+                    }
                 }
-            }
 
-            if (detail != null) {
-                return HookResult.builder()
-                    .hookReturnCode(HookReturnCode.deny())
-                    .smtpDescription(DSNStatus.getStatus(DSNStatus.PERMANENT, DSNStatus.SECURITY_OTHER) + "Rejected: message contains domain " + target.get() + " listed by " + uRblServer + " . Details: " + detail)
-                    .build();
+                if (detail != null) {
+                    return HookResult.builder()
+                        .hookReturnCode(HookReturnCode.deny())
+                        .smtpDescription(DSNStatus.getStatus(DSNStatus.PERMANENT, DSNStatus.SECURITY_OTHER) + "Rejected: message contains domain " + target.get() + " listed by " + uRblServer + " . Details: " + detail)
+                        .build();
+                } else {
+                    return HookResult.builder()
+                        .hookReturnCode(HookReturnCode.deny())
+                        .smtpDescription(DSNStatus.getStatus(DSNStatus.PERMANENT, DSNStatus.SECURITY_OTHER) + " Rejected: message contains domain " + target.orElse("[target not set]") + " listed by " + uRblServer)
+                        .build();
+                }
+
             } else {
-                return HookResult.builder()
-                    .hookReturnCode(HookReturnCode.deny())
-                    .smtpDescription(DSNStatus.getStatus(DSNStatus.PERMANENT, DSNStatus.SECURITY_OTHER) + " Rejected: message contains domain " + target.orElse("[target not set]") + " listed by " + uRblServer)
-                    .build();
+                return HookResult.DECLINED;
             }
-
-        } else {
-            return HookResult.DECLINED;
-        }
+        });
     }
 
     /**

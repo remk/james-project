@@ -30,6 +30,8 @@ import org.apache.mailet.Mail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.publisher.Mono;
+
 /**
  * Adds the header to the message
  */
@@ -66,21 +68,23 @@ public class SetMimeHeaderHandler implements JamesMessageHook, ProtocolHandler {
      * Adds header to the message
      */
     @Override
-    public HookResult onMessage(SMTPSession session, Mail mail) {
-        try {
-            MimeMessage message = mail.getMessage();
+    public Mono<HookResult> onMessage(SMTPSession session, Mail mail) {
+        return Mono.fromCallable(() -> {
+            try {
+                MimeMessage message = mail.getMessage();
 
-            // Set the header name and value (supplied at init time).
-            if (headerName != null) {
-                message.setHeader(headerName, headerValue);
-                message.saveChanges();
+                // Set the header name and value (supplied at init time).
+                if (headerName != null) {
+                    message.setHeader(headerName, headerValue);
+                    message.saveChanges();
+                }
+
+            } catch (javax.mail.MessagingException me) {
+                LOGGER.error(me.getMessage());
             }
 
-        } catch (javax.mail.MessagingException me) {
-            LOGGER.error(me.getMessage());
-        }
-
-        return HookResult.DECLINED;
+            return HookResult.DECLINED;
+        });
     }
 
     @Override

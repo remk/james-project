@@ -22,6 +22,7 @@ import org.apache.james.protocols.smtp.SMTPSession;
 import org.apache.james.protocols.smtp.hook.Hook;
 import org.apache.james.protocols.smtp.hook.HookResult;
 import org.apache.mailet.Mail;
+import org.reactivestreams.Publisher;
 
 /**
  * Custom message handlers must implement this interface The message hooks will
@@ -32,6 +33,6 @@ public interface JamesMessageHook extends Hook {
     /**
      * Handle Message
      */
-    HookResult onMessage(SMTPSession session, Mail mail);
+    Publisher<HookResult> onMessage(SMTPSession session, Mail mail);
 
 }

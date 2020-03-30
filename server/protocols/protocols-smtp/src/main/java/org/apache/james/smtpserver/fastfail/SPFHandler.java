@@ -49,6 +49,8 @@ import org.apache.mailet.Mail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.publisher.Mono;
+
 public class SPFHandler implements JamesMessageHook, MailHook, RcptHook, ProtocolHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SPFHandler.class);
@@ -278,11 +280,11 @@ public class SPFHandler implements JamesMessageHook, MailHook, RcptHook, Protoco
     }
 
     @Override
-    public HookResult onMessage(SMTPSession session, Mail mail) {
+    public Mono<HookResult> onMessage(SMTPSession session, Mail mail) {
         // Store the spf header as attribute for later using
         mail.setAttribute(new Attribute(SPF_HEADER_MAIL_ATTRIBUTE_NAME, AttributeValue.of(session.getAttachment(SPF_HEADER, State.Transaction).get())));
 
-        return null;
+        return Mono.empty();
     }
 
     @Override

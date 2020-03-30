@@ -21,7 +21,6 @@ package org.apache.james.smtpserver.fastfail;
 
 import javax.inject.Inject;
 import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
 
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -34,10 +33,11 @@ import org.apache.james.protocols.smtp.hook.HookResult;
 import org.apache.james.protocols.smtp.hook.HookReturnCode;
 import org.apache.james.smtpserver.JamesMessageHook;
 import org.apache.james.spamassassin.SpamAssassinInvoker;
-import org.apache.james.spamassassin.SpamAssassinResult;
 import org.apache.mailet.Mail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -119,42 +119,41 @@ public class SpamAssassinHandler implements JamesMessageHook, ProtocolHandler {
     }
 
     @Override
-    public HookResult onMessage(SMTPSession session, Mail mail) {
+    public Mono<HookResult> onMessage(SMTPSession session, Mail mail) {
+        SpamAssassinInvoker sa = new SpamAssassinInvoker(metricFactory, spamdHost, spamdPort);
 
-        try {
-            MimeMessage message = mail.getMessage();
-            SpamAssassinInvoker sa = new SpamAssassinInvoker(metricFactory, spamdHost, spamdPort);
-            SpamAssassinResult result = sa.scanMail(message).block();
+           return  Mono.fromCallable(mail::getMessage)
+                 .flatMap(sa::scanMail)
+                 .map(result -> {
+                     // Add the headers
+                     result.getHeadersAsAttributes().forEach(mail::setAttribute);
 
-            // Add the headers
-            result.getHeadersAsAttributes().forEach(mail::setAttribute);
+                     // Check if rejectionHits was configured
+                     if (spamdRejectionHits > 0) {
+                             double hits = Double.parseDouble(result.getHits());
 
-            // Check if rejectionHits was configured
-            if (spamdRejectionHits > 0) {
-                try {
-                    double hits = Double.parseDouble(result.getHits());
+                             // if the hits are bigger the rejectionHits reject the
+                             // message
+                             if (spamdRejectionHits <= hits) {
+                                 String buffer = "Rejected message from " + session.getAttachment(SMTPSession.SENDER, State.Transaction).toString() + " from host " + session.getRemoteAddress().getHostName() + " (" + session.getRemoteAddress().getAddress().getHostAddress() + ") This message reach the spam hits treshold. Required rejection hits: " + spamdRejectionHits + " hits: " + hits;
+                                 LOGGER.info(buffer);
 
-                    // if the hits are bigger the rejectionHits reject the
-                    // message
-                    if (spamdRejectionHits <= hits) {
-                        String buffer = "Rejected message from " + session.getAttachment(SMTPSession.SENDER, State.Transaction).toString() + " from host " + session.getRemoteAddress().getHostName() + " (" + session.getRemoteAddress().getAddress().getHostAddress() + ") This message reach the spam hits treshold. Required rejection hits: " + spamdRejectionHits + " hits: " + hits;
-                        LOGGER.info(buffer);
-
-                        // Message reject .. abort it!
-                        return HookResult.builder()
-                            .hookReturnCode(HookReturnCode.deny())
-                            .smtpDescription(DSNStatus.getStatus(DSNStatus.PERMANENT, DSNStatus.SECURITY_OTHER)
-                                + " This message reach the spam hits treshold. Please contact the Postmaster if the email is not SPAM. Message rejected")
-                            .build();
-                    }
-                } catch (NumberFormatException e) {
-                    // hits unknown
-                }
-            }
-        } catch (MessagingException e) {
-            LOGGER.error(e.getMessage());
-        }
-        return HookResult.DECLINED;
+                                 // Message reject .. abort it!
+                                 return HookResult.builder()
+                                     .hookReturnCode(HookReturnCode.deny())
+                                     .smtpDescription(DSNStatus.getStatus(DSNStatus.PERMANENT, DSNStatus.SECURITY_OTHER)
+                                         + " This message reach the spam hits treshold. Please contact the Postmaster if the email is not SPAM. Message rejected")
+                                     .build();
+                             }
+                     }
+                     return HookResult.DECLINED;
+                 }).onErrorResume(MessagingException.class,  e -> {
+                 LOGGER.error(e.getMessage(), e);
+                 return Mono.just(HookResult.DECLINED);
+             }).onErrorResume(NumberFormatException.class,  e -> {
+                 //hits unknown
+                 return Mono.just(HookResult.DECLINED);
+             });
     }
 
     @Override
