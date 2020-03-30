@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import com.github.fge.lambdas.Throwing;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import reactor.core.publisher.Mono;
 
 /**
  * Sends the message through daemonized SpamAssassin (spamd), visit <a
@@ -93,7 +94,7 @@ public class SpamAssassinInvoker {
      * @throws MessagingException
      *             if an error on scanning is detected
      */
-    public SpamAssassinResult scanMail(MimeMessage message, Username username) throws MessagingException {
+    public Mono<SpamAssassinResult> scanMail(MimeMessage message, Username username) {
         return metricFactory.runPublishingTimerMetric(
             "spamAssassin-check",
             Throwing.supplier(
@@ -102,56 +103,56 @@ public class SpamAssassinInvoker {
                 .sneakyThrow());
     }
 
-    public SpamAssassinResult scanMail(MimeMessage message) throws MessagingException {
-        return metricFactory.runPublishingTimerMetric(
+    public Mono<SpamAssassinResult> scanMail(MimeMessage message) {
+        return Mono.from(metricFactory.runPublishingTimerMetric(
             "spamAssassin-check",
-            Throwing.supplier(
-                () -> scanMailWithoutAdditionalHeaders(message))
-            .sneakyThrow());
+            scanMailWithoutAdditionalHeaders(message)));
     }
 
-    private SpamAssassinResult scanMailWithAdditionalHeaders(MimeMessage message, String... additionalHeaders) throws MessagingException {
-        try (Socket socket = new Socket(spamdHost, spamdPort);
-             OutputStream out = socket.getOutputStream();
-             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(out);
-             PrintWriter writer = new PrintWriter(bufferedOutputStream);
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+    private Mono<SpamAssassinResult> scanMailWithAdditionalHeaders(MimeMessage message, String... additionalHeaders) {
+       return Mono.fromCallable( () -> {
+            try (Socket socket = new Socket(spamdHost, spamdPort);
+                 OutputStream out = socket.getOutputStream();
+                 BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(out);
+                 PrintWriter writer = new PrintWriter(bufferedOutputStream);
+                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-            LOGGER.debug("Sending email {} for spam check", message.getMessageID());
+                LOGGER.debug("Sending email {} for spam check", message.getMessageID());
 
-            writer.write("CHECK SPAMC/1.2");
-            writer.write(CRLF);
+                writer.write("CHECK SPAMC/1.2");
+                writer.write(CRLF);
 
-            Arrays.stream(additionalHeaders)
-                .forEach(header -> {
-                    writer.write(header);
-                    writer.write(CRLF);
-                });
+                Arrays.stream(additionalHeaders)
+                    .forEach(header -> {
+                        writer.write(header);
+                        writer.write(CRLF);
+                    });
 
-            writer.write(CRLF);
-            writer.flush();
+                writer.write(CRLF);
+                writer.flush();
 
-            // pass the message to spamd
-            message.writeTo(out);
-            out.flush();
-            socket.shutdownOutput();
+                // pass the message to spamd
+                message.writeTo(out);
+                out.flush();
+                socket.shutdownOutput();
 
-            SpamAssassinResult spamAssassinResult = in.lines()
-                .filter(this::isSpam)
-                .map(this::processSpam)
-                .findFirst()
-                .orElse(SpamAssassinResult.empty());
+                SpamAssassinResult spamAssassinResult = in.lines()
+                    .filter(this::isSpam)
+                    .map(this::processSpam)
+                    .findFirst()
+                    .orElse(SpamAssassinResult.empty());
 
-            LOGGER.debug("spam check result: {}", spamAssassinResult);
-            return spamAssassinResult;
-        } catch (UnknownHostException e) {
-            throw new MessagingException("Error communicating with spamd. Unknown host: " + spamdHost);
-        } catch (IOException | MessagingException e) {
-            throw new MessagingException("Error communicating with spamd on " + spamdHost + ":" + spamdPort, e);
-        }
+                LOGGER.debug("spam check result: {}", spamAssassinResult);
+                return spamAssassinResult;
+            } catch (UnknownHostException e) {
+                throw new MessagingException("Error communicating with spamd. Unknown host: " + spamdHost);
+            } catch (IOException | MessagingException e) {
+                throw new MessagingException("Error communicating with spamd on " + spamdHost + ":" + spamdPort, e);
+            }
+        });
     }
 
-    private SpamAssassinResult scanMailWithoutAdditionalHeaders(MimeMessage message) throws MessagingException {
+    private Mono<SpamAssassinResult> scanMailWithoutAdditionalHeaders(MimeMessage message) {
         return scanMailWithAdditionalHeaders(message);
     }
 

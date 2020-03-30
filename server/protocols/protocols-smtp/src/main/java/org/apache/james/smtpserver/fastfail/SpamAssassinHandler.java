@@ -124,7 +124,7 @@ public class SpamAssassinHandler implements JamesMessageHook, ProtocolHandler {
         try {
             MimeMessage message = mail.getMessage();
             SpamAssassinInvoker sa = new SpamAssassinInvoker(metricFactory, spamdHost, spamdPort);
-            SpamAssassinResult result = sa.scanMail(message);
+            SpamAssassinResult result = sa.scanMail(message).block();
 
             // Add the headers
             result.getHeadersAsAttributes().forEach(mail::setAttribute);
