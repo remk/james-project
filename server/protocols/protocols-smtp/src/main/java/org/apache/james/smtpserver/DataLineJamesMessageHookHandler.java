@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.mail.MessagingException;
 
@@ -56,7 +57,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Handles the calling of JamesMessageHooks
@@ -139,67 +142,76 @@ public class DataLineJamesMessageHookHandler implements DataLineFilter, Extensib
         return null;
     }
 
-    protected Response processExtensions(SMTPSession session, Mail mail) {
+    protected Response processExtensions(SMTPSession session, final Mail mail) {
         if (mail != null && messageHandlers != null) {
             try {
                 MimeMessageInputStreamSource mmiss = session.getAttachment(SMTPConstants.DATA_MIMEMESSAGE_STREAMSOURCE, State.Transaction)
                     .orElseThrow(() -> new RuntimeException("'" + SMTPConstants.DATA_MIMEMESSAGE_STREAMSOURCE.asString() + "' has not been filled."));
                 OutputStream out;
                 out = mmiss.getWritableOutputStream();
-                for (MessageHook rawHandler : mHandlers) {
-                    LOGGER.debug("executing james message handler {}", rawHandler);
-                    long start = System.currentTimeMillis();
 
-                    HookResult hRes = rawHandler.onMessage(session, new MailToMailEnvelopeWrapper(mail, out));
-                    long executionTime = System.currentTimeMillis() - start;
+                Flux<Optional<SMTPResponse>> rawHandlerResponses = Flux.fromIterable(mHandlers).map(
+                    rawHandler -> getRawHandlersSmtpResponse(session, mail, out, rawHandler));
 
-                    if (rHooks != null) {
-                        for (HookResultHook rHook : rHooks) {
-                            LOGGER.debug("executing hook {}", rHook);
-                            hRes = rHook.onHookResult(session, hRes, executionTime, rawHandler);
-                        }
-                    }
+                Flux<Optional<SMTPResponse>> messageHandlerResponses = Flux.fromIterable(messageHandlers)
+                    .flatMap(messageHandler -> getMessageHandlersSmtpResponse(session, mail, messageHandler));
 
-                    SMTPResponse response = AbstractHookableCmdHandler.calcDefaultSMTPResponse(hRes);
+                return rawHandlerResponses
+                    .concatWith(messageHandlerResponses)
+                    // if the response is received, stop processing of command handlers
+                    .filter(Optional::isPresent)
+                    .defaultIfEmpty(Optional.empty())
+                    .subscribeOn(Schedulers.elastic())
+                    .blockFirst()
+                    .orElse(null);
 
-                    // if the response is received, stop processing of command
-                    // handlers
-                    if (response != null) {
-                        return response;
-                    }
-                }
-
-                for (JamesMessageHook messageHandler : messageHandlers) {
-                    LOGGER.debug("executing james message handler {}", messageHandler);
-                    long start = System.currentTimeMillis();
-                    HookResult hRes = Mono.from(messageHandler.onMessage(session, mail)).block();
-                    long executionTime = System.currentTimeMillis() - start;
-                    if (rHooks != null) {
-                        for (HookResultHook rHook : rHooks) {
-                            LOGGER.debug("executing hook {}", rHook);
-                            hRes = rHook.onHookResult(session, hRes, executionTime, messageHandler);
-                        }
-                    }
-
-                    SMTPResponse response = AbstractHookableCmdHandler.calcDefaultSMTPResponse(hRes);
-
-                    // if the response is received, stop processing of command
-                    // handlers
-                    if (response != null) {
-                        return response;
-                    }
-                }
             } finally {
                 // Dispose the mail object and remove it
                 if (mail != null) {
                     LifecycleUtil.dispose(mail);
-                    mail = null;
                 }
                 // do the clean up
                 session.resetState();
             }
         }
         return null;
+    }
+
+    private Optional<SMTPResponse> getRawHandlersSmtpResponse(SMTPSession session, Mail mail, OutputStream out, MessageHook rawHandler) {
+        LOGGER.debug("executing james message handler {}", rawHandler);
+        long start = System.currentTimeMillis();
+
+        HookResult hRes = rawHandler.onMessage(session, new MailToMailEnvelopeWrapper(mail, out));
+        long executionTime = System.currentTimeMillis() - start;
+
+        if (rHooks != null) {
+            for (HookResultHook rHook : rHooks) {
+                LOGGER.debug("executing hook {}", rHook);
+                hRes = rHook.onHookResult(session, hRes, executionTime, rawHandler);
+            }
+        }
+
+        SMTPResponse response = AbstractHookableCmdHandler.calcDefaultSMTPResponse(hRes);
+
+        return Optional.ofNullable(response);
+    }
+
+    private Mono<Optional<SMTPResponse>> getMessageHandlersSmtpResponse(SMTPSession session, Mail mail, JamesMessageHook messageHandler) {
+        LOGGER.debug("executing james message handler {}", messageHandler);
+        long start = System.currentTimeMillis();
+
+        return Mono.from(messageHandler.onMessage(session, mail)).map(
+            hRes -> {
+                long executionTime = System.currentTimeMillis() - start;
+                if (rHooks != null) {
+                    for (HookResultHook rHook : rHooks) {
+                        LOGGER.debug("executing hook {}", rHook);
+                        hRes = rHook.onHookResult(session, hRes, executionTime, messageHandler);
+                    }
+                }
+                SMTPResponse response = AbstractHookableCmdHandler.calcDefaultSMTPResponse(hRes);
+                return Optional.ofNullable(response);
+            });
     }
 
     @SuppressWarnings("unchecked")
