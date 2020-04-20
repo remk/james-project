@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import javax.mail.Flags;
 import javax.mail.Folder;
@@ -48,9 +49,11 @@ import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
 
 import com.github.fge.lambdas.Throwing;
+import com.github.fge.lambdas.consumers.ThrowingConsumer;
+import com.github.steveash.guavate.Guavate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 
 import reactor.core.publisher.Mono;
@@ -178,6 +181,43 @@ interface MailsShouldBeWellReceived {
     }
 
     @Test
+    default void mailsShouldBeWellReceivedByTenRecipient(GuiceJamesServer server) throws Exception {
+        server.getProbe(DataProbeImpl.class).fluent()
+                .addDomain(DOMAIN)
+                .addUser(JAMES_USER, PASSWORD);
+
+        ImmutableList<String> users = generateNUsers(10);
+
+        users.forEach((ThrowingConsumer<String>) user -> server.getProbe(DataProbeImpl.class)
+                        .fluent()
+                        .addUser(user, PASSWORD));
+
+        MailboxProbeImpl mailboxProbe = server.getProbe(MailboxProbeImpl.class);
+        mailboxProbe.createMailbox("#private", JAMES_USER, DefaultMailboxes.INBOX);
+        users.forEach((ThrowingConsumer<String>) user ->
+                        mailboxProbe.createMailbox("#private", user, DefaultMailboxes.INBOX));
+
+
+        Port smtpPort = server.getProbe(SmtpGuiceProbe.class).getSmtpPort();
+        String message = Resources.toString(Resources.getResource("eml/htmlMail.eml"), StandardCharsets.UTF_8);
+
+        try (SMTPMessageSender sender = new SMTPMessageSender(Domain.LOCALHOST.asString())) {
+            sender.connect(JAMES_SERVER_HOST, smtpPort);
+            sendUniqueMessageToUsers(sender, message, users);
+        }
+
+        CALMLY_AWAIT_FIVE_MINUTE.untilAsserted(() -> assertThat(server.getProbe(SpoolerProbe.class).processingFinished()).isTrue());
+
+        try (IMAPMessageReader reader = new IMAPMessageReader()) {
+            users.forEach((ThrowingConsumer<String>) user -> reader
+                    .connect(JAMES_SERVER_HOST, server.getProbe(ImapGuiceProbe.class).getImapPort())
+                    .login(user, PASSWORD)
+                    .select(IMAPMessageReader.INBOX)
+                    .awaitMessageCount(CALMLY_AWAIT, 1));
+        }
+    }
+
+    @Test
     default void oneHundredMailsShouldBeWellReceived(GuiceJamesServer server) throws Exception {
         server.getProbe(DataProbeImpl.class).fluent()
             .addDomain(DOMAIN)
@@ -218,7 +258,16 @@ interface MailsShouldBeWellReceived {
     }
 
     default void sendUniqueMessageToTwoUsers(SMTPMessageSender sender, String message) throws IOException {
-        String uniqueMessage = message.replace("banana", "UUID " + UUID.randomUUID().toString());
-        sender.sendMessageWithHeaders("bob@apache.org", ImmutableList.of(JAMES_USER, OTHER_USER), uniqueMessage);
+        sendUniqueMessageToUsers(sender, message, ImmutableList.of(JAMES_USER, OTHER_USER));
     }
+
+    default void sendUniqueMessageToUsers(SMTPMessageSender sender, String message, ImmutableList<String> users) throws IOException {
+        String uniqueMessage = message.replace("banana", "UUID " + UUID.randomUUID().toString());
+        sender.sendMessageWithHeaders("bob@apache.org", users, uniqueMessage);
+    }
+
+    default ImmutableList<String> generateNUsers(int nbUsers) {
+        return IntStream.range(0, nbUsers).boxed().map(index -> "user" + index + "@" + DOMAIN).collect(Guavate.toImmutableList());
+    }
+
 }
