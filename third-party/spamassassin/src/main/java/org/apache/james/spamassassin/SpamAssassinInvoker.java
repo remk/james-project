@@ -21,6 +21,7 @@ package org.apache.james.spamassassin;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,6 +31,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
@@ -44,7 +46,17 @@ import com.github.fge.lambdas.Throwing;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
+import io.netty.handler.codec.LineBasedFrameDecoder;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
+import reactor.netty.ByteBufFlux;
+import reactor.netty.Connection;
+import reactor.netty.NettyInbound;
+import reactor.netty.NettyOutbound;
+import reactor.netty.tcp.TcpClient;
+
 
 /**
  * Sends the message through daemonized SpamAssassin (spamd), visit <a
@@ -111,6 +123,77 @@ public class SpamAssassinInvoker {
     }
 
     private Mono<SpamAssassinResult> scanMailWithAdditionalHeaders(MimeMessage message, String... additionalHeaders) {
+
+        System.out.println("host : " + spamdHost);
+        System.out.println("port : " + spamdPort);
+        Connection connection =
+                TcpClient.create()
+                        .host(spamdHost)
+                        .port(spamdPort)
+                        .doOnConnected(c -> c.addHandlerLast("codec",
+                                new LineBasedFrameDecoder(8 * 1024)))
+                        .wiretap(true)
+                        .handle(((nettyInbound, outbound) -> {
+                            sendRequestToSpamd(message, outbound, additionalHeaders);
+
+                            Mono<SpamAssassinResult> result = getSpamAssassinResultMono(nettyInbound);
+                            return result.then();
+                        }))
+                        .connectNow();
+
+
+
+//        sendRequestToSpamd(message, connection.outbound(), additionalHeaders);
+//
+//        Mono<SpamAssassinResult> result = getSpamAssassinResultMono(connection.inbound());
+
+
+return connection.onDispose().then(Mono.just(SpamAssassinResult.empty()));
+
+
+    }
+
+    private Mono<SpamAssassinResult> getSpamAssassinResultMono(NettyInbound inbound) {
+        return inbound.receive().asString().map(s -> {
+                System.out.println("RECEIVED : " + s);
+                return s;
+            })
+                .flatMapIterable(s -> Arrays.asList(s.split("\\n")))
+                    .filter(this::isSpam)
+                    .map(this::processSpam)
+                    .singleOrEmpty()
+                    .switchIfEmpty(Mono.just(SpamAssassinResult.empty()));
+    }
+
+    private void sendRequestToSpamd(MimeMessage message, NettyOutbound outbound, String[] additionalHeaders) {
+        outbound
+                .sendString(Mono.just(headerAsString(additionalHeaders)))
+                .sendByteArray(Mono.fromCallable(() -> {
+                    // pass the message to spamd
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    message.writeTo(byteArrayOutputStream);
+                    System.out.println("Send message: " + new String(byteArrayOutputStream.toByteArray()));
+                    return byteArrayOutputStream.toByteArray();
+                }).subscribeOn(Schedulers.elastic()))
+                .then()
+                .subscribeOn(Schedulers.elastic())
+                .doOnError(Throwable::printStackTrace).subscribe();
+    }
+
+    private String headerAsString(String[] additionalHeaders) {
+        StringBuilder headerBuilder = new StringBuilder();
+        headerBuilder.append("CHECK SPAMC/1.2");
+        headerBuilder.append(CRLF);
+
+        Arrays.stream(additionalHeaders)
+                .forEach(header -> {
+                    headerBuilder.append(header);
+                    headerBuilder.append(CRLF);
+                });
+        headerBuilder.append(CRLF);
+        return headerBuilder.toString();
+    }
+    private Mono<SpamAssassinResult> scanMailWithAdditionalHeadersOLD(MimeMessage message, String... additionalHeaders) {
        return Mono.fromCallable(() -> {
             try (Socket socket = new Socket(spamdHost, spamdPort);
                  OutputStream out = socket.getOutputStream();
