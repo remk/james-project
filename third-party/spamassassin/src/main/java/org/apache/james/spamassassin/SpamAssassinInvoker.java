@@ -19,15 +19,9 @@
 
 package org.apache.james.spamassassin;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,6 +31,8 @@ import javax.mail.internet.MimeMessage;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.core.Username;
 import org.apache.james.metrics.api.MetricFactory;
+import org.apache.james.util.ReactorUtils;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +40,16 @@ import com.github.fge.lambdas.Throwing;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.LineBasedFrameDecoder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.netty.Connection;
+import reactor.netty.NettyInbound;
+import reactor.netty.tcp.TcpClient;
 
 /**
  * Sends the message through daemonized SpamAssassin (spamd), visit <a
@@ -52,6 +57,8 @@ import reactor.core.publisher.Mono;
  */
 public class SpamAssassinInvoker {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpamAssassinInvoker.class);
+    public static final int MAX_LINE_LENGTH = 8 * 1024;
+    public static final int BUFFER_SIZE = 8 * 1024;
 
     enum MessageClass {
         HAM("ham"),
@@ -88,7 +95,7 @@ public class SpamAssassinInvoker {
 
     /**
      * Scan a MimeMessage for spam by passing it to spamd.
-     * 
+     *
      * @param message
      *            The MimeMessage to scan
      * @return true if spam otherwise false
@@ -111,46 +118,60 @@ public class SpamAssassinInvoker {
     }
 
     private Mono<SpamAssassinResult> scanMailWithAdditionalHeaders(MimeMessage message, String... additionalHeaders) {
-       return Mono.fromCallable(() -> {
-            try (Socket socket = new Socket(spamdHost, spamdPort);
-                 OutputStream out = socket.getOutputStream();
-                 BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(out);
-                 PrintWriter writer = new PrintWriter(bufferedOutputStream);
-                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+        return createConnection()
+            .flatMap(connection ->
+                sendScanMailRequest(message, connection, additionalHeaders)
+                    .then(getSpamAssassinResultMono(connection.inbound())));
+    }
 
-                LOGGER.debug("Sending email {} for spam check", message.getMessageID());
+    private Mono<? extends Connection> createConnection() {
+        return TcpClient.create()
+            .host(spamdHost)
+            .port(spamdPort)
+            .doOnConnected(c -> c.addHandlerLast("codec",
+                new LineBasedFrameDecoder(MAX_LINE_LENGTH)))
+            .connect();
+    }
 
-                writer.write("CHECK SPAMC/1.2");
-                writer.write(CRLF);
+    private Mono<SpamAssassinResult> getSpamAssassinResultMono(NettyInbound inbound) {
+        return inbound.receive().asString()
+            .filter(this::isSpam)
+            .map(this::processSpam)
+            .singleOrEmpty()
+            .switchIfEmpty(Mono.just(SpamAssassinResult.empty()));
+    }
 
-                Arrays.stream(additionalHeaders)
-                    .forEach(header -> {
-                        writer.write(header);
-                        writer.write(CRLF);
-                    });
+    private Mono<Void> sendScanMailRequest(MimeMessage message, Connection connection, String[] additionalHeaders) {
+        Flux<ByteBuf> byteBufFlux = Mono.fromCallable(message::getInputStream)
+            .flatMapMany(inputStream -> ReactorUtils.toChunks(inputStream, BUFFER_SIZE))
+            .map(Unpooled::wrappedBuffer);
 
-                writer.write(CRLF);
-                writer.flush();
+        return sendRequestToSpamd(Mono.fromCallable(() -> headerAsString(additionalHeaders)), byteBufFlux, connection);
+    }
 
-                // pass the message to spamd
-                message.writeTo(out);
-                out.flush();
-                socket.shutdownOutput();
+    private Mono<Void> sendRequestToSpamd(Mono<String> header, Publisher<ByteBuf> message, Connection connection) {
+        return connection.outbound()
+            .sendString(header)
+            .send(message)
+            // the channel output need to be closed for spamassassin to send the response (TCP Half Closed Connection).
+            .then(Mono.fromRunnable(() -> ((SocketChannel) connection.channel()).shutdownOutput()))
+            .then()
+            .subscribeOn(Schedulers.elastic())
+            .doOnError(e -> LOGGER.error("Error when sending request to spamd", e));
+    }
 
-                SpamAssassinResult spamAssassinResult = in.lines()
-                    .filter(this::isSpam)
-                    .map(this::processSpam)
-                    .findFirst()
-                    .orElse(SpamAssassinResult.empty());
+    private String headerAsString(String[] additionalHeaders) {
+        StringBuilder headerBuilder = new StringBuilder();
+        headerBuilder.append("CHECK SPAMC/1.2");
+        headerBuilder.append(CRLF);
 
-                LOGGER.debug("spam check result: {}", spamAssassinResult);
-                return spamAssassinResult;
-            } catch (UnknownHostException e) {
-                throw new MessagingException("Error communicating with spamd. Unknown host: " + spamdHost);
-            } catch (IOException | MessagingException e) {
-                throw new MessagingException("Error communicating with spamd on " + spamdHost + ":" + spamdPort, e);
-            }
-        });
+        Arrays.stream(additionalHeaders)
+            .forEach(header -> {
+                headerBuilder.append(header);
+                headerBuilder.append(CRLF);
+            });
+        headerBuilder.append(CRLF);
+        return headerBuilder.toString();
     }
 
     private Mono<SpamAssassinResult> scanMailWithoutAdditionalHeaders(MimeMessage message) {
@@ -178,7 +199,7 @@ public class SpamAssassinInvoker {
         try {
             return Boolean.parseBoolean(string);
         } catch (Exception e) {
-            LOGGER.warn("Fail parsing spamassassin answer: " + string);
+            LOGGER.warn("Fail parsing spamassassin answer: " + string, e);
             return false;
         }
     }
@@ -195,12 +216,10 @@ public class SpamAssassinInvoker {
      * @throws MessagingException
      *             if an error occured during learning.
      */
-    public boolean learnAsSpam(InputStream message, Username username) throws MessagingException {
+    public Publisher<Boolean> learnAsSpam(InputStream message, Username username) {
         return metricFactory.runPublishingTimerMetric(
             "spamAssassin-spam-report",
-            Throwing.supplier(
-                () -> reportMessageAs(message, username, MessageClass.SPAM))
-                .sneakyThrow());
+           reportMessageAs(message, username, MessageClass.SPAM));
     }
 
     /**
@@ -211,53 +230,53 @@ public class SpamAssassinInvoker {
      * @throws MessagingException
      *             if an error occured during learning.
      */
-    public boolean learnAsHam(InputStream message, Username username) throws MessagingException {
+    public Publisher<Boolean> learnAsHam(InputStream message, Username username) {
         return metricFactory.runPublishingTimerMetric(
             "spamAssassin-ham-report",
-            Throwing.supplier(
-                () -> reportMessageAs(message, username, MessageClass.HAM))
-                .sneakyThrow());
+            reportMessageAs(message, username, MessageClass.HAM));
     }
 
-    private boolean reportMessageAs(InputStream message, Username username, MessageClass messageClass) throws MessagingException {
-        try (Socket socket = new Socket(spamdHost, spamdPort);
-             OutputStream out = socket.getOutputStream();
-             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(out);
-             PrintWriter writer = new PrintWriter(bufferedOutputStream);
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+    private Mono<Boolean> reportMessageAs(InputStream message, Username username, MessageClass messageClass) {
+        return createConnection()
+            .flatMap(connection -> {
+                LOGGER.debug("Report mail as {}", messageClass);
+                return Mono.fromCallable(() -> IOUtils.toByteArray(message)).flatMap(
+                    bytes -> {
+                        Publisher<ByteBuf> messageByteBuf = ReactorUtils.toChunks(new ByteArrayInputStream(bytes), BUFFER_SIZE)
+                            .map(Unpooled::wrappedBuffer);
 
-            LOGGER.debug("Report mail as {}", messageClass);
+                        return sendRequestToSpamd(Mono.just(learnHamRequestHeader(bytes.length, username, messageClass)), messageByteBuf, connection)
+                            .then(connection.inbound()
+                                .receive()
+                                .asString()
+                                .any(this::hasBeenSet)
+                                .doOnNext(hasBeenSet -> {
+                                    if (hasBeenSet) {
+                                        LOGGER.debug("Reported mail as {} succeeded", messageClass);
+                                    } else {
+                                        LOGGER.debug("Reported mail as {} failed", messageClass);
+                                    }
+                                }))
+                            .onErrorMap(IOException.class, e -> new MessagingException("Error communicating with spamd on " + spamdHost + ":" + spamdPort, e));
+                    }
+                );
+            });
+    }
 
-            byte[] byteArray = IOUtils.toByteArray(message);
-            writer.write("TELL SPAMC/1.2");
-            writer.write(CRLF);
-            writer.write("Content-length: " + byteArray.length);
-            writer.write(CRLF);
-            writer.write("Message-class: " + messageClass.value);
-            writer.write(CRLF);
-            writer.write("Set: local, remote");
-            writer.write(CRLF);
-            writer.write("User: " + username.asString());
-            writer.write(CRLF);
-            writer.write(CRLF);
-            writer.flush();
-
-            out.write(byteArray);
-            out.flush();
-            socket.shutdownOutput();
-
-            boolean hasBeenSet = in.lines().anyMatch(this::hasBeenSet);
-            if (hasBeenSet) {
-                LOGGER.debug("Reported mail as {} succeeded", messageClass);
-            } else {
-                LOGGER.debug("Reported mail as {} failed", messageClass);
-            }
-            return hasBeenSet;
-        } catch (UnknownHostException e) {
-            throw new MessagingException("Error communicating with spamd. Unknown host: " + spamdHost);
-        } catch (IOException e) {
-            throw new MessagingException("Error communicating with spamd on " + spamdHost + ":" + spamdPort, e);
-        }
+    private String learnHamRequestHeader(int contentLength, Username username, MessageClass messageClass) {
+        StringBuilder headerBuilder = new StringBuilder();
+        headerBuilder.append("TELL SPAMC/1.2");
+        headerBuilder.append(CRLF);
+        headerBuilder.append("Content-length: " + contentLength);
+        headerBuilder.append(CRLF);
+        headerBuilder.append("Message-class: " + messageClass.value);
+        headerBuilder.append(CRLF);
+        headerBuilder.append("Set: local, remote");
+        headerBuilder.append(CRLF);
+        headerBuilder.append("User: " + username.asString());
+        headerBuilder.append(CRLF);
+        headerBuilder.append(CRLF);
+        return headerBuilder.toString();
     }
 
     private boolean hasBeenSet(String line) {
