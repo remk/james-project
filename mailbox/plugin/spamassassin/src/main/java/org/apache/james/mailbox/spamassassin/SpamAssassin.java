@@ -28,7 +28,8 @@ import org.apache.james.metrics.api.MetricFactory;
 import org.apache.james.spamassassin.SpamAssassinInvoker;
 import org.apache.james.util.Host;
 
-import com.github.fge.lambdas.Throwing;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class SpamAssassin {
 
@@ -41,21 +42,25 @@ public class SpamAssassin {
         this.spamAssassinConfiguration = spamAssassinConfiguration;
     }
 
-    public void learnSpam(List<InputStream> messages, Username username) {
+    public Mono<Void> learnSpam(List<InputStream> messages, Username username) {
         if (spamAssassinConfiguration.isEnable()) {
             Host host = spamAssassinConfiguration.getHost().get();
             SpamAssassinInvoker invoker = new SpamAssassinInvoker(metricFactory, host.getHostName(), host.getPort());
-            messages
-                .forEach(Throwing.consumer(message -> invoker.learnAsSpam(message, username)));
+            return Flux.fromIterable(messages)
+                .flatMap(message -> invoker.learnAsSpam(message, username))
+                .then();
         }
+        return Mono.empty();
     }
 
-    public void learnHam(List<InputStream> messages, Username username) {
+    public Mono<Void> learnHam(List<InputStream> messages, Username username) {
         if (spamAssassinConfiguration.isEnable()) {
             Host host = spamAssassinConfiguration.getHost().get();
             SpamAssassinInvoker invoker = new SpamAssassinInvoker(metricFactory, host.getHostName(), host.getPort());
-            messages
-                .forEach(Throwing.consumer(message -> invoker.learnAsHam(message, username)));
+            return Flux.fromIterable(messages)
+                .flatMap(message -> invoker.learnAsHam(message, username))
+                .then();
         }
+        return Mono.empty();
     }
 }

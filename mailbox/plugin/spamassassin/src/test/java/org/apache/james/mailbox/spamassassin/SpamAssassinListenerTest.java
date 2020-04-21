@@ -58,6 +58,8 @@ import org.apache.james.mailbox.store.mail.model.impl.SimpleMailboxMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import reactor.core.publisher.Mono;
+
 class SpamAssassinListenerTest {
     static final Username USER = Username.of("user");
     static final MailboxSession MAILBOX_SESSION = MailboxSessionUtil.create(USER);
@@ -84,6 +86,8 @@ class SpamAssassinListenerTest {
             .thenReturn(MAILBOX_SESSION);
 
         spamAssassin = mock(SpamAssassin.class);
+        when(spamAssassin.learnHam(any(), any())).thenReturn(Mono.empty());
+        when(spamAssassin.learnSpam(any(), any())).thenReturn(Mono.empty());
         mapperFactory = mailboxManager.getMapperFactory();
         MailboxMapper mailboxMapper = mapperFactory.createMailboxMapper(MAILBOX_SESSION);
         inbox = mailboxMapper.create(MailboxPath.forUser(USER, DefaultMailboxes.INBOX), UID_VALIDITY);

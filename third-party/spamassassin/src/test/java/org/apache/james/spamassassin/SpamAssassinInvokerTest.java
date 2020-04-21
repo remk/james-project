@@ -36,6 +36,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import reactor.core.publisher.Mono;
+
 @ExtendWith(SpamAssassinExtension.class)
 public class SpamAssassinInvokerTest {
 
@@ -94,7 +96,7 @@ public class SpamAssassinInvokerTest {
         MimeMessage mimeMessage = MimeMessageUtil.mimeMessageFromStream(
                 ClassLoader.getSystemResourceAsStream("spamassassin_db/spam/spam2"));
 
-        boolean result = testee.learnAsSpam(mimeMessage.getInputStream(), USERNAME);
+        boolean result = Mono.from(testee.learnAsSpam(mimeMessage.getInputStream(), USERNAME)).block();
 
         assertThat(result).isTrue();
     }
@@ -118,7 +120,7 @@ public class SpamAssassinInvokerTest {
         MimeMessage mimeMessage = MimeMessageUtil.mimeMessageFromStream(
             ClassLoader.getSystemResourceAsStream("spamassassin_db/ham/ham2"));
 
-        boolean result = testee.learnAsHam(mimeMessage.getInputStream(), USERNAME);
+        boolean result = Mono.from(testee.learnAsHam(mimeMessage.getInputStream(), USERNAME)).block();
 
         assertThat(result).isTrue();
     }
@@ -142,8 +144,9 @@ public class SpamAssassinInvokerTest {
 
         byte[] messageAsBytes = MimeMessageUtil.asString(mimeMessage).getBytes(StandardCharsets.UTF_8);
 
-        testee.learnAsSpam(new ByteArrayInputStream(messageAsBytes), USERNAME);
-        testee.learnAsHam(new ByteArrayInputStream(messageAsBytes), USERNAME);
+        Mono.from(testee.learnAsSpam(new ByteArrayInputStream(messageAsBytes), USERNAME))
+            .then(Mono.from(testee.learnAsHam(new ByteArrayInputStream(messageAsBytes), USERNAME)));
+
 
         SpamAssassinResult result = testee.scanMail(mimeMessage, USERNAME).block();
 

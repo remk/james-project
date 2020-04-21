@@ -120,11 +120,11 @@ public class SpamAssassinListener implements SpamEventListener {
         if (isMessageMovedToSpamMailbox(messageMoveEvent)) {
             LOGGER.debug("Spam event detected");
             ImmutableList<InputStream> messages = retrieveMessages(messageMoveEvent, session);
-            spamAssassin.learnSpam(messages, event.getUsername());
+            spamAssassin.learnSpam(messages, event.getUsername()).block();
         }
         if (isMessageMovedOutOfSpamMailbox(messageMoveEvent)) {
             ImmutableList<InputStream> messages = retrieveMessages(messageMoveEvent, session);
-            spamAssassin.learnHam(messages, event.getUsername());
+            spamAssassin.learnHam(messages, event.getUsername()).block();
         }
     }
 
