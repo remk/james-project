@@ -46,6 +46,7 @@ public class MockSpamd implements Runnable {
     public static final String GTUBE = "-SPAM-";
     public static final String NOT_SPAM = "Spam: False ; 3 / 5";
     public static final String SPAM = "Spam: True ; 1000 / 5";
+    public static final String CRLF = "\r\n";
 
     private ServerSocket socket;
     private boolean isBinded;
@@ -80,6 +81,7 @@ public class MockSpamd implements Runnable {
     private void handleRequest(BufferedReader in, OutputStream out) throws IOException {
         if (isSpam(in)) {
             out.write(SPAM.getBytes());
+            out.write(CRLF.getBytes());
         } else {
             out.write(NOT_SPAM.getBytes());
         }
