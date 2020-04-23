@@ -104,7 +104,7 @@ public interface DumbBlobStoreCacheContract {
         BlobId blobId = blobIdFactory().randomId();
         assertThatCode(Mono.from(testee().cache(blobId, EIGHT_KILOBYTES))::block)
             .doesNotThrowAnyException();
-
+        //add some time after the TTL to avoid threshold effect
         await().atMost(Duration.TWO_SECONDS.plus(Duration.FIVE_HUNDRED_MILLISECONDS)).await().untilAsserted(()
             -> assertThat(Mono.from(testee().read(blobId)).blockOptional()).isEmpty());
     }
