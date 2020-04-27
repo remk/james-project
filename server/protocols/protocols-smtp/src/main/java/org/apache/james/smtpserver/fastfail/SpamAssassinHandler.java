@@ -148,7 +148,7 @@ public class SpamAssassinHandler implements JamesMessageHook, ProtocolHandler {
                      }
                      return HookResult.DECLINED;
                  }).onErrorResume(MessagingException.class,  e -> {
-                 LOGGER.error(e.getMessage());
+                 LOGGER.error(e.getMessage(), e);
                  return Mono.just(HookResult.DECLINED);
              }).onErrorResume(NumberFormatException.class,  e -> {
                  //hits unknown
