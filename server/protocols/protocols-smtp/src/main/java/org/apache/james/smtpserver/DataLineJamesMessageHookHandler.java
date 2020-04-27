@@ -154,7 +154,7 @@ public class DataLineJamesMessageHookHandler implements DataLineFilter, Extensib
                     rawHandler -> getRawHandlersSmtpResponse(session, mail, out, rawHandler));
 
                 Flux<Optional<SMTPResponse>> messageHandlerResponses = Flux.fromIterable(messageHandlers)
-                    .flatMap(messageHandler -> getMessageHandlersSmtpResponse(session, mail, messageHandler));
+                    .concatMap(messageHandler -> getMessageHandlersSmtpResponse(session, mail, messageHandler));
 
                 return rawHandlerResponses
                     .concatWith(messageHandlerResponses)
