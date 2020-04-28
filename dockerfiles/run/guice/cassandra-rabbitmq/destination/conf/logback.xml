@@ -36,5 +36,6 @@
         </root>
 
         <logger name="com.datastax.driver.core.QueryLogger.SLOW" level="DEBUG" />
+        <logger name="org.apache.james.metrics" level="DEBUG" />
 
 </configuration>
