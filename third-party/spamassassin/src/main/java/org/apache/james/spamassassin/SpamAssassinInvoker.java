@@ -241,7 +241,9 @@ public class SpamAssassinInvoker {
                 return Mono.fromCallable(() -> IOUtils.toByteArray(message)).flatMap(
                     bytes ->
                         sendRequestToSpamd(Mono.just(learnHamRequestHeader(bytes.length, username, messageClass)), Mono.just(bytes), connection)
-                            .then(connection.inbound().receive().asString()
+                            .then(connection.inbound()
+                                .receive()
+                                .asString()
                                 .any(this::hasBeenSet)
                                 .doOnNext(hasBeenSet -> {
                                     if (hasBeenSet) {
