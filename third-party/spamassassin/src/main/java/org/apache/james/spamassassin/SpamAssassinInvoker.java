@@ -19,7 +19,7 @@
 
 package org.apache.james.spamassassin;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -31,6 +31,7 @@ import javax.mail.internet.MimeMessage;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.core.Username;
 import org.apache.james.metrics.api.MetricFactory;
+import org.apache.james.util.ReactorUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,14 +40,16 @@ import com.github.fge.lambdas.Throwing;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LineBasedFrameDecoder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
 import reactor.netty.NettyInbound;
 import reactor.netty.tcp.TcpClient;
-
 
 /**
  * Sends the message through daemonized SpamAssassin (spamd), visit <a
@@ -55,6 +58,7 @@ import reactor.netty.tcp.TcpClient;
 public class SpamAssassinInvoker {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpamAssassinInvoker.class);
     public static final int MAX_LINE_LENGTH = 8 * 1024;
+    public static final int BUFFER_SIZE = 8 * 1024;
 
     enum MessageClass {
         HAM("ham"),
@@ -91,7 +95,7 @@ public class SpamAssassinInvoker {
 
     /**
      * Scan a MimeMessage for spam by passing it to spamd.
-     * 
+     *
      * @param message
      *            The MimeMessage to scan
      * @return true if spam otherwise false
@@ -138,19 +142,17 @@ public class SpamAssassinInvoker {
     }
 
     private Mono<Void> sendScanMailRequest(MimeMessage message, Connection connection, String[] additionalHeaders) {
-    Mono<byte[]> messageAsBytes =  Mono.fromCallable(() -> {
-              ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-              message.writeTo(byteArrayOutputStream);
-              return byteArrayOutputStream.toByteArray();
-          });
+        Flux<ByteBuf> byteBufFlux = Mono.fromCallable(message::getInputStream)
+            .flatMapMany(inputStream -> ReactorUtils.toChunks(inputStream, BUFFER_SIZE))
+            .map(Unpooled::wrappedBuffer);
 
-        return sendRequestToSpamd(Mono.fromCallable(() -> headerAsString(additionalHeaders)), messageAsBytes, connection);
+        return sendRequestToSpamd(Mono.fromCallable(() -> headerAsString(additionalHeaders)), byteBufFlux, connection);
     }
 
-    private Mono<Void> sendRequestToSpamd(Mono<String> header, Mono<byte[]> message, Connection connection) {
+    private Mono<Void> sendRequestToSpamd(Mono<String> header, Publisher<ByteBuf> message, Connection connection) {
         return connection.outbound()
             .sendString(header)
-            .sendByteArray(message)
+            .send(message)
             // the channel output need to be closed for spamassassin to send the response (TCP Half Closed Connection).
             .then(Mono.fromRunnable(() -> ((SocketChannel) connection.channel()).shutdownOutput()))
             .then()
@@ -239,8 +241,11 @@ public class SpamAssassinInvoker {
             .flatMap(connection -> {
                 LOGGER.debug("Report mail as {}", messageClass);
                 return Mono.fromCallable(() -> IOUtils.toByteArray(message)).flatMap(
-                    bytes ->
-                        sendRequestToSpamd(Mono.just(learnHamRequestHeader(bytes.length, username, messageClass)), Mono.just(bytes), connection)
+                    bytes -> {
+                        Publisher<ByteBuf> messageByteBuf = ReactorUtils.toChunks(new ByteArrayInputStream(bytes), BUFFER_SIZE)
+                            .map(Unpooled::wrappedBuffer);
+
+                        return sendRequestToSpamd(Mono.just(learnHamRequestHeader(bytes.length, username, messageClass)), messageByteBuf, connection)
                             .then(connection.inbound()
                                 .receive()
                                 .asString()
@@ -252,7 +257,8 @@ public class SpamAssassinInvoker {
                                         LOGGER.debug("Reported mail as {} failed", messageClass);
                                     }
                                 }))
-                            .onErrorMap(IOException.class, e -> new MessagingException("Error communicating with spamd on " + spamdHost + ":" + spamdPort, e))
+                            .onErrorMap(IOException.class, e -> new MessagingException("Error communicating with spamd on " + spamdHost + ":" + spamdPort, e));
+                    }
                 );
             });
     }
