@@ -18,7 +18,6 @@
  ****************************************************************/
 package org.apache.james.mailbox.spamassassin;
 
-import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -40,12 +39,12 @@ import org.apache.james.mailbox.store.MailboxSessionMapperFactory;
 import org.apache.james.mailbox.store.event.SpamEventListener;
 import org.apache.james.mailbox.store.mail.MessageMapper;
 import org.apache.james.mailbox.store.mail.model.MailboxMessage;
-import org.apache.james.mailbox.store.mail.model.Message;
+import org.apache.james.spamassassin.MessageToLearn;
 import org.apache.james.util.streams.Iterators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.fge.lambdas.Throwing;
+import com.github.fge.lambdas.functions.ThrowingFunction;
 import com.github.steveash.guavate.Guavate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -107,10 +106,11 @@ public class SpamAssassinListener implements SpamEventListener {
             Mailbox mailbox = mapperFactory.getMailboxMapper(session).findMailboxById(addedEvent.getMailboxId());
             MessageMapper messageMapper = mapperFactory.getMessageMapper(session);
 
-            List<InputStream> contents = MessageRange.toRanges(addedEvent.getUids())
+            List<MessageToLearn> contents = MessageRange.toRanges(addedEvent.getUids())
                 .stream()
                 .flatMap(range -> retrieveMessages(messageMapper, mailbox, range))
-                .map(Throwing.function(MailboxMessage::getFullContent))
+                .map((ThrowingFunction<MailboxMessage, MessageToLearn>) message ->
+                        new MessageToLearn(message.getFullContent(), message.getFullContentOctets()))
                 .collect(Guavate.toImmutableList());
             spamAssassin.learnHam(contents, event.getUsername());
         }
@@ -119,11 +119,11 @@ public class SpamAssassinListener implements SpamEventListener {
     private void handleMessageMove(Event event, MailboxSession session, MessageMoveEvent messageMoveEvent) {
         if (isMessageMovedToSpamMailbox(messageMoveEvent)) {
             LOGGER.debug("Spam event detected");
-            ImmutableList<InputStream> messages = retrieveMessages(messageMoveEvent, session);
+            ImmutableList<MessageToLearn> messages = retrieveMessages(messageMoveEvent, session);
             spamAssassin.learnSpam(messages, event.getUsername()).block();
         }
         if (isMessageMovedOutOfSpamMailbox(messageMoveEvent)) {
-            ImmutableList<InputStream> messages = retrieveMessages(messageMoveEvent, session);
+            ImmutableList<MessageToLearn> messages = retrieveMessages(messageMoveEvent, session);
             spamAssassin.learnHam(messages, event.getUsername()).block();
         }
     }
@@ -147,11 +147,11 @@ public class SpamAssassinListener implements SpamEventListener {
         }
     }
 
-    private ImmutableList<InputStream> retrieveMessages(MessageMoveEvent messageMoveEvent, MailboxSession session) {
+    private ImmutableList<MessageToLearn> retrieveMessages(MessageMoveEvent messageMoveEvent, MailboxSession session) {
         return mapperFactory.getMessageIdMapper(session)
             .find(messageMoveEvent.getMessageIds(), MessageMapper.FetchType.Full)
             .stream()
-            .map(Throwing.function(Message::getFullContent))
+            .map((ThrowingFunction<MailboxMessage, MessageToLearn>) message -> new MessageToLearn(message.getFullContent(), message.getFullContentOctets()))
             .collect(Guavate.toImmutableList());
     }
 

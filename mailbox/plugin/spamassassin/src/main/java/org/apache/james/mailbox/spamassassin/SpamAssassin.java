@@ -18,13 +18,13 @@
  ****************************************************************/
 package org.apache.james.mailbox.spamassassin;
 
-import java.io.InputStream;
 import java.util.List;
 
 import javax.inject.Inject;
 
 import org.apache.james.core.Username;
 import org.apache.james.metrics.api.MetricFactory;
+import org.apache.james.spamassassin.MessageToLearn;
 import org.apache.james.spamassassin.SpamAssassinInvoker;
 import org.apache.james.util.Host;
 
@@ -42,7 +42,7 @@ public class SpamAssassin {
         this.spamAssassinConfiguration = spamAssassinConfiguration;
     }
 
-    public Mono<Void> learnSpam(List<InputStream> messages, Username username) {
+    public Mono<Void> learnSpam(List<MessageToLearn> messages, Username username) {
         if (spamAssassinConfiguration.isEnable()) {
             Host host = spamAssassinConfiguration.getHost().get();
             SpamAssassinInvoker invoker = new SpamAssassinInvoker(metricFactory, host.getHostName(), host.getPort());
@@ -53,7 +53,7 @@ public class SpamAssassin {
         return Mono.empty();
     }
 
-    public Mono<Void> learnHam(List<InputStream> messages, Username username) {
+    public Mono<Void> learnHam(List<MessageToLearn> messages, Username username) {
         if (spamAssassinConfiguration.isEnable()) {
             Host host = spamAssassinConfiguration.getHost().get();
             SpamAssassinInvoker invoker = new SpamAssassinInvoker(metricFactory, host.getHostName(), host.getPort());

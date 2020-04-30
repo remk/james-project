@@ -19,16 +19,13 @@
 
 package org.apache.james.spamassassin;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.james.core.Username;
 import org.apache.james.metrics.api.MetricFactory;
 import org.apache.james.util.ReactorUtils;
@@ -39,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.github.fge.lambdas.Throwing;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.common.io.FileBackedOutputStream;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -59,6 +57,7 @@ public class SpamAssassinInvoker {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpamAssassinInvoker.class);
     public static final int MAX_LINE_LENGTH = 8 * 1024;
     public static final int BUFFER_SIZE = 8 * 1024;
+    public static final int FILE_THRESHOLD = 256 * 1024;
 
     enum MessageClass {
         HAM("ham"),
@@ -142,9 +141,21 @@ public class SpamAssassinInvoker {
     }
 
     private Mono<Void> sendScanMailRequest(MimeMessage message, Connection connection, String[] additionalHeaders) {
-        Flux<ByteBuf> byteBufFlux = Mono.fromCallable(message::getInputStream)
-            .flatMapMany(inputStream -> ReactorUtils.toChunks(inputStream, BUFFER_SIZE))
-            .map(Unpooled::wrappedBuffer);
+        Flux<ByteBuf> byteBufFlux = Flux.using(() -> new FileBackedOutputStream(FILE_THRESHOLD),
+                fileBackedOutputStream ->
+                        Mono.fromCallable(() -> {
+                            message.writeTo(fileBackedOutputStream);
+                            return fileBackedOutputStream.asByteSource().openBufferedStream();
+                        })
+                                .flatMapMany(inputStream -> ReactorUtils.toChunks(inputStream, BUFFER_SIZE))
+                                .map(Unpooled::wrappedBuffer), fileBackedOutputStream -> {
+                    try {
+                        fileBackedOutputStream.reset();
+                    } catch (IOException e) {
+                        //ignored
+                    }
+                });
+
 
         return sendRequestToSpamd(Mono.fromCallable(() -> headerAsString(additionalHeaders)), byteBufFlux, connection);
     }
@@ -216,7 +227,7 @@ public class SpamAssassinInvoker {
      * @throws MessagingException
      *             if an error occured during learning.
      */
-    public Publisher<Boolean> learnAsSpam(InputStream message, Username username) {
+    public Publisher<Boolean> learnAsSpam(MessageToLearn message, Username username) {
         return metricFactory.runPublishingTimerMetric(
             "spamAssassin-spam-report",
            reportMessageAs(message, username, MessageClass.SPAM));
@@ -230,40 +241,38 @@ public class SpamAssassinInvoker {
      * @throws MessagingException
      *             if an error occured during learning.
      */
-    public Publisher<Boolean> learnAsHam(InputStream message, Username username) {
+    public Publisher<Boolean> learnAsHam(MessageToLearn message, Username username) {
         return metricFactory.runPublishingTimerMetric(
             "spamAssassin-ham-report",
             reportMessageAs(message, username, MessageClass.HAM));
     }
 
-    private Mono<Boolean> reportMessageAs(InputStream message, Username username, MessageClass messageClass) {
+    private Mono<Boolean> reportMessageAs(MessageToLearn message, Username username, MessageClass messageClass) {
         return createConnection()
             .flatMap(connection -> {
-                LOGGER.debug("Report mail as {}", messageClass);
-                return Mono.fromCallable(() -> IOUtils.toByteArray(message)).flatMap(
-                    bytes -> {
-                        Publisher<ByteBuf> messageByteBuf = ReactorUtils.toChunks(new ByteArrayInputStream(bytes), BUFFER_SIZE)
-                            .map(Unpooled::wrappedBuffer);
+                        LOGGER.debug("Report mail as {}", messageClass);
 
-                        return sendRequestToSpamd(Mono.just(learnHamRequestHeader(bytes.length, username, messageClass)), messageByteBuf, connection)
-                            .then(connection.inbound()
-                                .receive()
-                                .asString()
-                                .any(this::hasBeenSet)
-                                .doOnNext(hasBeenSet -> {
-                                    if (hasBeenSet) {
-                                        LOGGER.debug("Reported mail as {} succeeded", messageClass);
-                                    } else {
-                                        LOGGER.debug("Reported mail as {} failed", messageClass);
-                                    }
-                                }))
-                            .onErrorMap(IOException.class, e -> new MessagingException("Error communicating with spamd on " + spamdHost + ":" + spamdPort, e));
+                        Publisher<ByteBuf> messageByteBuf = ReactorUtils.toChunks(message.getMessage(), BUFFER_SIZE)
+                                .map(Unpooled::wrappedBuffer);
+
+                        return sendRequestToSpamd(Mono.just(learnHamRequestHeader(message.getContentLength(), username, messageClass)), messageByteBuf, connection)
+                                .then(connection.inbound()
+                                        .receive()
+                                        .asString()
+                                        .any(this::hasBeenSet)
+                                        .doOnNext(hasBeenSet -> {
+                                            if (hasBeenSet) {
+                                                LOGGER.debug("Reported mail as {} succeeded", messageClass);
+                                            } else {
+                                                LOGGER.debug("Reported mail as {} failed", messageClass);
+                                            }
+                                        }))
+                                .onErrorMap(IOException.class, e -> new MessagingException("Error communicating with spamd on " + spamdHost + ":" + spamdPort, e));
                     }
                 );
-            });
     }
 
-    private String learnHamRequestHeader(int contentLength, Username username, MessageClass messageClass) {
+    private String learnHamRequestHeader(long contentLength, Username username, MessageClass messageClass) {
         StringBuilder headerBuilder = new StringBuilder();
         headerBuilder.append("TELL SPAMC/1.2");
         headerBuilder.append(CRLF);

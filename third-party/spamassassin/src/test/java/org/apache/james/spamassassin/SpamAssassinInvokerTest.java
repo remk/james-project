@@ -96,7 +96,9 @@ public class SpamAssassinInvokerTest {
         MimeMessage mimeMessage = MimeMessageUtil.mimeMessageFromStream(
                 ClassLoader.getSystemResourceAsStream("spamassassin_db/spam/spam2"));
 
-        boolean result = Mono.from(testee.learnAsSpam(mimeMessage.getInputStream(), USERNAME)).block();
+        byte[] messageAsBytes = MimeMessageUtil.asString(mimeMessage).getBytes(StandardCharsets.UTF_8);
+
+        boolean result = Mono.from(testee.learnAsSpam(new MessageToLearn(new ByteArrayInputStream(messageAsBytes), messageAsBytes.length), USERNAME)).block();
 
         assertThat(result).isTrue();
     }
@@ -108,7 +110,7 @@ public class SpamAssassinInvokerTest {
 
         byte[] messageAsBytes = MimeMessageUtil.asString(mimeMessage).getBytes(StandardCharsets.UTF_8);
 
-        Mono.from(testee.learnAsSpam(new ByteArrayInputStream(messageAsBytes), USERNAME)).block();
+        Mono.from(testee.learnAsSpam(new MessageToLearn(new ByteArrayInputStream(messageAsBytes), messageAsBytes.length), USERNAME)).block();
 
         SpamAssassinResult result = testee.scanMail(mimeMessage, USERNAME).block();
 
@@ -119,8 +121,8 @@ public class SpamAssassinInvokerTest {
     public void learnAsHamShouldReturnTrueWhenLearningWorks() throws Exception {
         MimeMessage mimeMessage = MimeMessageUtil.mimeMessageFromStream(
             ClassLoader.getSystemResourceAsStream("spamassassin_db/ham/ham2"));
-
-        boolean result = Mono.from(testee.learnAsHam(mimeMessage.getInputStream(), USERNAME)).block();
+        byte[] messageAsBytes = MimeMessageUtil.asString(mimeMessage).getBytes(StandardCharsets.UTF_8);
+        boolean result = Mono.from(testee.learnAsHam(new MessageToLearn(new ByteArrayInputStream(messageAsBytes), messageAsBytes.length), USERNAME)).block();
 
         assertThat(result).isTrue();
     }
@@ -129,8 +131,8 @@ public class SpamAssassinInvokerTest {
     public void scanMailShouldMarkAsHamWhenMessageAlreadyLearnedAsHam() throws Exception {
         MimeMessage mimeMessage = MimeMessageUtil.mimeMessageFromStream(
             ClassLoader.getSystemResourceAsStream("spamassassin_db/ham/ham1"));
-
-        Mono.from(testee.learnAsHam(mimeMessage.getInputStream(), USERNAME)).block();
+        byte[] messageAsBytes = MimeMessageUtil.asString(mimeMessage).getBytes(StandardCharsets.UTF_8);
+        Mono.from(testee.learnAsHam(new MessageToLearn(new ByteArrayInputStream(messageAsBytes), messageAsBytes.length) , USERNAME)).block();
 
         SpamAssassinResult result = testee.scanMail(mimeMessage, USERNAME).block();
 
@@ -143,9 +145,8 @@ public class SpamAssassinInvokerTest {
             ClassLoader.getSystemResourceAsStream("eml/spam.eml"));
 
         byte[] messageAsBytes = MimeMessageUtil.asString(mimeMessage).getBytes(StandardCharsets.UTF_8);
-
-        Mono.from(testee.learnAsSpam(new ByteArrayInputStream(messageAsBytes), USERNAME))
-            .then(Mono.from(testee.learnAsHam(new ByteArrayInputStream(messageAsBytes), USERNAME)))
+        Mono.from(testee.learnAsSpam(new MessageToLearn(new ByteArrayInputStream(messageAsBytes), messageAsBytes.length), USERNAME))
+            .then(Mono.from(testee.learnAsHam(new MessageToLearn(new ByteArrayInputStream(messageAsBytes), messageAsBytes.length), USERNAME)))
             .block();
 
         SpamAssassinResult result = testee.scanMail(mimeMessage, USERNAME).block();
