@@ -119,7 +119,7 @@ class SpamAssassinListenerTest {
             .messageId(MESSAGE_ID)
             .build();
 
-        assertThat(listener.isMessageMovedToSpamMailbox(messageMoveEvent)).isFalse();
+        assertThat(listener.isMessageMovedToSpamMailbox(messageMoveEvent).block()).isFalse();
     }
 
     @Test
@@ -133,7 +133,7 @@ class SpamAssassinListenerTest {
             .messageId(MESSAGE_ID)
             .build();
 
-        assertThat(listener.isMessageMovedToSpamMailbox(messageMoveEvent)).isTrue();
+        assertThat(listener.isMessageMovedToSpamMailbox(messageMoveEvent).block()).isTrue();
     }
 
     @Test
@@ -147,7 +147,7 @@ class SpamAssassinListenerTest {
             .messageId(MESSAGE_ID)
             .build();
 
-        assertThat(listener.isMessageMovedToSpamMailbox(messageMoveEvent)).isFalse();
+        assertThat(listener.isMessageMovedToSpamMailbox(messageMoveEvent).block()).isFalse();
     }
 
     @Test
@@ -177,7 +177,7 @@ class SpamAssassinListenerTest {
             .messageId(MESSAGE_ID)
             .build();
 
-        assertThat(listener.isMessageMovedOutOfSpamMailbox(messageMoveEvent)).isFalse();
+        assertThat(listener.isMessageMovedOutOfSpamMailbox(messageMoveEvent).block()).isFalse();
     }
 
     @Test
@@ -191,7 +191,7 @@ class SpamAssassinListenerTest {
             .messageId(MESSAGE_ID)
             .build();
 
-        assertThat(listener.isMessageMovedOutOfSpamMailbox(messageMoveEvent)).isFalse();
+        assertThat(listener.isMessageMovedOutOfSpamMailbox(messageMoveEvent).block()).isFalse();
     }
 
     @Test
@@ -205,7 +205,7 @@ class SpamAssassinListenerTest {
             .messageId(MESSAGE_ID)
             .build();
 
-        assertThat(listener.isMessageMovedOutOfSpamMailbox(messageMoveEvent)).isTrue();
+        assertThat(listener.isMessageMovedOutOfSpamMailbox(messageMoveEvent).block()).isTrue();
     }
 
     @Test
@@ -219,7 +219,7 @@ class SpamAssassinListenerTest {
             .messageId(MESSAGE_ID)
             .build();
 
-        assertThat(listener.isMessageMovedOutOfSpamMailbox(messageMoveEvent)).isFalse();
+        assertThat(listener.isMessageMovedOutOfSpamMailbox(messageMoveEvent).block()).isFalse();
     }
 
     @Test

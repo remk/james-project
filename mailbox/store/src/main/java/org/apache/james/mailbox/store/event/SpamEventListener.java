@@ -20,6 +20,6 @@ package org.apache.james.mailbox.store.event;
 
 import org.apache.james.mailbox.events.MailboxListener;
 
-public interface SpamEventListener extends MailboxListener.GroupMailboxListener {
+public interface SpamEventListener extends MailboxListener.ReactiveGroupMailboxListener {
 
 }
