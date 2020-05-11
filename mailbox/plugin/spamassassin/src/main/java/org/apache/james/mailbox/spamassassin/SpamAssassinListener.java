@@ -136,15 +136,16 @@ public class SpamAssassinListener implements SpamEventListener {
                 .filter(FunctionalUtils.identityPredicate())
                 .flatMap(any -> {
                     LOGGER.debug("Spam event detected");
-
                     return retrieveMessages(messageMoveEvent, session)
-                        .flatMap(messages -> spamAssassin.learnSpam(messages, event.getUsername()));
-            }),
+                        .flatMap(messages ->
+                            spamAssassin.learnSpam(messages, event.getUsername()));
+                }),
             isMessageMovedOutOfSpamMailbox(messageMoveEvent)
                 .filter(FunctionalUtils.identityPredicate())
                 .flatMap(any ->
                     retrieveMessages(messageMoveEvent, session)
-                        .flatMap(messages -> spamAssassin.learnHam(messages, event.getUsername()))))
+                        .flatMap(messages ->
+                            spamAssassin.learnHam(messages, event.getUsername()))))
             .then();
     }
 
