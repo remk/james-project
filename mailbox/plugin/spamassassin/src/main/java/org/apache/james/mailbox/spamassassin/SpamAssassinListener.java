@@ -18,8 +18,6 @@
  ****************************************************************/
 package org.apache.james.mailbox.spamassassin;
 
-import java.util.stream.Stream;
-
 import javax.inject.Inject;
 
 import org.apache.james.core.Username;
@@ -47,9 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.fge.lambdas.functions.ThrowingFunction;
-import com.github.steveash.guavate.Guavate;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -114,19 +110,18 @@ public class SpamAssassinListener implements SpamEventListener {
 
            return mapperFactory.getMailboxMapper(session)
                 .findMailboxByIdReactive(addedEvent.getMailboxId())
-                .flatMap(mailbox -> retrieveContents(addedEvent, mailbox, messageMapper))
-                .flatMap(contents -> spamAssassin.learnHam(contents, event.getUsername()));
+                .flatMapMany(mailbox -> retrieveContents(addedEvent, mailbox, messageMapper))
+                .flatMap(contents -> spamAssassin.learnHam(contents, event.getUsername()))
+               .then();
         }
         return Mono.empty();
     }
 
-    private Mono<ImmutableList<MessageToLearn>> retrieveContents(Added addedEvent, Mailbox mailbox, MessageMapper messageMapper) {
-        return Mono.fromSupplier(() -> MessageRange.toRanges(addedEvent.getUids())
-                .stream()
+    private Flux<MessageToLearn> retrieveContents(Added addedEvent, Mailbox mailbox, MessageMapper messageMapper) {
+        return Flux.defer(() -> Flux.fromIterable(MessageRange.toRanges(addedEvent.getUids())))
                 .flatMap(range -> retrieveMessages(messageMapper, mailbox, range))
                 .map((ThrowingFunction<MailboxMessage, MessageToLearn>) message ->
                     new MessageToLearn(message.getFullContent(), message.getFullContentOctets()))
-                .collect(Guavate.toImmutableList()))
             .subscribeOn(Schedulers.elastic());
     }
 
@@ -134,7 +129,7 @@ public class SpamAssassinListener implements SpamEventListener {
         return Flux.merge(
             isMessageMovedToSpamMailbox(messageMoveEvent)
                 .filter(FunctionalUtils.identityPredicate())
-                .flatMap(any -> {
+                .flatMapMany(any -> {
                     LOGGER.debug("Spam event detected");
                     return retrieveMessages(messageMoveEvent, session)
                         .flatMap(messages ->
@@ -142,19 +137,19 @@ public class SpamAssassinListener implements SpamEventListener {
                 }),
             isMessageMovedOutOfSpamMailbox(messageMoveEvent)
                 .filter(FunctionalUtils.identityPredicate())
-                .flatMap(any ->
+                .flatMapMany(any ->
                     retrieveMessages(messageMoveEvent, session)
                         .flatMap(messages ->
                             spamAssassin.learnHam(messages, event.getUsername()))))
             .then();
     }
 
-    private Stream<MailboxMessage> retrieveMessages(MessageMapper messageMapper, Mailbox mailbox, MessageRange range) {
+    private Flux<MailboxMessage> retrieveMessages(MessageMapper messageMapper, Mailbox mailbox, MessageRange range) {
         try {
-            return Iterators.toStream(messageMapper.findInMailbox(mailbox, range, MessageMapper.FetchType.Full, LIMIT));
+            return Iterators.toFlux(messageMapper.findInMailbox(mailbox, range, MessageMapper.FetchType.Full, LIMIT));
         } catch (MailboxException e) {
             LOGGER.warn("Can not retrieve message {} {}", mailbox.getMailboxId(), range.toString(), e);
-            return Stream.empty();
+            return Flux.empty();
         }
     }
 
@@ -168,12 +163,11 @@ public class SpamAssassinListener implements SpamEventListener {
         }
     }
 
-    private Mono<ImmutableList<MessageToLearn>> retrieveMessages(MessageMoveEvent messageMoveEvent, MailboxSession session) {
-        return Mono.fromSupplier(() -> mapperFactory.getMessageIdMapper(session)
-                .find(messageMoveEvent.getMessageIds(), MessageMapper.FetchType.Full)
-                .stream()
-                .map((ThrowingFunction<MailboxMessage, MessageToLearn>) message -> new MessageToLearn(message.getFullContent(), message.getFullContentOctets()))
-                .collect(Guavate.toImmutableList()))
+    private Flux<MessageToLearn> retrieveMessages(MessageMoveEvent messageMoveEvent, MailboxSession session) {
+        return Flux.defer(() ->
+            Flux.fromIterable(mapperFactory.getMessageIdMapper(session)
+                .find(messageMoveEvent.getMessageIds(), MessageMapper.FetchType.Full)))
+            .map((ThrowingFunction<MailboxMessage, MessageToLearn>) message -> new MessageToLearn(message.getFullContent(), message.getFullContentOctets()))
             .subscribeOn(Schedulers.elastic());
     }
 

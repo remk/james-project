@@ -77,6 +77,8 @@ class SpamAssassinListenerTest {
     MailboxId trashMailboxId;
     MailboxSessionMapperFactory mapperFactory;
     Mailbox mailbox2;
+    private Mailbox spamMailbox;
+    private Mailbox spamCapitalMailbox;
 
     @BeforeEach
     void setup() throws Exception {
@@ -95,8 +97,10 @@ class SpamAssassinListenerTest {
         mailbox2 = mailboxMapper.create(MailboxPath.forUser(USER, "mailbox2"), UID_VALIDITY);
         mailboxId1 = mailbox1.getMailboxId();
         mailboxId2 = mailbox2.getMailboxId();
-        spamMailboxId = mailboxMapper.create(MailboxPath.forUser(USER, "Spam"), UID_VALIDITY).getMailboxId();
-        spamCapitalMailboxId = mailboxMapper.create(MailboxPath.forUser(USER, "SPAM"), UID_VALIDITY).getMailboxId();
+        spamMailbox = mailboxMapper.create(MailboxPath.forUser(USER, "Spam"), UID_VALIDITY);
+        spamMailboxId = spamMailbox.getMailboxId();
+        spamCapitalMailbox = mailboxMapper.create(MailboxPath.forUser(USER, "SPAM"), UID_VALIDITY);
+        spamCapitalMailboxId = spamCapitalMailbox.getMailboxId();
         trashMailboxId = mailboxMapper.create(MailboxPath.forUser(USER, "Trash"), UID_VALIDITY).getMailboxId();
 
         listener = new SpamAssassinListener(spamAssassin, systemMailboxesProvider, mailboxManager, mapperFactory, MailboxListener.ExecutionMode.SYNCHRONOUS);
@@ -109,7 +113,9 @@ class SpamAssassinListenerTest {
     }
 
     @Test
-    void isEventOnSpamMailboxShouldReturnFalseWhenMessageIsMovedToANonSpamMailbox() {
+    void isEventOnSpamMailboxShouldReturnFalseWhenMessageIsMovedToANonSpamMailbox() throws MailboxException {
+        createMessage(mailbox1);
+
         MessageMoveEvent messageMoveEvent = MessageMoveEvent.builder()
             .session(MAILBOX_SESSION)
             .messageMoves(MessageMoves.builder()
@@ -123,7 +129,9 @@ class SpamAssassinListenerTest {
     }
 
     @Test
-    void isEventOnSpamMailboxShouldReturnTrueWhenMailboxIsSpam() {
+    void isEventOnSpamMailboxShouldReturnTrueWhenMailboxIsSpam() throws MailboxException {
+        createMessage(mailbox1);
+
         MessageMoveEvent messageMoveEvent = MessageMoveEvent.builder()
             .session(MAILBOX_SESSION)
             .messageMoves(MessageMoves.builder()
@@ -137,7 +145,9 @@ class SpamAssassinListenerTest {
     }
 
     @Test
-    void isEventOnSpamMailboxShouldReturnFalseWhenMailboxIsSpamOtherCase() {
+    void isEventOnSpamMailboxShouldReturnFalseWhenMailboxIsSpamOtherCase() throws MailboxException {
+        createMessage(mailbox1);
+
         MessageMoveEvent messageMoveEvent = MessageMoveEvent.builder()
             .session(MAILBOX_SESSION)
             .messageMoves(MessageMoves.builder()
@@ -152,6 +162,8 @@ class SpamAssassinListenerTest {
 
     @Test
     void eventShouldCallSpamAssassinSpamLearningWhenTheEventMatches() throws Exception {
+        createMessage(mailbox1);
+
         MessageMoveEvent messageMoveEvent = MessageMoveEvent.builder()
             .session(MAILBOX_SESSION)
             .messageMoves(MessageMoves.builder()
@@ -167,7 +179,9 @@ class SpamAssassinListenerTest {
     }
 
     @Test
-    void isMessageMovedOutOfSpamMailboxShouldReturnFalseWhenMessageMovedBetweenNonSpamMailboxes() {
+    void isMessageMovedOutOfSpamMailboxShouldReturnFalseWhenMessageMovedBetweenNonSpamMailboxes() throws MailboxException {
+        createMessage(mailbox1);
+
         MessageMoveEvent messageMoveEvent = MessageMoveEvent.builder()
             .session(MAILBOX_SESSION)
             .messageMoves(MessageMoves.builder()
@@ -181,7 +195,9 @@ class SpamAssassinListenerTest {
     }
 
     @Test
-    void isMessageMovedOutOfSpamMailboxShouldReturnFalseWhenMessageMovedOutOfCapitalSpamMailbox() {
+    void isMessageMovedOutOfSpamMailboxShouldReturnFalseWhenMessageMovedOutOfCapitalSpamMailbox() throws MailboxException {
+        createMessage(spamCapitalMailbox);
+
         MessageMoveEvent messageMoveEvent = MessageMoveEvent.builder()
             .session(MAILBOX_SESSION)
             .messageMoves(MessageMoves.builder()
@@ -195,7 +211,9 @@ class SpamAssassinListenerTest {
     }
 
     @Test
-    void isMessageMovedOutOfSpamMailboxShouldReturnTrueWhenMessageMovedOutOfSpamMailbox() {
+    void isMessageMovedOutOfSpamMailboxShouldReturnTrueWhenMessageMovedOutOfSpamMailbox() throws MailboxException {
+        createMessage(spamMailbox);
+
         MessageMoveEvent messageMoveEvent = MessageMoveEvent.builder()
             .session(MAILBOX_SESSION)
             .messageMoves(MessageMoves.builder()
@@ -209,7 +227,9 @@ class SpamAssassinListenerTest {
     }
 
     @Test
-    void isMessageMovedOutOfSpamMailboxShouldReturnFalseWhenMessageMovedToTrash() {
+    void isMessageMovedOutOfSpamMailboxShouldReturnFalseWhenMessageMovedToTrash() throws MailboxException {
+        createMessage(spamMailbox);
+
         MessageMoveEvent messageMoveEvent = MessageMoveEvent.builder()
             .session(MAILBOX_SESSION)
             .messageMoves(MessageMoves.builder()
@@ -224,6 +244,8 @@ class SpamAssassinListenerTest {
 
     @Test
     void eventShouldCallSpamAssassinHamLearningWhenTheEventMatches() throws Exception {
+        createMessage(spamMailbox);
+
         MessageMoveEvent messageMoveEvent = MessageMoveEvent.builder()
             .session(MAILBOX_SESSION)
             .messageMoves(MessageMoves.builder()

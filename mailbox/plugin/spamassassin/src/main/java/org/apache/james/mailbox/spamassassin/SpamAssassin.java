@@ -18,7 +18,7 @@
  ****************************************************************/
 package org.apache.james.mailbox.spamassassin;
 
-import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Inject;
 
@@ -28,39 +28,33 @@ import org.apache.james.spamassassin.MessageToLearn;
 import org.apache.james.spamassassin.SpamAssassinInvoker;
 import org.apache.james.util.Host;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class SpamAssassin {
 
-    private final MetricFactory metricFactory;
-    private final SpamAssassinConfiguration spamAssassinConfiguration;
+    private final Optional<SpamAssassinInvoker> invoker;
 
     @Inject
     public SpamAssassin(MetricFactory metricFactory, SpamAssassinConfiguration spamAssassinConfiguration) {
-        this.metricFactory = metricFactory;
-        this.spamAssassinConfiguration = spamAssassinConfiguration;
-    }
-
-    public Mono<Void> learnSpam(List<MessageToLearn> messages, Username username) {
         if (spamAssassinConfiguration.isEnable()) {
             Host host = spamAssassinConfiguration.getHost().get();
-            SpamAssassinInvoker invoker = new SpamAssassinInvoker(metricFactory, host.getHostName(), host.getPort());
-            return Flux.fromIterable(messages)
-                .flatMap(message -> invoker.learnAsSpam(message, username))
-                .then();
+            invoker = Optional.of(new SpamAssassinInvoker(metricFactory, host.getHostName(), host.getPort()));
+        } else {
+            invoker = Optional.empty();
         }
-        return Mono.empty();
     }
 
-    public Mono<Void> learnHam(List<MessageToLearn> messages, Username username) {
-        if (spamAssassinConfiguration.isEnable()) {
-            Host host = spamAssassinConfiguration.getHost().get();
-            SpamAssassinInvoker invoker = new SpamAssassinInvoker(metricFactory, host.getHostName(), host.getPort());
-            return Flux.fromIterable(messages)
-                .flatMap(message -> invoker.learnAsHam(message, username))
-                .then();
-        }
-        return Mono.empty();
+    public Mono<Void> learnSpam(MessageToLearn message, Username username) {
+        return invoker.map(invoker ->
+            Mono.from(invoker.learnAsSpam(message, username))
+            .then())
+            .orElse(Mono.empty());
+    }
+
+    public Mono<Void> learnHam(MessageToLearn message, Username username) {
+        return invoker.map(invoker ->
+            Mono.from(invoker.learnAsHam(message, username))
+                .then())
+            .orElse(Mono.empty());
     }
 }
