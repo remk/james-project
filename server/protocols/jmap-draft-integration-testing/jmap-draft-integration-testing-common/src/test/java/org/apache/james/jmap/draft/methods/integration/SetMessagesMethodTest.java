@@ -66,6 +66,7 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -128,6 +129,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import com.github.steveash.guavate.Guavate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
@@ -140,6 +142,7 @@ import io.restassured.parsing.Parser;
 import io.restassured.path.json.JsonPath;
 import net.javacrumbs.jsonunit.core.Option;
 import net.javacrumbs.jsonunit.core.internal.Options;
+import reactor.core.publisher.Mono;
 
 public abstract class SetMessagesMethodTest {
     private static final String FORWARDED = "$Forwarded";
@@ -777,6 +780,52 @@ public abstract class SetMessagesMethodTest {
             .body(NAME, equalTo("messages"))
             .body(ARGUMENTS + ".list", hasSize(1))
             .body(ARGUMENTS + ".list[0].isUnread", equalTo(true));
+    }
+
+    @Test
+    public void setMessagesShouldMarkAsReadWhenIsUnreadPassedForABatchOfMessages() {
+        // Given
+        mailboxProbe.createMailbox(MailboxConstants.USER_NAMESPACE, USERNAME.asString(), "mailbox");
+        int nbMessages = 50;
+
+        List<ComposedMessageId> messages = Mono.fromCallable(() ->
+                mailboxProbe.appendMessage(USERNAME.asString(), USER_MAILBOX,
+            new ByteArrayInputStream(("Subject: test\r\n\r\ntestmail" + UUID.randomUUID().toString()).getBytes(StandardCharsets.UTF_8)), new Date(), false, new Flags()))
+                .repeat(nbMessages - 1)
+                .collectList()
+                .block();
+        await();
+
+        List<String> serializedMessageIds = messages.stream()
+                .map(message -> message.getMessageId().serialize())
+                .collect(Guavate.toImmutableList());
+
+        String serializedMessageIdsAsString = serializedMessageIds.stream()
+                .map(id -> "\"" + id + "\"")
+                .collect(Collectors.joining(", "));
+
+        String setUnread = serializedMessageIds.stream()
+                .map(id -> String.format("\"%s\" : { \"isUnread\" : false }", id))
+                .collect(Collectors.joining(", "));
+        given()
+            .header("Authorization", accessToken.asString())
+            .body("[[\"setMessages\", {\"update\": { " + setUnread + " } }, \"#0\"]]")
+        // When
+        .when()
+            .post("/jmap");
+
+        // Then
+        with()
+            .header("Authorization", accessToken.asString())
+            .body("[[\"getMessages\", {\"ids\": [" + serializedMessageIdsAsString + "]}, \"#0\"]]")
+            .post("/jmap")
+        .then()
+            .log().ifValidationFails()
+            .body(NAME, equalTo("messages"))
+            .body(ARGUMENTS + ".list", hasSize(nbMessages))
+            .body(ARGUMENTS + ".list[0].isUnread", equalTo(false))
+            .body(ARGUMENTS + ".list[24].isUnread", equalTo(false))
+            .body(ARGUMENTS + ".list[49].isUnread", equalTo(false));
     }
 
 
