@@ -84,6 +84,7 @@ public class MockSpamd implements Runnable {
             out.write(CRLF.getBytes());
         } else {
             out.write(NOT_SPAM.getBytes());
+            out.write(CRLF.getBytes());
         }
         out.flush();
     }
