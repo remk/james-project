@@ -54,6 +54,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 
 import reactor.core.publisher.Flux;
+import scala.util.Try;
 
 /**
  * This mailet handles MDN messages and define a header X-JAMES-MDN-JMAP-MESSAGE-ID referencing
@@ -118,10 +119,17 @@ public class ExtractMDNOriginalJMAPMessageId extends GenericMailet {
 
     private Optional<MDNReport> parseReport(Entity report) {
         LOGGER.debug("Parsing report");
+        Try<MDNReport> result;
         try {
-            return new MDNReportParser().parse(((SingleBody)report.getBody()).getInputStream(), report.getCharset());
+            result = MDNReportParser.parse(((SingleBody)report.getBody()).getInputStream(), report.getCharset());
         } catch (IOException e) {
             LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", e);
+            return Optional.empty();
+        }
+        if(result.isSuccess()) {
+            return Optional.of(result.get());
+        } else {
+            LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", result.failed().get());
             return Optional.empty();
         }
     }
