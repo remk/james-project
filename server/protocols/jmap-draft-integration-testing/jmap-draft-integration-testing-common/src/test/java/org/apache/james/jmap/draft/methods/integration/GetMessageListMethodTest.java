@@ -669,7 +669,7 @@ public abstract class GetMessageListMethodTest {
                             messageNotSeenFlaggedInOtherMailbox.getMessageId().serialize()))));
     }
 
-    @Ignore
+    @Ignore("To fix in JAMES-3182")
     @Category(BasicFeature.class)
     @Test
     public void getMessageListShouldFetchUnreadMessagesInMailboxUsingACombinationOfFilter() throws Exception {
