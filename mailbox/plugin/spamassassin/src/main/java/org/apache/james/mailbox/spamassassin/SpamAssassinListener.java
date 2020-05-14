@@ -129,12 +129,10 @@ public class SpamAssassinListener implements SpamEventListener {
         return Flux.merge(
             isMessageMovedToSpamMailbox(messageMoveEvent)
                 .filter(FunctionalUtils.identityPredicate())
-                .flatMapMany(any -> {
-                    LOGGER.debug("Spam event detected");
-                    return retrieveMessages(messageMoveEvent, session)
-                        .flatMap(messages ->
-                            spamAssassin.learnSpam(messages, event.getUsername()));
-                }),
+                .doOnNext(ignore -> LOGGER.debug("Spam event detected"))
+                .flatMapMany(any -> retrieveMessages(messageMoveEvent, session)
+                    .flatMap(messages ->
+                        spamAssassin.learnSpam(messages, event.getUsername()))),
             isMessageMovedOutOfSpamMailbox(messageMoveEvent)
                 .filter(FunctionalUtils.identityPredicate())
                 .flatMapMany(any ->
