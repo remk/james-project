@@ -120,9 +120,8 @@ public class SpamAssassinListener implements SpamEventListener {
     private Flux<MessageToLearn> retrieveContents(Added addedEvent, Mailbox mailbox, MessageMapper messageMapper) {
         return Flux.defer(() -> Flux.fromIterable(MessageRange.toRanges(addedEvent.getUids())))
                 .flatMap(range -> retrieveMessages(messageMapper, mailbox, range))
-                .map((ThrowingFunction<MailboxMessage, MessageToLearn>) message ->
-                    new MessageToLearn(message.getFullContent(), message.getFullContentOctets()))
-            .subscribeOn(Schedulers.elastic());
+                .flatMap(message ->
+                    Mono.fromCallable(() -> new MessageToLearn(message.getFullContent(), message.getFullContentOctets())));
     }
 
     private Mono<Void> handleMessageMove(Event event, MailboxSession session, MessageMoveEvent messageMoveEvent) {
