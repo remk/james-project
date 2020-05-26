@@ -32,6 +32,7 @@ import org.apache.james.mailbox.events.MessageMoveEvent;
 import org.apache.james.mailbox.exception.MailboxException;
 import org.apache.james.mailbox.model.Mailbox;
 import org.apache.james.mailbox.model.MailboxId;
+import org.apache.james.mailbox.model.MessageMoves;
 import org.apache.james.mailbox.model.MessageRange;
 import org.apache.james.mailbox.store.MailboxSessionMapperFactory;
 import org.apache.james.mailbox.store.event.SpamEventListener;
@@ -187,9 +188,10 @@ public class SpamAssassinListener implements SpamEventListener {
             .map(tuple -> {
                 MailboxId spamMailboxId = tuple.getT1();
                 MailboxId trashMailboxId = tuple.getT2();
+                MessageMoves messageMoves = event.getMessageMoves();
 
-                return event.getMessageMoves().removedMailboxIds().contains(spamMailboxId)
-                    && !event.getMessageMoves().addedMailboxIds().contains(trashMailboxId);
+                return messageMoves.removedMailboxIds().contains(spamMailboxId)
+                    && !messageMoves.addedMailboxIds().contains(trashMailboxId);
             })
             .onErrorResume(e -> {
                 LOGGER.warn("Could not resolve Spam mailbox", e);
