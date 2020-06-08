@@ -126,7 +126,7 @@ public class ExtractMDNOriginalJMAPMessageId extends GenericMailet {
             LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", e);
             return Optional.empty();
         }
-        if(result.isSuccess()) {
+        if (result.isSuccess()) {
             return Optional.of(result.get());
         } else {
             LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", result.failed().get());
