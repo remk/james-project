@@ -119,13 +119,9 @@ public class ExtractMDNOriginalJMAPMessageId extends GenericMailet {
 
     private Optional<MDNReport> parseReport(Entity report) {
         LOGGER.debug("Parsing report");
-        Try<MDNReport> result;
-        try {
-            result = MDNReportParser.parse(((SingleBody)report.getBody()).getInputStream(), report.getCharset());
-        } catch (IOException e) {
-            LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", e);
-            return Optional.empty();
-        }
+
+        Try<MDNReport> result = MDNReportParser.parse((SingleBody)report.getBody(), report.getCharset());
+
         if (result.isSuccess()) {
             return Optional.of(result.get());
         } else {
