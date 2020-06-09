@@ -200,7 +200,7 @@ class MDNReportParser(val input: ParserInput) extends Parser {
 
   //    original-message-id-field = "Original-Message-ID" ":" msg-id
   private[mdn] def originalMessageIdField: Rule1[OriginalMessageId] = rule {
-    "Original-Message-ID" ~ ":" ~ capture(msgId) ~> ((s: String) => new OriginalMessageId(s))
+    "Original-Message-ID" ~ ":" ~ capture(msgId) ~> ((msgId: String) => new OriginalMessageId(msgId))
   }
 
   //    msg-id          =   [CFWS] "<" id-left "@" id-right ">" [CFWS]
@@ -266,7 +266,9 @@ class MDNReportParser(val input: ParserInput) extends Parser {
     "dispatched" ~ push(DispositionType.Dispatched) |
     "processed" ~ push(DispositionType.Processed)
   }
-
+  //subpart of disposition-field corresponding to :
+  // [ OWS "/" OWS disposition-modifier
+  //                     *( OWS "," OWS disposition-modifier ) ]
   private def dispositionModifiers: Rule1[Seq[DispositionModifier]] = rule { (ows ~ "/" ~ ows ~ capture(dispositionModifier) ~
       zeroOrMore(ows ~ "," ~ ows ~ capture(dispositionModifier))) ~> ((head: String, tail: Seq[String]) =>
       tail.prepended(head).map(new DispositionModifier(_)))
