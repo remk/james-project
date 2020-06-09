@@ -38,7 +38,36 @@ class MDNReportParserTest {
   @Test
   def parseShouldReturnMdnReportWhenMaximalSubset(): Unit = {
     val maximal = "Reporting-UA: UA_name; UA_product\r\n" + "MDN-Gateway: smtp; apache.org\r\n" + "Original-Recipient: rfc822; originalRecipient\r\n" + "Final-Recipient: rfc822; final_recipient\r\n" + "Original-Message-ID: <original@message.id>\r\n" + "Disposition: automatic-action/MDN-sent-automatically;processed/error,failed\r\n" + "Error: Message1\r\n" + "Error: Message2\r\n" + "X-OPENPAAS-IP: 177.177.177.77\r\n" + "X-OPENPAAS-PORT: 8000\r\n"
-    val expected = Some(MDNReport.builder.reportingUserAgentField(ReportingUserAgent.builder.userAgentName("UA_name").userAgentProduct("UA_product").build).gatewayField(Gateway.builder.nameType(new AddressType("smtp")).name(Text.fromRawText("apache.org")).build).originalRecipientField("originalRecipient").finalRecipientField("final_recipient").originalMessageIdField("<original@message.id>").dispositionField(Disposition.builder.actionMode(DispositionActionMode.Automatic).sendingMode(DispositionSendingMode.Automatic).`type`(DispositionType.Processed).addModifier(DispositionModifier.Error).addModifier(DispositionModifier.Failed).build).addErrorField("Message1").addErrorField("Message2").withExtensionField(ExtensionField.builder.fieldName("X-OPENPAAS-IP").rawValue(" 177.177.177.77").build).withExtensionField(ExtensionField.builder.fieldName("X-OPENPAAS-PORT").rawValue(" 8000").build).build)
+    val expected = Some(MDNReport.builder
+      .reportingUserAgentField(ReportingUserAgent.builder
+        .userAgentName("UA_name")
+        .userAgentProduct("UA_product")
+        .build)
+      .gatewayField(Gateway.builder
+        .nameType(new AddressType("smtp"))
+        .name(Text.fromRawText("apache.org"))
+        .build)
+      .originalRecipientField("originalRecipient")
+      .finalRecipientField("final_recipient")
+      .originalMessageIdField("<original@message.id>")
+      .dispositionField(Disposition.builder
+        .actionMode(DispositionActionMode.Automatic)
+        .sendingMode(DispositionSendingMode.Automatic)
+        .`type`(DispositionType.Processed)
+        .addModifier(DispositionModifier.Error)
+        .addModifier(DispositionModifier.Failed)
+        .build)
+      .addErrorField("Message1")
+      .addErrorField("Message2")
+      .withExtensionField(ExtensionField.builder
+        .fieldName("X-OPENPAAS-IP")
+        .rawValue(" 177.177.177.77")
+        .build)
+      .withExtensionField(ExtensionField.builder
+        .fieldName("X-OPENPAAS-PORT")
+        .rawValue(" 8000")
+        .build)
+      .build)
     val actual = MDNReportParser.parse(maximal).toOption
     assertThat(actual).isEqualTo(expected)
   }
@@ -46,7 +75,15 @@ class MDNReportParserTest {
   @Test
   def parseShouldReturnMdnReportWhenMinimalSubset(): Unit = {
     val minimal = "Final-Recipient: rfc822; final_recipient\r\n" + "Disposition: automatic-action/MDN-sent-automatically;processed\r\n"
-    val expected = Some(MDNReport.builder.finalRecipientField("final_recipient").dispositionField(Disposition.builder.actionMode(DispositionActionMode.Automatic).sendingMode(DispositionSendingMode.Automatic).`type`(DispositionType.Processed).build).build)
+    val disposition = Disposition.builder
+      .actionMode(DispositionActionMode.Automatic)
+      .sendingMode(DispositionSendingMode.Automatic)
+      .`type`(DispositionType.Processed)
+      .build
+    val expected = Some(MDNReport.builder
+      .finalRecipientField("final_recipient")
+      .dispositionField(disposition)
+      .build)
     val actual = MDNReportParser.parse(minimal).toOption
     assertThat(actual).isEqualTo(expected)
   }
@@ -115,7 +152,11 @@ class MDNReportParserTest {
   @Test
   def dispositionFieldShouldParseWhenMinimal(): Unit = {
     val disposition = "Disposition: automatic-action/MDN-sent-automatically;processed"
-    val expected = Disposition.builder.actionMode(DispositionActionMode.Automatic).sendingMode(DispositionSendingMode.Automatic).`type`(DispositionType.Processed).build
+    val expected = Disposition.builder
+      .actionMode(DispositionActionMode.Automatic)
+      .sendingMode(DispositionSendingMode.Automatic)
+      .`type`(DispositionType.Processed)
+      .build
     val parser = new MDNReportParser(disposition)
     val result = parser.dispositionField.run()
     assertThat(result.isSuccess).isTrue
@@ -125,7 +166,13 @@ class MDNReportParserTest {
   @Test
   def dispositionFieldShouldParseWhenMaximal(): Unit = {
     val disposition = "Disposition: automatic-action/MDN-sent-automatically;processed/error,failed"
-    val expected = Disposition.builder.actionMode(DispositionActionMode.Automatic).sendingMode(DispositionSendingMode.Automatic).`type`(DispositionType.Processed).addModifier(DispositionModifier.Error).addModifier(DispositionModifier.Failed).build
+    val expected = Disposition.builder.
+      actionMode(DispositionActionMode.Automatic)
+      .sendingMode(DispositionSendingMode.Automatic)
+      .`type`(DispositionType.Processed)
+      .addModifier(DispositionModifier.Error)
+      .addModifier(DispositionModifier.Failed)
+      .build
     val parser = new MDNReportParser(disposition)
     val result = parser.dispositionField.run()
     assertThat(result.isSuccess).isTrue
@@ -135,7 +182,11 @@ class MDNReportParserTest {
   @Test
   def dispositionFieldShouldParseWhenManualAutomaticWithDisplayedType(): Unit = {
     val disposition = "Disposition: manual-action/MDN-sent-automatically;processed"
-    val expected = Disposition.builder.actionMode(DispositionActionMode.Manual).sendingMode(DispositionSendingMode.Automatic).`type`(DispositionType.Processed).build
+    val expected = Disposition.builder
+      .actionMode(DispositionActionMode.Manual)
+      .sendingMode(DispositionSendingMode.Automatic)
+      .`type`(DispositionType.Processed)
+      .build
     val parser = new MDNReportParser(disposition)
     val result = parser.dispositionField.run()
     assertThat(result.isSuccess).isTrue
@@ -145,7 +196,11 @@ class MDNReportParserTest {
   @Test
   def dispositionFieldShouldParseWhenAutomaticManualWithDisplayedType(): Unit = {
     val disposition = "Disposition: automatic-action/MDN-sent-manually;processed"
-    val expected = Disposition.builder.actionMode(DispositionActionMode.Automatic).sendingMode(DispositionSendingMode.Manual).`type`(DispositionType.Processed).build
+    val expected = Disposition.builder
+      .actionMode(DispositionActionMode.Automatic)
+      .sendingMode(DispositionSendingMode.Manual)
+      .`type`(DispositionType.Processed)
+      .build
     val parser = new MDNReportParser(disposition)
     val result = parser.dispositionField.run()
     assertThat(result.isSuccess).isTrue
@@ -155,7 +210,11 @@ class MDNReportParserTest {
   @Test
   def dispositionFieldShouldParseWhenDeletedType(): Unit = {
     val disposition = "Disposition: automatic-action/MDN-sent-manually;deleted"
-    val expected = Disposition.builder.actionMode(DispositionActionMode.Automatic).sendingMode(DispositionSendingMode.Manual).`type`(DispositionType.Deleted).build
+    val expected = Disposition.builder
+      .actionMode(DispositionActionMode.Automatic)
+      .sendingMode(DispositionSendingMode.Manual)
+      .`type`(DispositionType.Deleted)
+      .build
     val parser = new MDNReportParser(disposition)
     val result = parser.dispositionField.run()
     assertThat(result.isSuccess).isTrue
@@ -165,7 +224,11 @@ class MDNReportParserTest {
   @Test
   def dispositionFieldShouldParseWhenDispatchedType(): Unit = {
     val disposition = "Disposition: automatic-action/MDN-sent-manually;dispatched"
-    val expected = Disposition.builder.actionMode(DispositionActionMode.Automatic).sendingMode(DispositionSendingMode.Manual).`type`(DispositionType.Dispatched).build
+    val expected = Disposition.builder
+      .actionMode(DispositionActionMode.Automatic)
+      .sendingMode(DispositionSendingMode.Manual)
+      .`type`(DispositionType.Dispatched)
+      .build
     val parser = new MDNReportParser(disposition)
     val result = parser.dispositionField.run()
     assertThat(result.isSuccess).isTrue
@@ -175,7 +238,11 @@ class MDNReportParserTest {
   @Test
   def dispositionFieldShouldParseWhenDisplayedType(): Unit = {
     val disposition = "Disposition: automatic-action/MDN-sent-manually;displayed"
-    val expected = Disposition.builder.actionMode(DispositionActionMode.Automatic).sendingMode(DispositionSendingMode.Manual).`type`(DispositionType.Displayed).build
+    val expected = Disposition.builder
+      .actionMode(DispositionActionMode.Automatic)
+      .sendingMode(DispositionSendingMode.Manual)
+      .`type`(DispositionType.Displayed)
+      .build
     val parser = new MDNReportParser(disposition)
     val result = parser.dispositionField.run()
     assertThat(result.isSuccess).isTrue
