@@ -101,7 +101,7 @@ class MDNReportParser(val input: ParserInput) extends Parser {
   /*    reporting-ua-field = "Reporting-UA" ":" OWS ua-name OWS [
                                    ";" OWS ua-product OWS ]    */
   private[mdn] def reportingUaField: Rule1[ReportingUserAgent] = rule {
-    ("Reporting-UA" ~ ":" ~ ows ~ capture(uaName) ~ ows ~ optional(";" ~ ows ~ capture(uaProduct) ~ ows)) ~> ((uaName: String, uaProduct: Option[String]) => {
+    ("Reporting-UA" ~ ":" ~ ows ~ capture(uaName) ~ ows ~ (";" ~ ows ~ capture(uaProduct) ~ ows).?) ~> ((uaName: String, uaProduct: Option[String]) => {
      val builder = ReportingUserAgent.builder()
         .userAgentName(uaName)
       (uaProduct match {
@@ -125,7 +125,7 @@ class MDNReportParser(val input: ParserInput) extends Parser {
   }
 
   //    ua-product = *([FWS] text)
-  private def uaProduct: Rule0 = rule { zeroOrMore(optional(fws) ~ text) }
+  private def uaProduct: Rule0 = rule { zeroOrMore(fws.? ~ text) }
 
   /*   text            =   %d1-9 /            ; Characters excluding CR
                                  %d11 /             ;  and LF
@@ -147,7 +147,7 @@ class MDNReportParser(val input: ParserInput) extends Parser {
             ;
             ; MDN parsers MUST parse it as "[CFWS]".    */
   private def ows = rule {
-    optional(cfws)
+    cfws.?
   }
 
   /*    mdn-gateway-field = "MDN-Gateway" ":" OWS mta-name-type OWS
@@ -204,7 +204,7 @@ class MDNReportParser(val input: ParserInput) extends Parser {
   }
 
   //    msg-id          =   [CFWS] "<" id-left "@" id-right ">" [CFWS]
-  private def msgId: Rule0 = rule { optional(cfws) ~ "<" ~ idLeft ~ "@" ~ idRight ~ ">" ~ optional(cfws) }
+  private def msgId: Rule0 = rule { cfws.? ~ "<" ~ idLeft ~ "@" ~ idRight ~ ">" ~ cfws.? }
 
   //   id-left         =   dot-atom-text / obs-id-left
   private def idLeft: Rule0 = rule { dotAtomText | obsIdLeft }
@@ -223,7 +223,7 @@ class MDNReportParser(val input: ParserInput) extends Parser {
   private[mdn] def dispositionField : Rule1[Disposition] = rule {
     ("Disposition" ~ ":" ~ ows ~ dispositionMode ~ ows ~ ";" ~
     ows ~ dispositionType ~
-    optional(dispositionModifiers) ~ ows) ~> ((modes: (DispositionActionMode, DispositionSendingMode),
+    dispositionModifiers.? ~ ows) ~> ((modes: (DispositionActionMode, DispositionSendingMode),
                                                                               dispositionType: DispositionType,
                                                                               dispositionModifiers: Option[Seq[DispositionModifier]]) =>
        Disposition.builder()
@@ -282,10 +282,10 @@ class MDNReportParser(val input: ParserInput) extends Parser {
   private def dispositionModifierExtension = rule { atom }
 
   //    error-field = "Error" ":" *([FWS] text)
-  private[mdn] def errorField: Rule1[Error] = rule { ("Error" ~ ":" ~ capture(zeroOrMore(optional(fws) ~ text))) ~> ((error: String) =>  new Error(Text.fromRawText(error))) }
+  private[mdn] def errorField: Rule1[Error] = rule { ("Error" ~ ":" ~ capture(zeroOrMore(fws.? ~ text))) ~> ((error: String) =>  new Error(Text.fromRawText(error))) }
 
   //    extension-field = extension-field-name ":" *([FWS] text)
-  private[mdn] def extentionField: Rule1[ExtensionField] = rule { capture(extensionFieldName) ~ ":" ~ capture(zeroOrMore(optional(fws) ~ text)) ~> ((extensionFieldName: String, text : String) =>
+  private[mdn] def extentionField: Rule1[ExtensionField] = rule { capture(extensionFieldName) ~ ":" ~ capture(zeroOrMore(fws.? ~ text)) ~> ((extensionFieldName: String, text : String) =>
     ExtensionField.builder()
       .fieldName(extensionFieldName)
       .rawValue(text)
@@ -306,10 +306,10 @@ class MDNReportParser(val input: ParserInput) extends Parser {
   }
 
   //   CFWS            =   (1*([FWS] comment) [FWS]) / FWS
-  private def cfws: Rule0 = rule { (oneOrMore(optional(fws) ~ comment) ~ fws) | fws }
+  private def cfws: Rule0 = rule { (oneOrMore(fws.? ~ comment) ~ fws) | fws }
 
   //   FWS             =   ([*WSP CRLF] 1*WSP) /  obs-FWS
-  private def fws: Rule0 = rule { (optional(zeroOrMore(wsp) ~ crlf) ~ oneOrMore(wsp)) | obsFWS }
+  private def fws: Rule0 = rule { ((zeroOrMore(wsp) ~ crlf).? ~ oneOrMore(wsp)) | obsFWS }
 
   //         WSP            =  SP / HTAB
   private def wsp: Rule0 = rule { sp | htab }
@@ -333,7 +333,7 @@ class MDNReportParser(val input: ParserInput) extends Parser {
   private def obsFWS: Rule0 = rule { oneOrMore(wsp) ~ zeroOrMore(crlf ~ oneOrMore(wsp)) }
 
   //   comment         =   "(" *([FWS] ccontent) [FWS] ")"
-  private def comment: Rule[HNil, HNil] = rule { "(" ~ zeroOrMore(optional(fws) ~ ccontent) ~ optional(fws) ~ ")" }
+  private def comment: Rule[HNil, HNil] = rule { "(" ~ zeroOrMore(fws.? ~ ccontent) ~ fws.? ~ ")" }
 
   //   ccontent        =   ctext / quoted-pair / comment
   private def ccontent: Rule[HNil, HNil] = rule { ctext | quotedPair | comment }
@@ -378,7 +378,7 @@ class MDNReportParser(val input: ParserInput) extends Parser {
   private def word: Rule0 = rule { atom | quotedString }
 
   //    atom            =   [CFWS] 1*atext [CFWS]
-  private def atom: Rule0 = rule { optional(cfws) ~ oneOrMore(atext) ~ optional(cfws) }
+  private def atom: Rule0 = rule { cfws.? ~ oneOrMore(atext) ~ cfws.? }
 
   /*   atext           =   ALPHA / DIGIT /    ; Printable US-ASCII
                          "!" / "#" /        ;  characters not including
@@ -419,9 +419,9 @@ class MDNReportParser(val input: ParserInput) extends Parser {
                                  [CFWS]   */
 
   private def quotedString: Rule0 = rule {
-    optional(cfws) ~
-    dquote ~ zeroOrMore(optional(fws) ~ qcontent) ~ optional(fws) ~ dquote ~
-    optional(cfws)
+    cfws.? ~
+    dquote ~ zeroOrMore(fws.? ~ qcontent) ~ fws.? ~ dquote ~
+    cfws.?
   }
 
   //         DQUOTE         =  %x22
@@ -448,14 +448,14 @@ class MDNReportParser(val input: ParserInput) extends Parser {
   private def domain = rule { dotAtom | domainLiteral | dotAtom }
 
   //   dot-atom        =   [CFWS] dot-atom-text [CFWS]
-  private def dotAtom = rule { optional(cfws) ~ dotAtomText ~ optional(cfws) }
+  private def dotAtom = rule { cfws.? ~ dotAtomText ~ cfws.? }
 
   //   dot-atom-text   =   1*atext *("." 1*atext)
   private def dotAtomText = rule { oneOrMore(atext) ~ zeroOrMore("." ~ oneOrMore(atext)) }
 
   //   domain-literal  =   [CFWS] "[" *([FWS] dtext) [FWS] "]" [CFWS]
   private def domainLiteral = rule {
-    optional(cfws) ~ "[" ~ zeroOrMore(optional(fws) ~ dtext) ~ optional(fws) ~ "]" ~ optional(cfws)
+    cfws.? ~ "[" ~ zeroOrMore(fws.? ~ dtext) ~ fws.? ~ "]" ~ cfws.?
   }
 
   /*   dtext           =   %d33-90 /          ; Printable US-ASCII
