@@ -46,6 +46,7 @@ import org.apache.james.utils.DataProbeImpl;
 import org.apache.james.utils.TestIMAPClient;
 import org.apache.james.utils.SMTPMessageSender;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -53,6 +54,7 @@ import org.junit.rules.TemporaryFolder;
 public class BounceIntegrationTest {
     public static final String POSTMASTER = "postmaster@" + DEFAULT_DOMAIN;
     public static final String BOUNCE_RECEIVER = "bounce.receiver@" + DEFAULT_DOMAIN;
+    public static final String BOUNCE_RECEIVER_TO_RETURN = "return.receiver@" + DEFAULT_DOMAIN;
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -90,6 +92,40 @@ public class BounceIntegrationTest {
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(BOUNCE_RECEIVER, PASSWORD)
+            .select(TestIMAPClient.INBOX)
+            .awaitMessage(awaitAtMostOneMinute);
+    }
+
+    @Ignore("Will be fixed in next commit")
+    @Test
+    public void dsnBounceMailetShouldDeliverBounceToReturnAddress() throws Exception {
+        jamesServer = TemporaryJamesServer.builder()
+            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
+            .withMailetContainer(
+                generateMailetContainerConfiguration(MailetConfiguration.builder()
+                .matcher(All.class)
+                .mailet(DSNBounce.class)
+                .addProperty("passThrough", "false")))
+            .build(temporaryFolder.newFolder());
+
+        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
+        dataProbe.addDomain(DEFAULT_DOMAIN);
+        dataProbe.addUser(RECIPIENT, PASSWORD);
+        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
+        dataProbe.addUser(BOUNCE_RECEIVER_TO_RETURN, PASSWORD);
+
+        messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
+            .sendMessageWithHeaders(BOUNCE_RECEIVER, RECIPIENT,
+                    "From: " + BOUNCE_RECEIVER + "\r\n" +
+                    "To: " + RECIPIENT + "\r\n" +
+                    "Return-Path: " + BOUNCE_RECEIVER_TO_RETURN + "\r\n" +
+                    "Subject: " + "Hello\r\n" +
+                    "\r\n" +
+                    "Please bounce me to the return address\r\n"
+                    );
+
+        testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
+            .login(BOUNCE_RECEIVER_TO_RETURN, PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessage(awaitAtMostOneMinute);
     }
@@ -262,6 +298,10 @@ public class BounceIntegrationTest {
                 .matcher(RecipientIs.class)
                 .matcherCondition(BOUNCE_RECEIVER)
                 .mailet(LocalDelivery.class))
+            .addMailet(MailetConfiguration.builder()
+                    .matcher(RecipientIs.class)
+                    .matcherCondition(BOUNCE_RECEIVER_TO_RETURN)
+                    .mailet(LocalDelivery.class))
             .addMailet(MailetConfiguration.builder()
                 .matcher(RecipientIs.class)
                 .matcherCondition(POSTMASTER)
