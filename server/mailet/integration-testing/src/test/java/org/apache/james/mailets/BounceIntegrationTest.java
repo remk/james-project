@@ -43,10 +43,9 @@ import org.apache.james.transport.mailets.Resend;
 import org.apache.james.transport.matchers.All;
 import org.apache.james.transport.matchers.RecipientIs;
 import org.apache.james.utils.DataProbeImpl;
-import org.apache.james.utils.TestIMAPClient;
 import org.apache.james.utils.SMTPMessageSender;
+import org.apache.james.utils.TestIMAPClient;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -96,7 +95,6 @@ public class BounceIntegrationTest {
             .awaitMessage(awaitAtMostOneMinute);
     }
 
-    @Ignore("Will be fixed in next commit")
     @Test
     public void dsnBounceMailetShouldDeliverBounceToReturnAddress() throws Exception {
         jamesServer = TemporaryJamesServer.builder()

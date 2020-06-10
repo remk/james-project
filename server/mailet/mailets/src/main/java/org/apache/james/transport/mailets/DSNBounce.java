@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.mail.MessagingException;
@@ -38,6 +39,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.james.core.MailAddress;
 import org.apache.james.core.MaybeSender;
 import org.apache.james.dnsservice.api.DNSService;
@@ -58,6 +60,7 @@ import org.apache.james.transport.util.ReplyToUtils;
 import org.apache.james.transport.util.SenderUtils;
 import org.apache.james.transport.util.SpecialAddressesUtils;
 import org.apache.james.transport.util.TosUtils;
+import org.apache.james.util.OptionalUtils;
 import org.apache.mailet.AttributeName;
 import org.apache.mailet.AttributeUtils;
 import org.apache.mailet.Mail;
@@ -67,6 +70,8 @@ import org.apache.mailet.base.RFC2822Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.fge.lambdas.Throwing;
+import com.github.fge.lambdas.functions.ThrowingFunction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -117,6 +122,7 @@ public class DSNBounce extends GenericMailet implements RedirectNotify {
     private static final List<MailAddress> RECIPIENT_MAIL_ADDRESSES = ImmutableList.of(SpecialAddress.REVERSE_PATH);
     private static final List<InternetAddress> TO_INTERNET_ADDRESSES = ImmutableList.of(SpecialAddress.REVERSE_PATH.toInternetAddress());
 
+    private static final String RETURN_PATH = "Return-Path";
     private static final String LOCALHOST = "127.0.0.1";
     private static final Pattern DIAG_PATTERN = Patterns.compilePatternUncheckedException("^\\d{3}\\s.*$");
     private static final String MACHINE_PATTERN = "[machine]";
@@ -253,9 +259,11 @@ public class DSNBounce extends GenericMailet implements RedirectNotify {
     private void trySendBounce(Mail originalMail) throws MessagingException {
         MailImpl newMail = MailImpl.duplicate(originalMail);
         try {
+            List<MailAddress> bounceReceiver = getSenderAsList(originalMail);
+
             newMail.setRemoteHost(getRemoteHost());
             newMail.setRemoteAddr(getRemoteAddr());
-            newMail.setRecipients(getSenderAsList(originalMail));
+            newMail.setRecipients(bounceReceiver);
        
             if (getInitParameters().isDebug()) {
                 LOGGER.debug("New mail - sender: {}, recipients: {}, name: {}, remoteHost: {}, remoteAddr: {}, state: {}, lastUpdated: {}, errorMessage: {}",
@@ -270,8 +278,8 @@ public class DSNBounce extends GenericMailet implements RedirectNotify {
                     .mail(newMail)
                     .dns(dns)
                     .build();
-            mailModifier.setRecipients(getRecipients(originalMail));
-            mailModifier.setTo(getTo(originalMail));
+            mailModifier.setRecipients(bounceReceiver);
+            mailModifier.setTo(bounceReceiver);
             mailModifier.setSubjectPrefix(originalMail);
             mailModifier.setReplyTo(getReplyTo(originalMail));
             mailModifier.setReversePath(getReversePath(originalMail));
@@ -281,6 +289,7 @@ public class DSNBounce extends GenericMailet implements RedirectNotify {
             newMail.getMessage().setHeader(RFC2822Headers.DATE, getDateHeader(originalMail));
        
             newMail.getMessage().saveChanges();
+
             getMailetContext().sendMail(newMail);
         } finally {
             newMail.dispose();
@@ -321,13 +330,23 @@ public class DSNBounce extends GenericMailet implements RedirectNotify {
         }
     }
 
-    private List<MailAddress> getSenderAsList(Mail originalMail) {
-        MaybeSender reversePath = originalMail.getMaybeSender();
+    private List<MailAddress> getSenderAsList(Mail originalMail) throws MessagingException {
+        Optional<MailAddress> returnPath = Optional.ofNullable(originalMail.getMessage().getHeader(RETURN_PATH))
+                .flatMap(path -> path.length > 0 ? Optional.ofNullable(path[0]) : Optional.empty())
+                .map((Throwing.<String, MailAddress>function(MailAddress::new).sneakyThrow()));
 
-        if (getInitParameters().isDebug()) {
-            LOGGER.debug("Processing a bounce request for a message with a reverse path.  The bounce will be sent to {}", reversePath.asString());
+        if(returnPath.isPresent()) {
+            if (getInitParameters().isDebug()) {
+                LOGGER.debug("Processing a bounce request for a message with a reverse path.  The bounce will be sent to {}", returnPath.get().asString());
+            }
+            return ImmutableList.of(returnPath.get());
+        } else {
+            MaybeSender reversePath = originalMail.getMaybeSender();
+            if (getInitParameters().isDebug()) {
+                LOGGER.debug("Processing a bounce request for a message with a reverse path.  The bounce will be sent to {}", reversePath.asString());
+            }
+            return reversePath.asList();
         }
-        return reversePath.asList();
     }
 
     private MimeMessage createBounceMessage(Mail originalMail) throws MessagingException {
