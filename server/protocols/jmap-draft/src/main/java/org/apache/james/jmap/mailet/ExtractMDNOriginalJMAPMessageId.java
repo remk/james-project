@@ -21,6 +21,7 @@ package org.apache.james.jmap.mailet;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -119,15 +120,18 @@ public class ExtractMDNOriginalJMAPMessageId extends GenericMailet {
 
     private Optional<MDNReport> parseReport(Entity report) {
         LOGGER.debug("Parsing report");
-
-        Try<MDNReport> result = MDNReportParser.parse((SingleBody)report.getBody(), report.getCharset());
-
-        if (result.isSuccess()) {
-            return Optional.of(result.get());
-        } else {
-            LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", result.failed().get());
-            return Optional.empty();
-        }
+          try(InputStream inputStream = ((SingleBody)report.getBody()).getInputStream()) {
+              Try<MDNReport> result = MDNReportParser.parse(inputStream, report.getCharset());
+              if (result.isSuccess()) {
+                  return Optional.of(result.get());
+              } else {
+                  LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", result.failed().get());
+                  return Optional.empty();
+              }
+          } catch (IOException e) {
+              LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", e);
+              return Optional.empty();
+          }
     }
 
     private Optional<Entity> findReport(MimeMessage mimeMessage) {

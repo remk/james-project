@@ -27,7 +27,6 @@ import org.apache.james.mdn.action.mode.DispositionActionMode
 import org.apache.james.mdn.fields._
 import org.apache.james.mdn.modifier.DispositionModifier
 import org.apache.james.mdn.sending.mode.DispositionSendingMode
-import org.apache.james.mime4j.dom.SingleBody
 import org.parboiled2._
 import org.slf4j.LoggerFactory
 import shapeless.HNil
@@ -36,9 +35,6 @@ import scala.util.{Failure, Try}
 
 object MDNReportParser {
   private val LOGGER = LoggerFactory.getLogger(classOf[MDNReportParser])
-
-  def parse(body: SingleBody, charset: String): Try[MDNReport] = Try(body.getInputStream)
-    .flatMap(inputStream => parse(inputStream, charset))
 
   def parse(is: InputStream, charset: String): Try[MDNReport] = new MDNReportParser(IOUtils.toString(is, charset)).dispositionNotificationContent.run()
 
