@@ -25,6 +25,9 @@ import static org.apache.james.mailets.configuration.Constants.PASSWORD;
 import static org.apache.james.mailets.configuration.Constants.RECIPIENT;
 import static org.apache.james.mailets.configuration.Constants.awaitAtMostOneMinute;
 
+import javax.ws.rs.POST;
+
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.james.MemoryJamesServerMain;
 import org.apache.james.mailets.configuration.MailetConfiguration;
 import org.apache.james.mailets.configuration.MailetContainer;
@@ -45,10 +48,12 @@ import org.apache.james.transport.matchers.RecipientIs;
 import org.apache.james.utils.DataProbeImpl;
 import org.apache.james.utils.SMTPMessageSender;
 import org.apache.james.utils.TestIMAPClient;
+import org.apache.mailet.Mailet;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
 
 public class BounceIntegrationTest {
     public static final String POSTMASTER = "postmaster@" + DEFAULT_DOMAIN;
@@ -63,7 +68,6 @@ public class BounceIntegrationTest {
     public SMTPMessageSender messageSender = new SMTPMessageSender(DEFAULT_DOMAIN);
 
     private TemporaryJamesServer jamesServer;
-    private DataProbe dataProbe;
 
     @After
     public void tearDown() {
@@ -72,19 +76,7 @@ public class BounceIntegrationTest {
 
     @Test
     public void dsnBounceMailetShouldDeliverBounce() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(
-                generateMailetContainerConfiguration(MailetConfiguration.builder()
-                .matcher(All.class)
-                .mailet(DSNBounce.class)
-                .addProperty("passThrough", "false")))
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
+        setupForDsnBounce();
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage(BOUNCE_RECEIVER, RECIPIENT);
@@ -95,22 +87,44 @@ public class BounceIntegrationTest {
             .awaitMessage(awaitAtMostOneMinute);
     }
 
+    private void setup(Class<? extends Mailet> mailet, Pair<String, String>... additionalProperties) throws Exception {
+        MailetConfiguration.Builder mailetConfiguration = MailetConfiguration.builder()
+                .matcher(All.class)
+                .mailet(mailet)
+                .addProperty("passThrough", "false");
+
+        if (additionalProperties.length > 0) {
+            ImmutableList.copyOf(additionalProperties)
+                    .stream()
+                    .forEach(property -> mailetConfiguration.addProperty(property.getKey(), property.getValue()));
+        }
+
+        jamesServer = TemporaryJamesServer.builder()
+                .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
+                .withMailetContainer(
+                        generateMailetContainerConfiguration(mailetConfiguration))
+                .build(temporaryFolder.newFolder());
+
+        jamesServer.getProbe(DataProbeImpl.class)
+                .fluent()
+                .addDomain(DEFAULT_DOMAIN)
+                .addUser(RECIPIENT, PASSWORD)
+                .addUser(BOUNCE_RECEIVER, PASSWORD)
+                .addUser(BOUNCE_RECEIVER_TO_RETURN, PASSWORD)
+                .addUser(POSTMASTER, PASSWORD);
+    }
+
+    private void setupForBounce() throws Exception {
+        setup(Bounce.class);
+    }
+
+    private void setupForDsnBounce() throws Exception {
+        setup(DSNBounce.class);
+    }
+
     @Test
     public void dsnBounceMailetShouldDeliverBounceToReturnAddress() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(
-                generateMailetContainerConfiguration(MailetConfiguration.builder()
-                .matcher(All.class)
-                .mailet(DSNBounce.class)
-                .addProperty("passThrough", "false")))
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER_TO_RETURN, PASSWORD);
+        setupForDsnBounce();
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessageWithHeaders(BOUNCE_RECEIVER, RECIPIENT,
@@ -130,19 +144,7 @@ public class BounceIntegrationTest {
 
     @Test
     public void bounceMailetShouldDeliverBounce() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(
-                generateMailetContainerConfiguration(MailetConfiguration.builder()
-                .matcher(All.class)
-                .mailet(Bounce.class)
-                .addProperty("passThrough", "false")))
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
+        setupForBounce();
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage(BOUNCE_RECEIVER, RECIPIENT);
@@ -155,19 +157,7 @@ public class BounceIntegrationTest {
 
     @Test
     public void forwardMailetShouldDeliverBounce() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(generateMailetContainerConfiguration(MailetConfiguration.builder()
-                .matcher(All.class)
-                .mailet(Forward.class)
-                .addProperty("forwardTo", BOUNCE_RECEIVER)
-                .addProperty("passThrough", "false")))
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
+        setup(Forward.class, Pair.of("forwardTo", BOUNCE_RECEIVER));
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage("any@" + DEFAULT_DOMAIN, RECIPIENT);
@@ -180,20 +170,7 @@ public class BounceIntegrationTest {
 
     @Test
     public void redirectMailetShouldDeliverBounce() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(
-                generateMailetContainerConfiguration(MailetConfiguration.builder()
-                    .matcher(All.class)
-                    .mailet(Redirect.class)
-                    .addProperty("recipients", BOUNCE_RECEIVER)
-                    .addProperty("passThrough", "false")))
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
+        setup(Redirect.class, Pair.of("recipients", BOUNCE_RECEIVER));
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage("any@" + DEFAULT_DOMAIN, RECIPIENT);
@@ -206,20 +183,7 @@ public class BounceIntegrationTest {
 
     @Test
     public void resendMailetShouldDeliverBounce() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(
-                generateMailetContainerConfiguration(MailetConfiguration.builder()
-                    .matcher(All.class)
-                    .mailet(Resend.class)
-                    .addProperty("recipients", BOUNCE_RECEIVER)
-                    .addProperty("passThrough", "false")))
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
+        setup(Resend.class, Pair.of("recipients", BOUNCE_RECEIVER));
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage("any@" + DEFAULT_DOMAIN, RECIPIENT);
@@ -232,19 +196,7 @@ public class BounceIntegrationTest {
 
     @Test
     public void notifySenderMailetShouldDeliverBounce() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(
-                generateMailetContainerConfiguration(MailetConfiguration.builder()
-                    .matcher(All.class)
-                    .mailet(NotifySender.class)
-                    .addProperty("passThrough", "false")))
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
+        setup(NotifySender.class);
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage(BOUNCE_RECEIVER, RECIPIENT);
@@ -257,19 +209,7 @@ public class BounceIntegrationTest {
 
     @Test
     public void notifyPostmasterMailetShouldDeliverBounce() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(
-                generateMailetContainerConfiguration(MailetConfiguration.builder()
-                    .matcher(All.class)
-                    .mailet(NotifyPostmaster.class)
-                    .addProperty("passThrough", "false")))
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(POSTMASTER, PASSWORD);
+        setup(NotifyPostmaster.class);
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage("any@" + DEFAULT_DOMAIN, RECIPIENT);
