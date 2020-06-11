@@ -31,7 +31,6 @@ import org.apache.james.mailets.configuration.MailetContainer;
 import org.apache.james.mailets.configuration.ProcessorConfiguration;
 import org.apache.james.modules.protocols.ImapGuiceProbe;
 import org.apache.james.modules.protocols.SmtpGuiceProbe;
-import org.apache.james.probe.DataProbe;
 import org.apache.james.transport.mailets.DSNBounce;
 import org.apache.james.transport.mailets.LocalDelivery;
 import org.apache.james.transport.matchers.All;
@@ -41,13 +40,14 @@ import org.apache.james.utils.DataProbeImpl;
 import org.apache.james.utils.SMTPMessageSender;
 import org.apache.james.utils.TestIMAPClient;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class SizeGreaterThanIntegrationTest {
     public static final String POSTMASTER = "postmaster@" + DEFAULT_DOMAIN;
-    public static final String BOUNCE_RECEIVER = "bounce.receiver@" + DEFAULT_DOMAIN;
+    public static final String SENDER = "sender@" + DEFAULT_DOMAIN;
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -57,7 +57,22 @@ public class SizeGreaterThanIntegrationTest {
     public SMTPMessageSender messageSender = new SMTPMessageSender(DEFAULT_DOMAIN);
 
     private TemporaryJamesServer jamesServer;
-    private DataProbe dataProbe;
+
+    @Before
+    public void setup() throws Exception {
+        jamesServer = TemporaryJamesServer.builder()
+                .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
+                .withMailetContainer(
+                        generateMailetContainerConfiguration())
+                .build(temporaryFolder.newFolder());
+
+        jamesServer
+                .getProbe(DataProbeImpl.class)
+                .fluent()
+                .addDomain(DEFAULT_DOMAIN)
+                .addUser(RECIPIENT, PASSWORD)
+                .addUser(SENDER, PASSWORD);
+    }
 
     @After
     public void tearDown() {
@@ -66,41 +81,20 @@ public class SizeGreaterThanIntegrationTest {
 
     @Test
     public void sizeGreaterThanMatcherShouldBounceWhenSizeExceeded() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(
-                generateMailetContainerConfiguration())
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
-            .sendMessageWithHeaders(BOUNCE_RECEIVER, RECIPIENT, "01234567\r\n".repeat(1025));
+            .sendMessageWithHeaders(SENDER, RECIPIENT, "01234567\r\n".repeat(1025));
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(BOUNCE_RECEIVER, PASSWORD)
+            .login(SENDER, PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessage(awaitAtMostOneMinute);
     }
 
     @Test
     public void sizeGreaterThanMatcherShouldNotBounceWhenSizeWithinLimit() throws Exception {
-        jamesServer = TemporaryJamesServer.builder()
-            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-            .withMailetContainer(
-                generateMailetContainerConfiguration())
-            .build(temporaryFolder.newFolder());
-
-        dataProbe = jamesServer.getProbe(DataProbeImpl.class);
-        dataProbe.addDomain(DEFAULT_DOMAIN);
-        dataProbe.addUser(RECIPIENT, PASSWORD);
-        dataProbe.addUser(BOUNCE_RECEIVER, PASSWORD);
-
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
-            .sendMessageWithHeaders(BOUNCE_RECEIVER, RECIPIENT, "01234567\r\n".repeat(1000));
+            .sendMessageWithHeaders(SENDER, RECIPIENT, "01234567\r\n".repeat(1000));
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(RECIPIENT, PASSWORD)
@@ -112,7 +106,7 @@ public class SizeGreaterThanIntegrationTest {
         return TemporaryJamesServer.DEFAULT_MAILET_CONTAINER_CONFIGURATION
             .postmaster(POSTMASTER)
             .putProcessor(transport())
-            .putProcessor(bounces());
+            .putProcessor(bounceIfOversized());
     }
 
     private ProcessorConfiguration.Builder transport() {
@@ -122,7 +116,7 @@ public class SizeGreaterThanIntegrationTest {
             .addMailet(MailetConfiguration.BCC_STRIPPER)
             .addMailet(MailetConfiguration.builder()
                 .matcher(RecipientIs.class)
-                .matcherCondition(BOUNCE_RECEIVER)
+                .matcherCondition(SENDER)
                 .mailet(LocalDelivery.class))
             .addMailet(MailetConfiguration.builder()
                 .matcher(RecipientIs.class)
@@ -131,7 +125,7 @@ public class SizeGreaterThanIntegrationTest {
             .addMailet(MailetConfiguration.TO_BOUNCE);
     }
 
-    public static ProcessorConfiguration.Builder bounces() {
+    public static ProcessorConfiguration.Builder bounceIfOversized() {
         return ProcessorConfiguration.bounces()
             .addMailet(MailetConfiguration.builder()
                 .matcher(SizeGreaterThan.class)
