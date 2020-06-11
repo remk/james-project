@@ -37,7 +37,18 @@ class MDNReportParserTest {
 
   @Test
   def parseShouldReturnMdnReportWhenMaximalSubset(): Unit = {
-    val maximal = "Reporting-UA: UA_name; UA_product\r\n" + "MDN-Gateway: smtp; apache.org\r\n" + "Original-Recipient: rfc822; originalRecipient\r\n" + "Final-Recipient: rfc822; final_recipient\r\n" + "Original-Message-ID: <original@message.id>\r\n" + "Disposition: automatic-action/MDN-sent-automatically;processed/error,failed\r\n" + "Error: Message1\r\n" + "Error: Message2\r\n" + "X-OPENPAAS-IP: 177.177.177.77\r\n" + "X-OPENPAAS-PORT: 8000\r\n"
+    val maximal = """Reporting-UA: UA_name; UA_product
+      |MDN-Gateway: smtp; apache.org
+      |Original-Recipient: rfc822; originalRecipient
+      |Final-Recipient: rfc822; final_recipient
+      |Original-Message-ID: <original@message.id>
+      |Disposition: automatic-action/MDN-sent-automatically;processed/error,failed
+      |Error: Message1
+      |Error: Message2
+      |X-OPENPAAS-IP: 177.177.177.77
+      |X-OPENPAAS-PORT: 8000
+      |""".replaceAllLiterally(System.lineSeparator(), "\r\n")
+      .stripMargin
     val expected = Some(MDNReport.builder
       .reportingUserAgentField(ReportingUserAgent.builder
         .userAgentName("UA_name")
@@ -74,7 +85,10 @@ class MDNReportParserTest {
 
   @Test
   def parseShouldReturnMdnReportWhenMinimalSubset(): Unit = {
-    val minimal = "Final-Recipient: rfc822; final_recipient\r\n" + "Disposition: automatic-action/MDN-sent-automatically;processed\r\n"
+    val minimal = """Final-Recipient: rfc822; final_recipient
+      |Disposition: automatic-action/MDN-sent-automatically;processed
+      |""".replaceAllLiterally(System.lineSeparator(), "\r\n")
+      .stripMargin
     val disposition = Disposition.builder
       .actionMode(DispositionActionMode.Automatic)
       .sendingMode(DispositionSendingMode.Automatic)
@@ -90,7 +104,11 @@ class MDNReportParserTest {
 
   @Test
   def parseShouldReturnEmptyWhenDuplicatedFields(): Unit = {
-    val duplicated = "Final-Recipient: rfc822; final_recipient\r\n" + "Final-Recipient: rfc822; final_recipient\r\n" + "Disposition: automatic-action/MDN-sent-automatically;processed\r\n"
+    val duplicated = """Final-Recipient: rfc822; final_recipient
+      |Final-Recipient: rfc822; final_recipient
+      |Disposition: automatic-action/MDN-sent-automatically;processed
+      |""".replaceAllLiterally(System.lineSeparator(), "\r\n")
+      .stripMargin
     val actual = MDNReportParser.parse(duplicated).toOption
     assertThat(actual.isEmpty)
   }
