@@ -120,18 +120,18 @@ public class ExtractMDNOriginalJMAPMessageId extends GenericMailet {
 
     private Optional<MDNReport> parseReport(Entity report) {
         LOGGER.debug("Parsing report");
-          try(InputStream inputStream = ((SingleBody)report.getBody()).getInputStream()) {
-              Try<MDNReport> result = MDNReportParser.parse(inputStream, report.getCharset());
-              if (result.isSuccess()) {
-                  return Optional.of(result.get());
-              } else {
-                  LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", result.failed().get());
-                  return Optional.empty();
-              }
-          } catch (IOException e) {
-              LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", e);
-              return Optional.empty();
-          }
+        try (InputStream inputStream = ((SingleBody) report.getBody()).getInputStream()) {
+            Try<MDNReport> result = MDNReportParser.parse(inputStream, report.getCharset());
+            if (result.isSuccess()) {
+                return Optional.of(result.get());
+            } else {
+                LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", result.failed().get());
+                return Optional.empty();
+            }
+        } catch (IOException e) {
+            LOGGER.error("unable to parse MESSAGE_DISPOSITION_NOTIFICATION part", e);
+            return Optional.empty();
+        }
     }
 
     private Optional<Entity> findReport(MimeMessage mimeMessage) {
