@@ -55,7 +55,9 @@ import com.google.common.collect.ImmutableList;
 
 public class BounceIntegrationTest {
     public static final String POSTMASTER = "postmaster@" + DEFAULT_DOMAIN;
-    public static final String BOUNCE_RECEIVER = "bounce.receiver@" + DEFAULT_DOMAIN;
+    public static final String POSTMASTER_PASSWORD = "postmasterSecret";
+    public static final String SENDER = "bounce.receiver@" + DEFAULT_DOMAIN;
+    public static final String SENDER_PASSWORD = "senderSecret";
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -76,10 +78,10 @@ public class BounceIntegrationTest {
         setup(DSNBounce.class);
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
-            .sendMessage(BOUNCE_RECEIVER, RECIPIENT);
+            .sendMessage(SENDER, RECIPIENT);
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(BOUNCE_RECEIVER, PASSWORD)
+            .login(SENDER, SENDER_PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessage(awaitAtMostOneMinute);
     }
@@ -106,8 +108,8 @@ public class BounceIntegrationTest {
                 .fluent()
                 .addDomain(DEFAULT_DOMAIN)
                 .addUser(RECIPIENT, PASSWORD)
-                .addUser(BOUNCE_RECEIVER, PASSWORD)
-                .addUser(POSTMASTER, PASSWORD);
+                .addUser(SENDER, SENDER_PASSWORD)
+                .addUser(POSTMASTER, POSTMASTER_PASSWORD);
     }
 
     @Test
@@ -115,49 +117,49 @@ public class BounceIntegrationTest {
         setup(Bounce.class);
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
-            .sendMessage(BOUNCE_RECEIVER, RECIPIENT);
+            .sendMessage(SENDER, RECIPIENT);
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(BOUNCE_RECEIVER, PASSWORD)
+            .login(SENDER, SENDER_PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessage(awaitAtMostOneMinute);
     }
 
     @Test
     public void forwardMailetShouldDeliverBounce() throws Exception {
-        setup(Forward.class, Pair.of("forwardTo", BOUNCE_RECEIVER));
+        setup(Forward.class, Pair.of("forwardTo", SENDER));
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage("any@" + DEFAULT_DOMAIN, RECIPIENT);
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(BOUNCE_RECEIVER, PASSWORD)
+            .login(SENDER, SENDER_PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessage(awaitAtMostOneMinute);
     }
 
     @Test
     public void redirectMailetShouldDeliverBounce() throws Exception {
-        setup(Redirect.class, Pair.of("recipients", BOUNCE_RECEIVER));
+        setup(Redirect.class, Pair.of("recipients", SENDER));
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage("any@" + DEFAULT_DOMAIN, RECIPIENT);
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(BOUNCE_RECEIVER, PASSWORD)
+            .login(SENDER, SENDER_PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessage(awaitAtMostOneMinute);
     }
 
     @Test
     public void resendMailetShouldDeliverBounce() throws Exception {
-        setup(Resend.class, Pair.of("recipients", BOUNCE_RECEIVER));
+        setup(Resend.class, Pair.of("recipients", SENDER));
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessage("any@" + DEFAULT_DOMAIN, RECIPIENT);
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(BOUNCE_RECEIVER, PASSWORD)
+            .login(SENDER, SENDER_PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessage(awaitAtMostOneMinute);
     }
@@ -167,10 +169,10 @@ public class BounceIntegrationTest {
         setup(NotifySender.class);
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
-            .sendMessage(BOUNCE_RECEIVER, RECIPIENT);
+            .sendMessage(SENDER, RECIPIENT);
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(BOUNCE_RECEIVER, PASSWORD)
+            .login(SENDER, SENDER_PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessage(awaitAtMostOneMinute);
     }
@@ -183,7 +185,7 @@ public class BounceIntegrationTest {
             .sendMessage("any@" + DEFAULT_DOMAIN, RECIPIENT);
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(POSTMASTER, PASSWORD)
+            .login(POSTMASTER, POSTMASTER_PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessage(awaitAtMostOneMinute);
     }
@@ -196,13 +198,13 @@ public class BounceIntegrationTest {
     }
 
     private ProcessorConfiguration.Builder transport() {
-        // This processor delivers emails to BOUNCE_RECEIVER and POSTMASTER
+        // This processor delivers emails to SENDER and POSTMASTER
         // Other recipients will be bouncing
         return ProcessorConfiguration.transport()
             .addMailet(MailetConfiguration.BCC_STRIPPER)
             .addMailet(MailetConfiguration.builder()
                 .matcher(RecipientIs.class)
-                .matcherCondition(BOUNCE_RECEIVER)
+                .matcherCondition(SENDER)
                 .mailet(LocalDelivery.class))
             .addMailet(MailetConfiguration.builder()
                 .matcher(RecipientIs.class)
