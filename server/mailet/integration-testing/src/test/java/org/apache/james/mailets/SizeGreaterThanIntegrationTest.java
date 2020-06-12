@@ -26,8 +26,6 @@ import static org.apache.james.mailets.configuration.Constants.PASSWORD;
 import static org.apache.james.mailets.configuration.Constants.RECIPIENT;
 import static org.apache.james.mailets.configuration.Constants.awaitAtMostOneMinute;
 
-import java.time.Duration;
-
 import org.apache.james.MemoryJamesServerMain;
 import org.apache.james.mailets.configuration.CommonProcessors;
 import org.apache.james.mailets.configuration.MailetConfiguration;
@@ -63,17 +61,16 @@ public class SizeGreaterThanIntegrationTest {
     @Before
     public void setup() throws Exception {
         jamesServer = TemporaryJamesServer.builder()
-                .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
-                .withMailetContainer(
-                        generateMailetContainerConfiguration())
-                .build(temporaryFolder.newFolder());
+            .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
+            .withMailetContainer(
+                generateMailetContainerConfiguration())
+            .build(temporaryFolder.newFolder());
 
-        jamesServer
-                .getProbe(DataProbeImpl.class)
-                .fluent()
-                .addDomain(DEFAULT_DOMAIN)
-                .addUser(RECIPIENT, PASSWORD)
-                .addUser(SENDER, PASSWORD);
+        jamesServer.getProbe(DataProbeImpl.class)
+            .fluent()
+            .addDomain(DEFAULT_DOMAIN)
+            .addUser(RECIPIENT, PASSWORD)
+            .addUser(SENDER, PASSWORD);
     }
 
     @After
