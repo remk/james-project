@@ -19,24 +19,26 @@
 
 package org.apache.james.mailets;
 
+import static org.apache.james.mailets.configuration.CommonProcessors.ERROR_REPOSITORY;
 import static org.apache.james.mailets.configuration.Constants.DEFAULT_DOMAIN;
 import static org.apache.james.mailets.configuration.Constants.LOCALHOST_IP;
 import static org.apache.james.mailets.configuration.Constants.PASSWORD;
 import static org.apache.james.mailets.configuration.Constants.RECIPIENT;
 import static org.apache.james.mailets.configuration.Constants.awaitAtMostOneMinute;
 
+import java.time.Duration;
+
 import org.apache.james.MemoryJamesServerMain;
+import org.apache.james.mailets.configuration.CommonProcessors;
 import org.apache.james.mailets.configuration.MailetConfiguration;
 import org.apache.james.mailets.configuration.MailetContainer;
 import org.apache.james.mailets.configuration.ProcessorConfiguration;
 import org.apache.james.modules.protocols.ImapGuiceProbe;
 import org.apache.james.modules.protocols.SmtpGuiceProbe;
-import org.apache.james.transport.mailets.DSNBounce;
-import org.apache.james.transport.mailets.LocalDelivery;
-import org.apache.james.transport.matchers.All;
-import org.apache.james.transport.matchers.RecipientIs;
+import org.apache.james.transport.mailets.ToRepository;
 import org.apache.james.transport.matchers.SizeGreaterThan;
 import org.apache.james.utils.DataProbeImpl;
+import org.apache.james.utils.MailRepositoryProbeImpl;
 import org.apache.james.utils.SMTPMessageSender;
 import org.apache.james.utils.TestIMAPClient;
 import org.junit.After;
@@ -85,10 +87,7 @@ public class SizeGreaterThanIntegrationTest {
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessageWithHeaders(SENDER, RECIPIENT, "01234567\r\n".repeat(1025));
 
-        testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(SENDER, PASSWORD)
-            .select(TestIMAPClient.INBOX)
-            .awaitMessage(awaitAtMostOneMinute);
+        awaitAtMostOneMinute.until(() -> jamesServer.getProbe(MailRepositoryProbeImpl.class).getRepositoryMailCount(ERROR_REPOSITORY) == 1);
     }
 
     @Test
@@ -104,37 +103,14 @@ public class SizeGreaterThanIntegrationTest {
 
     private MailetContainer.Builder generateMailetContainerConfiguration() {
         return TemporaryJamesServer.DEFAULT_MAILET_CONTAINER_CONFIGURATION
-            .postmaster(POSTMASTER)
-            .putProcessor(transport())
-            .putProcessor(bounceIfOversized());
-    }
-
-    private ProcessorConfiguration.Builder transport() {
-        // This processor delivers emails to BOUNCE_RECEIVER and POSTMASTER
-        // Other recipients will be bouncing
-        return ProcessorConfiguration.transport()
-            .addMailet(MailetConfiguration.BCC_STRIPPER)
-            .addMailet(MailetConfiguration.builder()
-                .matcher(RecipientIs.class)
-                .matcherCondition(SENDER)
-                .mailet(LocalDelivery.class))
-            .addMailet(MailetConfiguration.builder()
-                .matcher(RecipientIs.class)
-                .matcherCondition(POSTMASTER)
-                .mailet(LocalDelivery.class))
-            .addMailet(MailetConfiguration.TO_BOUNCE);
-    }
-
-    public static ProcessorConfiguration.Builder bounceIfOversized() {
-        return ProcessorConfiguration.bounces()
-            .addMailet(MailetConfiguration.builder()
-                .matcher(SizeGreaterThan.class)
-                .matcherCondition("10k")
-                .mailet(DSNBounce.class)
-                .addProperty("passThrough", "false")
-            )
-            .addMailet(MailetConfiguration.builder()
-                .matcher(All.class)
-                .mailet(LocalDelivery.class));
+                .postmaster(POSTMASTER)
+                .putProcessor(ProcessorConfiguration.transport()
+                        .addMailet(MailetConfiguration.builder()
+                                .matcher(SizeGreaterThan.class)
+                                .matcherCondition("10k")
+                                .mailet(ToRepository.class)
+                                .addProperty("repositoryPath", ERROR_REPOSITORY.asString())
+                                .addProperty("passThrough", "false"))
+                        .addMailetsFrom(CommonProcessors.deliverOnlyTransport()));
     }
 }
