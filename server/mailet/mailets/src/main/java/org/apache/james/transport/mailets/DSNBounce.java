@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.mail.MessagingException;
@@ -39,7 +38,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.james.core.MailAddress;
 import org.apache.james.core.MaybeSender;
 import org.apache.james.dnsservice.api.DNSService;
@@ -60,7 +58,6 @@ import org.apache.james.transport.util.ReplyToUtils;
 import org.apache.james.transport.util.SenderUtils;
 import org.apache.james.transport.util.SpecialAddressesUtils;
 import org.apache.james.transport.util.TosUtils;
-import org.apache.james.util.OptionalUtils;
 import org.apache.mailet.AttributeName;
 import org.apache.mailet.AttributeUtils;
 import org.apache.mailet.Mail;
@@ -71,7 +68,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.fge.lambdas.Throwing;
-import com.github.fge.lambdas.functions.ThrowingFunction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -335,7 +331,7 @@ public class DSNBounce extends GenericMailet implements RedirectNotify {
                 .flatMap(path -> path.length > 0 ? Optional.ofNullable(path[0]) : Optional.empty())
                 .map((Throwing.<String, MailAddress>function(MailAddress::new).sneakyThrow()));
 
-        if(returnPath.isPresent()) {
+        if (returnPath.isPresent()) {
             if (getInitParameters().isDebug()) {
                 LOGGER.debug("Processing a bounce request for a message with a reverse path.  The bounce will be sent to {}", returnPath.get().asString());
             }
