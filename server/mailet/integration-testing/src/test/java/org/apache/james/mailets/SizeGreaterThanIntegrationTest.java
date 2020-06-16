@@ -79,7 +79,7 @@ public class SizeGreaterThanIntegrationTest {
     }
 
     @Test
-    public void sizeGreaterThanMatcherShouldBounceWhenSizeExceeded() throws Exception {
+    public void mailShouldGoToErrorRepositoryWhenSizeExceeded() throws Exception {
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessageWithHeaders(SENDER, RECIPIENT, "01234567\r\n".repeat(1025));
@@ -88,7 +88,7 @@ public class SizeGreaterThanIntegrationTest {
     }
 
     @Test
-    public void sizeGreaterThanMatcherShouldNotBounceWhenSizeWithinLimit() throws Exception {
+    public void mailShouldBeDeliveredWhenSizeWithinLimit() throws Exception {
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
             .sendMessageWithHeaders(SENDER, RECIPIENT, "01234567\r\n".repeat(1000));
 
