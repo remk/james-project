@@ -53,8 +53,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.google.common.collect.ImmutableList;
-
 public class BounceIntegrationTest {
     public static final String POSTMASTER = "postmaster@" + DEFAULT_DOMAIN;
     public static final String POSTMASTER_PASSWORD = "postmasterSecret";
