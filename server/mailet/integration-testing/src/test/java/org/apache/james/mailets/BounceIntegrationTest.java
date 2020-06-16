@@ -25,6 +25,8 @@ import static org.apache.james.mailets.configuration.Constants.PASSWORD;
 import static org.apache.james.mailets.configuration.Constants.RECIPIENT;
 import static org.apache.james.mailets.configuration.Constants.awaitAtMostOneMinute;
 
+import java.util.Arrays;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.james.MemoryJamesServerMain;
 import org.apache.james.mailets.configuration.MailetConfiguration;
@@ -92,11 +94,8 @@ public class BounceIntegrationTest {
                 .mailet(mailet)
                 .addProperty("passThrough", "false");
 
-        if (additionalProperties.length > 0) {
-            ImmutableList.copyOf(additionalProperties)
-                    .stream()
+        Arrays.stream(additionalProperties)
                     .forEach(property -> mailetConfiguration.addProperty(property.getKey(), property.getValue()));
-        }
 
         jamesServer = TemporaryJamesServer.builder()
                 .withBase(MemoryJamesServerMain.SMTP_AND_IMAP_MODULE)
