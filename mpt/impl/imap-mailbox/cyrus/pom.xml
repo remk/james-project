@@ -62,7 +62,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>29.0-jre</version><!--$NO-MVN-MAN-VER$-->
+            <version>25.1-jre</version><!--$NO-MVN-MAN-VER$-->
         </dependency>
     </dependencies>
 </project>
