@@ -97,18 +97,18 @@ public class BounceIntegrationTest {
         setup(DSNBounce.class);
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
-                .sendMessageWithHeaders(SENDER, RECIPIENT,
-                        "From: " + OTHER + "\r\n" +
-                                "To: " + RECIPIENT + "\r\n" +
-                                "Subject: " + "Hello\r\n" +
-                                "\r\n" +
-                                "Please bounce me to the return address\r\n"
-                );
+            .sendMessageWithHeaders(SENDER, RECIPIENT,
+                "From: " + OTHER + "\r\n" +
+                    "To: " + RECIPIENT + "\r\n" +
+                    "Subject: " + "Hello\r\n" +
+                    "\r\n" +
+                    "Please bounce me to the return address\r\n"
+            );
 
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-                .login(SENDER, SENDER_PASSWORD)
-                .select(TestIMAPClient.INBOX)
-                .awaitMessage(awaitAtMostOneMinute);
+            .login(SENDER, SENDER_PASSWORD)
+            .select(TestIMAPClient.INBOX)
+            .awaitMessage(awaitAtMostOneMinute);
     }
 
     @Test
@@ -116,19 +116,19 @@ public class BounceIntegrationTest {
         setup(DSNBounce.class);
 
         messageSender.connect(LOCALHOST_IP, jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort())
-                .sendMessageWithHeaders(SENDER, RECIPIENT,
-                        "From: " + OTHER + "\r\n" +
-                                "To: " + RECIPIENT + "\r\n" +
-                                "Subject: " + "Hello\r\n" +
-                                "\r\n" +
-                                "Please bounce me to the return address\r\n"
-                );
+            .sendMessageWithHeaders(SENDER, RECIPIENT,
+                "From: " + OTHER + "\r\n" +
+                    "To: " + RECIPIENT + "\r\n" +
+                    "Subject: " + "Hello\r\n" +
+                    "\r\n" +
+                    "Please bounce me to the return address\r\n"
+            );
 
         MimeMessage mimeMessage = MimeMessageUtil.mimeMessageFromString(testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-                .login(SENDER, SENDER_PASSWORD)
-                .select(TestIMAPClient.INBOX)
-                .awaitMessage(awaitAtMostOneMinute)
-                .readFirstMessage());
+            .login(SENDER, SENDER_PASSWORD)
+            .select(TestIMAPClient.INBOX)
+            .awaitMessage(awaitAtMostOneMinute)
+            .readFirstMessage());
         assertThat(mimeMessage.getHeader("To")[0]).isEqualTo(SENDER);
     }
 
