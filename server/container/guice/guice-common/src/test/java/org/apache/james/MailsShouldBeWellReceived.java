@@ -206,14 +206,19 @@ interface MailsShouldBeWellReceived {
             sendUniqueMessageToUsers(sender, message, users);
         }
 
-        CALMLY_AWAIT_FIVE_MINUTE.untilAsserted(() -> assertThat(server.getProbe(SpoolerProbe.class).processingFinished()).isTrue());
+        CALMLY_AWAIT_FIVE_MINUTE.untilAsserted(() ->
+            assertThat(
+                server
+                    .getProbe(SpoolerProbe.class)
+                    .processingFinished()
+            ).isTrue());
 
         try (IMAPMessageReader reader = new IMAPMessageReader()) {
             users.forEach((ThrowingConsumer<String>) user -> reader
-                    .connect(JAMES_SERVER_HOST, server.getProbe(ImapGuiceProbe.class).getImapPort())
-                    .login(user, PASSWORD)
-                    .select(IMAPMessageReader.INBOX)
-                    .awaitMessageCount(CALMLY_AWAIT, 1));
+                .connect(JAMES_SERVER_HOST, server.getProbe(ImapGuiceProbe.class).getImapPort())
+                .login(user, PASSWORD)
+                .select(IMAPMessageReader.INBOX)
+                .awaitMessageCount(CALMLY_AWAIT, 1));
         }
     }
 
@@ -267,7 +272,10 @@ interface MailsShouldBeWellReceived {
     }
 
     default ImmutableList<String> generateNUsers(int nbUsers) {
-        return IntStream.range(0, nbUsers).boxed().map(index -> "user" + index + "@" + DOMAIN).collect(Guavate.toImmutableList());
+        return IntStream.range(0, nbUsers)
+                .boxed()
+                .map(index -> "user" + index + "@" + DOMAIN)
+                .collect(Guavate.toImmutableList());
     }
 
 }
