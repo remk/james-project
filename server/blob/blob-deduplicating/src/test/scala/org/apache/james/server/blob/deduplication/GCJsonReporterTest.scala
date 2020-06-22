@@ -21,7 +21,7 @@ package org.apache.james.server.blob.deduplication
 
 import java.time.Instant
 
-import org.apache.james.server.blob.deduplication.RelatedAction.{Delete, GarbageCollect, Init, Save}
+import org.apache.james.server.blob.deduplication.RelatedAction.{DereferenceAction, GarbageCollect, Init, Save}
 import org.apache.james.util.ClassLoaderUtils
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -42,19 +42,19 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
       `garbage-collection-iterations` = TreeSet(initialIteration),
       blobs = Seq[JsonReport.BlobId](),
       references = Nil,
-      deletions = Nil)
+      dereferences = Nil)
     val firstSaveReport = JsonReport.State(Save(blobId, externalId),
       `reference-generations` = TreeSet(generation),
       `garbage-collection-iterations` = TreeSet(initialIteration),
       blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
       references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
-      deletions = Nil)
-    val firstDeleteReport = JsonReport.State(Delete(externalId),
+      dereferences = Nil)
+    val firstDeleteReport = JsonReport.State(DereferenceAction(externalId),
       `reference-generations` = TreeSet(generation),
       `garbage-collection-iterations` = TreeSet(initialIteration),
       blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
       references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
-      deletions = Seq(JsonReport.Dereference(blobId.asString(), generation, initialIteration)))
+      dereferences = Seq(JsonReport.Dereference(blobId.asString(), generation, initialIteration)))
 
     val iterationForImmediateGC = Iteration(1L, Set(), generation)
     val gcReportImmediate = GCIterationReport(iterationForImmediateGC, Set())
@@ -69,7 +69,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
           `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
           blobs = Seq[JsonReport.BlobId](),
           references = Nil,
-          deletions = Nil)))
+          dereferences = Nil)))
       }
     }
 
@@ -85,7 +85,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
           `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
           blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
           references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
-          deletions = Nil )))
+          dereferences = Nil )))
       }
 
       "one reference is added then removed" in {
@@ -100,7 +100,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
             `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
             blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
             references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
-            deletions = Seq(JsonReport.Dereference(blobId.asString(), generation, initialIteration)))))
+            dereferences = Seq(JsonReport.Dereference(blobId.asString(), generation, initialIteration)))))
       }
     }
 
@@ -122,7 +122,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
               `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
               blobs = Nil,
               references = Nil,
-              deletions = Nil )))
+              dereferences = Nil )))
         }
 
         "one reference is added, a gc run two generation later, then  it is removed and the GC is ran again" in {
@@ -147,21 +147,21 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
               `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
               blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
               references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
-              deletions = Nil),
+              dereferences = Nil),
             //delete
-            JsonReport.State(Delete(externalId),
+            JsonReport.State(DereferenceAction(externalId),
               `reference-generations` = TreeSet(generation, generationPlusOne),
               `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
               blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
               references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
-              deletions = Seq(JsonReport.Dereference(blobId.asString(), generationPlusOne, gcReportGenNPlus2.iteration.asString))),
+              dereferences = Seq(JsonReport.Dereference(blobId.asString(), generationPlusOne, gcReportGenNPlus2.iteration.asString))),
             //second gc
             JsonReport.State(GarbageCollect,
               `reference-generations` = TreeSet(generation, generationPlusOne),
               `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration, gcReportGenNPlus3.iteration.asString),
               blobs = Nil,
               references = Nil,
-              deletions = Nil)))
+              dereferences = Nil)))
         }
 
 
