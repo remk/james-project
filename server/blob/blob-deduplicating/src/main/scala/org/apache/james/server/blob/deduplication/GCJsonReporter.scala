@@ -19,7 +19,7 @@
 package org.apache.james.server.blob.deduplication
 
 import org.apache.james.blob.api.BlobId
-import org.apache.james.server.blob.deduplication.RelatedAction.{DereferenceAction, GarbageCollect, Init, Save}
+import org.apache.james.server.blob.deduplication.RelatedAction.{GarbageCollect, Init, Save}
 import play.api.libs.json.{JsString, Json, Writes}
 
 import scala.collection.immutable.TreeSet
@@ -29,7 +29,7 @@ sealed trait RelatedAction
 object RelatedAction {
   case object Init extends RelatedAction
   case class Save(blobId: BlobId, reference: ExternalID) extends RelatedAction
-  case class DereferenceAction(reference: ExternalID) extends RelatedAction
+  case class Dereference(reference: ExternalID) extends RelatedAction
   case object GarbageCollect extends RelatedAction
 }
 
@@ -51,7 +51,7 @@ object JsonReport {
   implicit val relatedActionWrites: Writes[RelatedAction] = {
     case Init => JsString("init")
     case Save(blobId, reference) => JsString(s"save(blob = ${blobId.asString()}, reference = ${reference.id})")
-    case DereferenceAction(reference) => JsString(s"dereference(reference = ${reference.id})")
+    case RelatedAction.Dereference(reference) => JsString(s"dereference(reference = ${reference.id})")
     case GarbageCollect => JsString(s"garbageCollect")
   }
   //generation
@@ -145,7 +145,7 @@ object GCJsonReporter {
     val lastIteration = previousState.`garbage-collection-iterations`.last
     val dereferences = previousState.dereferences :+ JsonReport.Dereference(dereference.blob.asString(), dereference.generation, lastIteration)
 
-    JsonReport.State(DereferenceAction(dereference.externalId),
+    JsonReport.State(RelatedAction.Dereference(dereference.externalId),
       `reference-generations` = referenceGenerations,
       `garbage-collection-iterations` = iterations,
       blobs = previousState.blobs,

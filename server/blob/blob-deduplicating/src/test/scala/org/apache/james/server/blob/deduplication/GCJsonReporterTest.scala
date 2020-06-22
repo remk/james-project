@@ -19,9 +19,7 @@
 
 package org.apache.james.server.blob.deduplication
 
-import java.time.Instant
-
-import org.apache.james.server.blob.deduplication.RelatedAction.{DereferenceAction, GarbageCollect, Init, Save}
+import org.apache.james.server.blob.deduplication.RelatedAction.{GarbageCollect, Init, Save}
 import org.apache.james.util.ClassLoaderUtils
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -49,7 +47,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
       blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
       references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
       dereferences = Nil)
-    val firstDeleteReport = JsonReport.State(DereferenceAction(externalId),
+    val firstDeleteReport = JsonReport.State(RelatedAction.Dereference(externalId),
       `reference-generations` = TreeSet(generation),
       `garbage-collection-iterations` = TreeSet(initialIteration),
       blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
@@ -149,7 +147,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
               references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
               dereferences = Nil),
             //delete
-            JsonReport.State(DereferenceAction(externalId),
+            JsonReport.State(RelatedAction.Dereference(externalId),
               `reference-generations` = TreeSet(generation, generationPlusOne),
               `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
               blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
