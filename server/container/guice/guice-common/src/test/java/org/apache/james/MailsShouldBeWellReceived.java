@@ -167,14 +167,14 @@ interface MailsShouldBeWellReceived {
 
         CALMLY_AWAIT.untilAsserted(() -> assertThat(server.getProbe(SpoolerProbe.class).processingFinished()).isTrue());
 
-        try (IMAPMessageReader reader = new IMAPMessageReader()) {
+        try (TestIMAPClient reader = new TestIMAPClient()) {
             reader.connect(JAMES_SERVER_HOST, server.getProbe(ImapGuiceProbe.class).getImapPort())
                 .login(JAMES_USER, PASSWORD)
-                .select(IMAPMessageReader.INBOX)
+                .select(TestIMAPClient.INBOX)
                 .awaitMessageCount(CALMLY_AWAIT, 1);
             reader.connect(JAMES_SERVER_HOST, server.getProbe(ImapGuiceProbe.class).getImapPort())
                 .login(OTHER_USER, PASSWORD_OTHER)
-                .select(IMAPMessageReader.INBOX)
+                .select(TestIMAPClient.INBOX)
                 .awaitMessageCount(CALMLY_AWAIT, 1);
         }
 
@@ -213,11 +213,11 @@ interface MailsShouldBeWellReceived {
                     .processingFinished()
             ).isTrue());
 
-        try (IMAPMessageReader reader = new IMAPMessageReader()) {
+        try (TestIMAPClient reader = new TestIMAPClient()) {
             users.forEach((ThrowingConsumer<String>) user -> reader
                 .connect(JAMES_SERVER_HOST, server.getProbe(ImapGuiceProbe.class).getImapPort())
                 .login(user, PASSWORD)
-                .select(IMAPMessageReader.INBOX)
+                .select(TestIMAPClient.INBOX)
                 .awaitMessageCount(CALMLY_AWAIT, 1));
         }
     }
