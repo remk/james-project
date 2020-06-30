@@ -118,13 +118,9 @@ public class SetMessagesUpdateProcessor implements SetMessagesProcessor {
             .map(outboxes -> {
                 prepareResponse(request, mailboxSession, responseBuilder, outboxes);
                 return null;
-                }
-            ).onFailure(e -> {
-            request.buildUpdatePatches(updatePatchConverter)
-                .forEach((id, patch) -> {
-                    prepareResponseIfCantReadOutboxes(responseBuilder, e, id, patch);
-                });
-        });
+            })
+            .onFailure(e -> request.buildUpdatePatches(updatePatchConverter)
+                .forEach((id, patch) -> prepareResponseIfCantReadOutboxes(responseBuilder, e, id, patch)));
 
         timeMetric.stopAndPublish();
         return responseBuilder.build();
