@@ -107,7 +107,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
 
     "GC has been ran" when {
       "report added and removed references" when {
-        "one reference is added then removed and the GC is ran 2 generation later" in {
+        "one reference is added then removed and the GC is run 2 generations later" in {
           val reference = Reference(externalId, blobId, generation)
           val gcReportGenNPlus2 = GC.plan(StabilizedState(Map(generation -> List(reference)), Map(generation -> List(Dereference(generation, reference)))),
             lastIteration = Iteration.initial,
@@ -126,7 +126,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
               dereferences = Nil)))
         }
 
-        "one reference is added, a gc run two generation later, then  it is removed and the GC is ran again" in {
+        "one reference is added, a gc run two generations later, then it is removed and the GC is run again" in {
           val reference = Reference(externalId, blobId, generation)
           val gcReportGenNPlus2 = GC.plan(StabilizedState(Map(generation -> List(reference)), Map.empty),
             lastIteration = Iteration.initial,
