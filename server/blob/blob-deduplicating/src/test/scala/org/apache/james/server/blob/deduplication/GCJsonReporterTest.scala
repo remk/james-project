@@ -61,13 +61,16 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
       "on initial state" in {
         GCJsonReporter
           .report(GCIterationEvent(gcReportImmediate) :: Nil)
-          .states should be (Seq(initialReport,
-          JsonReport.State(GarbageCollect,
-          `reference-generations` = TreeSet(Generation.first),
-          `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
-          blobs = Seq[JsonReport.BlobId](),
-          references = Nil,
-          dereferences = Nil)))
+          .states should be(
+          Seq(
+            initialReport,
+            JsonReport.State(
+              GarbageCollect,
+              `reference-generations` = TreeSet(Generation.first),
+              `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
+              blobs = Seq[JsonReport.BlobId](),
+              references = Nil,
+              dereferences = Nil)))
       }
     }
 
@@ -75,21 +78,21 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
       "one reference is added" in {
         GCJsonReporter
           .report(ReferenceEvent(Reference(externalId, blobId, generation)) :: GCIterationEvent(gcReportImmediate) :: Nil)
-          .states should be (Seq(
+          .states should be(Seq(
           initialReport,
           firstSaveReport,
           JsonReport.State(GarbageCollect,
-          `reference-generations` = TreeSet(generation),
-          `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
-          blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
-          references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
-          dereferences = Nil )))
+            `reference-generations` = TreeSet(generation),
+            `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
+            blobs = Seq[JsonReport.BlobId](JsonReport.BlobId(blobId.asString, blobId.generation)),
+            references = Seq(JsonReport.Reference(externalId.id, blobId.asString, generation)),
+            dereferences = Nil)))
       }
 
       "one reference is added then removed" in {
         val reference = Reference(externalId, blobId, generation)
         GCJsonReporter.report(ReferenceEvent(reference) :: DereferenceEvent(Dereference(generation, reference)) :: GCIterationEvent(gcReportImmediate) :: Nil)
-          .states should be (Seq(
+          .states should be(Seq(
           initialReport,
           firstSaveReport,
           firstDeleteReport,
@@ -111,7 +114,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
             targetedGeneration = generation.next(2))
 
           GCJsonReporter.report(ReferenceEvent(reference) :: DereferenceEvent(Dereference(generation, reference)) :: GCIterationEvent(gcReportGenNPlus2) :: Nil)
-            .states should be (Seq(
+            .states should be(Seq(
             initialReport,
             firstSaveReport,
             firstDeleteReport,
@@ -120,7 +123,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
               `garbage-collection-iterations` = TreeSet(initialIteration, firstIteration),
               blobs = Nil,
               references = Nil,
-              dereferences = Nil )))
+              dereferences = Nil)))
         }
 
         "one reference is added, a gc run two generation later, then  it is removed and the GC is ran again" in {
@@ -136,7 +139,7 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
             targetedGeneration = generationPlusOne.next(2))
 
           GCJsonReporter.report(ReferenceEvent(reference) :: GCIterationEvent(gcReportGenNPlus2) :: DereferenceEvent(dereference) :: GCIterationEvent(gcReportGenNPlus3) :: Nil)
-            .states should be (Seq(
+            .states should be(Seq(
             initialReport,
             firstSaveReport,
             //first gc
@@ -163,14 +166,13 @@ class GCJsonReporterTest extends AnyWordSpec with Matchers {
         }
 
 
-
         "json serialization" in {
           val reference = Reference(externalId, blobId, generation)
           val gcReportGenNPlus2 = GC.plan(StabilizedState(Map(generation -> List(reference)), Map.empty),
             lastIteration = Iteration.initial,
             targetedGeneration = generation.next(2))
 
-          val generationPlusOne= generation.next
+          val generationPlusOne = generation.next
           val dereference = Dereference(generation.next, reference)
           val gcReportGenNPlus3 = GC.plan(StabilizedState(Map(generation -> List(reference)), Map(generationPlusOne -> List(dereference))),
             lastIteration = gcReportGenNPlus2.iteration,
