@@ -211,9 +211,7 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
   private implicit def notFoundWrites(implicit mailboxIdWrites: Writes[MailboxId]): Writes[NotFound] =
     notFound => JsArray(notFound.value.toList.map(mailboxIdWrites.writes))
 
-  private implicit def mailboxGetResponseWrites(implicit mailboxWrites: Writes[Mailbox]): Writes[MailboxGetResponse] = {
-    Json.writes[MailboxGetResponse]
-  }
+  private implicit def mailboxGetResponseWrites(implicit mailboxWrites: Writes[Mailbox]): Writes[MailboxGetResponse] = Json.writes[MailboxGetResponse]
 
   private implicit val jsonValidationErrorWrites: Writes[JsonValidationError] = error => JsString(error.message)
 
