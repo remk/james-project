@@ -26,7 +26,7 @@ import org.apache.james.jmap.mail._
 import org.apache.james.jmap.model.CapabilityIdentifier.CapabilityIdentifier
 import org.apache.james.jmap.model.Invocation.{Arguments, MethodName}
 import org.apache.james.jmap.model.State.INSTANCE
-import org.apache.james.jmap.model.{CapabilityIdentifier, Invocation, MailboxFactory}
+import org.apache.james.jmap.model.{Invocation, MailboxFactory}
 import org.apache.james.jmap.utils.quotas.{QuotaLoader, QuotaLoaderWithPreloadedDefaultFactory}
 import org.apache.james.mailbox.exception.MailboxNotFoundException
 import org.apache.james.mailbox.model.search.MailboxQuery
@@ -34,7 +34,7 @@ import org.apache.james.mailbox.model.{MailboxId, MailboxMetaData}
 import org.apache.james.mailbox.{MailboxManager, MailboxSession}
 import org.apache.james.metrics.api.MetricFactory
 import org.reactivestreams.Publisher
-import play.api.libs.json.{JsError, JsObject, JsSuccess, Writes}
+import play.api.libs.json.{JsError, JsObject, JsSuccess}
 import reactor.core.scala.publisher.{SFlux, SMono}
 import reactor.core.scheduler.Schedulers
 
@@ -66,19 +66,8 @@ class MailboxGetMethod @Inject() (serializer: Serializer,
             notFound = mailboxes.notFound))
           .map(mailboxGetResponse => Invocation(
             methodName = methodName,
-            arguments = Arguments(serializer.serialize(mailboxGetResponse)(writesWithFilteredProperties(capabilities)).as[JsObject]),
+            arguments = Arguments(serializer.serialize(mailboxGetResponse, capabilities).as[JsObject]),
             methodCallId = invocation.methodCallId))))
-  }
-
-  private def writesWithFilteredProperties(capabilities: Set[CapabilityIdentifier]): Writes[Mailbox] = {
-    val propertiesForCapabitilites: Map[CapabilityIdentifier, Set[String]] = Map(
-      CapabilityIdentifier.JAMES_QUOTA -> Set("quotas"),
-      CapabilityIdentifier.JAMES_SHARES -> Set("namespace", "rights")
-    )
-    val propertiesToHide = propertiesForCapabitilites.filterNot(entry => capabilities.contains(entry._1))
-      .flatMap(_._2)
-      .toSet
-    serializer.mailboxWrites(propertiesToHide)
   }
 
   private def asMailboxGetRequest(arguments: Arguments): SMono[MailboxGetRequest] = {

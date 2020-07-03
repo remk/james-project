@@ -230,6 +230,17 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
       })
     }
 
+  private def mailboxWritesWithFilteredProperties(capabilities: Set[CapabilityIdentifier]): Writes[Mailbox] = {
+    val propertiesForCapabitilites: Map[CapabilityIdentifier, Set[String]] = Map(
+      CapabilityIdentifier.JAMES_QUOTA -> Set("quotas"),
+      CapabilityIdentifier.JAMES_SHARES -> Set("namespace", "rights")
+    )
+    val propertiesToHide = propertiesForCapabitilites.filterNot(entry => capabilities.contains(entry._1))
+      .flatMap(_._2)
+      .toSet
+    mailboxWrites(propertiesToHide)
+  }
+
   private implicit def jsErrorWrites: Writes[JsError] = Json.writes[JsError]
 
   def serialize(session: Session): JsValue = Json.toJson(session)
@@ -241,6 +252,10 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
   def serialize(mailbox: Mailbox)(implicit mailboxWrites: Writes[Mailbox]): JsValue = Json.toJson(mailbox)
 
   def serialize(mailboxGetResponse: MailboxGetResponse)(implicit mailboxWrites: Writes[Mailbox]): JsValue = Json.toJson(mailboxGetResponse)
+
+  def serialize(mailboxGetResponse: MailboxGetResponse, capabilities: Set[CapabilityIdentifier]): JsValue = {
+    serialize(mailboxGetResponse)(mailboxWritesWithFilteredProperties(capabilities))
+  }
 
   def serialize(errors: JsError): JsValue = Json.toJson(errors)
 
