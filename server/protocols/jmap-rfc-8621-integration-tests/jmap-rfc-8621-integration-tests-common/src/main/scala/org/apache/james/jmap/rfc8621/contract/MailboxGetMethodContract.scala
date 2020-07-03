@@ -313,9 +313,9 @@ trait MailboxGetMethodContract {
     val response: String = `given`
       .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
       .body(GET_ALL_MAILBOXES_REQUEST_WITH_BOTH)
-      .when
+    .when
       .post
-      .`then`
+    .`then`
       .statusCode(SC_OK)
       .contentType(JSON)
       .extract
@@ -766,9 +766,9 @@ trait MailboxGetMethodContract {
                |    },
                |    "c1"]]
                |}""".stripMargin)
-      .when
+    .when
       .post
-      .`then`
+    .`then`
       .statusCode(SC_OK)
       .contentType(JSON)
       .extract
