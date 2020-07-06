@@ -24,13 +24,16 @@ import static org.apache.james.queue.rabbitmq.view.cassandra.model.BucketedSlice
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.james.blob.api.Store;
 import org.apache.james.blob.mail.MimeMessagePartsId;
 import org.apache.james.blob.mail.MimeMessageStore;
@@ -52,9 +55,9 @@ public class CassandraMailQueueBrowser {
 
     static class CassandraMailQueueIterator implements ManageableMailQueue.MailQueueIterator {
 
-        private final Iterator<ManageableMailQueue.MailQueueItemView> iterator;
+        private final Iterator<CassandraMailQueueItemView> iterator;
 
-        CassandraMailQueueIterator(Iterator<ManageableMailQueue.MailQueueItemView> iterator) {
+        CassandraMailQueueIterator(Iterator<CassandraMailQueueItemView> iterator) {
             Preconditions.checkNotNull(iterator);
 
             this.iterator = iterator;
@@ -71,7 +74,7 @@ public class CassandraMailQueueBrowser {
         }
 
         @Override
-        public ManageableMailQueue.MailQueueItemView next() {
+        public CassandraMailQueueItemView next() {
             return iterator.next();
         }
     }
@@ -100,10 +103,24 @@ public class CassandraMailQueueBrowser {
         this.clock = clock;
     }
 
-    Flux<ManageableMailQueue.MailQueueItemView> browse(MailQueueName queueName) {
+    Flux<CassandraMailQueueItemView> browse(MailQueueName queueName) {
         return browseReferences(queueName)
             .flatMapSequential(this::toMailFuture)
-            .map(ManageableMailQueue.MailQueueItemView::new);
+            .map(CassandraMailQueueItemView::new);
+    }
+
+    Flux<CassandraMailQueueItemView> browseOlderThan(MailQueueName queueName, Instant olderThan) {
+        return browseReferencesOlderThan(queueName, olderThan)
+            .flatMapSequential(this::toMailFuture)
+            .map(CassandraMailQueueItemView::new);
+    }
+
+    Flux<EnqueuedItemWithSlicingContext> browseReferencesOlderThan(MailQueueName queueName, Instant olderThan) {
+        return browseStartDao.findBrowseStart(queueName)
+            .flatMapMany(this::allSlicesStartingAt)
+            .filter(slice -> slice.getStartSliceInstant().isBefore(olderThan))
+            .flatMapSequential(slice -> browseSlice(queueName, slice))
+            .filter(item -> item.getEnqueuedItem().getEnqueuedTime().isBefore(olderThan));
     }
 
     Flux<EnqueuedItemWithSlicingContext> browseReferences(MailQueueName queueName) {
@@ -112,10 +129,10 @@ public class CassandraMailQueueBrowser {
             .flatMapSequential(slice -> browseSlice(queueName, slice));
     }
 
-    private Mono<Mail> toMailFuture(EnqueuedItemWithSlicingContext enqueuedItemWithSlicingContext) {
+    private Mono<Pair<EnqueuedItem, Mail>> toMailFuture(EnqueuedItemWithSlicingContext enqueuedItemWithSlicingContext) {
         EnqueuedItem enqueuedItem = enqueuedItemWithSlicingContext.getEnqueuedItem();
         return mimeMessageStore.read(enqueuedItem.getPartsId())
-            .map(mimeMessage -> toMail(enqueuedItem, mimeMessage));
+            .map(mimeMessage -> Pair.of(enqueuedItem, toMail(enqueuedItem, mimeMessage)));
     }
 
     private Mail toMail(EnqueuedItem enqueuedItem, MimeMessage mimeMessage) {
@@ -150,5 +167,33 @@ public class CassandraMailQueueBrowser {
         return Flux
             .range(0, configuration.getBucketCount())
             .map(BucketId::of);
+    }
+
+    public static class CassandraMailQueueItemView implements ManageableMailQueue.MailQueueItemView {
+        private final EnqueuedItem enqueuedItem;
+        private final Mail mail;
+
+        public CassandraMailQueueItemView(Pair<EnqueuedItem, Mail> pair) {
+            this(pair.getLeft(), pair.getRight());
+        }
+
+        public CassandraMailQueueItemView(EnqueuedItem enqueuedItem, Mail mail) {
+            this.enqueuedItem = enqueuedItem;
+            this.mail = mail;
+        }
+
+        public EnqueuedItem getEnqueuedItem() {
+            return enqueuedItem;
+        }
+
+        @Override
+        public Mail getMail() {
+            return mail;
+        }
+
+        @Override
+        public Optional<ZonedDateTime> getNextDelivery() {
+            return Optional.empty();
+        }
     }
 }
