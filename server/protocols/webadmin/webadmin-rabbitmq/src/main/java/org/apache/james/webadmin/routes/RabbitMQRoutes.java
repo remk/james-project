@@ -20,6 +20,8 @@
 package org.apache.james.webadmin.routes;
 
 import static org.apache.james.webadmin.Constants.SEPARATOR;
+import static org.apache.james.webadmin.routes.MailQueueRoutes.BASE_URL;
+import static org.apache.james.webadmin.routes.MailQueueRoutes.MAIL_QUEUE_NAME;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -43,6 +45,8 @@ import org.apache.james.util.DurationParser;
 import org.apache.james.webadmin.Routes;
 import org.apache.james.webadmin.service.RepublishNotprocessedMailsTask;
 import org.apache.james.webadmin.tasks.TaskFromRequest;
+import org.apache.james.webadmin.tasks.TaskFromRequestRegistry;
+import org.apache.james.webadmin.tasks.TaskRegistrationKey;
 import org.apache.james.webadmin.utils.ErrorResponder;
 import org.apache.james.webadmin.utils.JsonTransformer;
 import org.eclipse.jetty.http.HttpStatus;
@@ -59,12 +63,11 @@ import spark.Request;
 import spark.Service;
 
 @Api(tags = "MailQueues")
-@Path(RabbitMQRoutes.BASE_URL)
+@Path(BASE_URL)
 @Produces("application/json")
 public class RabbitMQRoutes implements Routes {
 
-    public static final String BASE_URL = "/rabbitMQ/mailQueues";
-    @VisibleForTesting static final String MAIL_QUEUE_NAME = ":mailQueueName";
+    private static final TaskRegistrationKey REPUBLISH_NOT_PROCESSED_MAILS_REGISTRATION_KEY = TaskRegistrationKey.of("RepublishNotProcessedMails");
 
     private final MailQueueFactory<RabbitMQMailQueue> mailQueueFactory;
     private final JsonTransformer jsonTransformer;
@@ -109,12 +112,13 @@ public class RabbitMQRoutes implements Routes {
     public void republishNotProcessedMails(Service service) {
         TaskFromRequest taskFromRequest = this::republishNotProcessedMails;
         service.post(BASE_URL + SEPARATOR + MAIL_QUEUE_NAME,
-            taskFromRequest.asRoute(taskManager),
+            TaskFromRequestRegistry.builder()
+                .register(REPUBLISH_NOT_PROCESSED_MAILS_REGISTRATION_KEY, this::republishNotProcessedMails)
+                .buildAsRoute(taskManager),
             jsonTransformer);
     }
 
     private Task republishNotProcessedMails(Request request) {
-        checkTask(request, "RepublishNotProcessedMails");
         RabbitMQMailQueue mailQueue = getMailQueue(MailQueueName.of(request.params(MAIL_QUEUE_NAME)));
         return new RepublishNotprocessedMailsTask(mailQueue, getOlderThan(request));
     }
@@ -128,16 +132,6 @@ public class RabbitMQRoutes implements Routes {
                     .statusCode(HttpStatus.NOT_FOUND_404)
                     .type(ErrorResponder.ErrorType.NOT_FOUND)
                     .haltError());
-    }
-
-    private void checkTask(Request request, String expectedTaskName) {
-        Optional.ofNullable(request.queryParams("task"))
-            .filter(Predicate.isEqual(expectedTaskName))
-            .orElseThrow(() -> ErrorResponder.builder()
-                .message("Task unknown")
-                .statusCode(HttpStatus.BAD_REQUEST_400)
-                .type(ErrorResponder.ErrorType.INVALID_ARGUMENT)
-                .haltError());
     }
 
     private Instant getOlderThan(Request req) {

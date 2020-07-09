@@ -96,13 +96,13 @@ class RabbitMQRoutesTest {
     }
 
     @Test
-    void triggeringARebuildShouldCreateATask() {
+    void triggeringARepublishNotProcessedMailsShouldCreateATask() {
         when(mailQueueFactory.getQueue(any())).thenReturn(Optional.of(mock(RabbitMQMailQueue.class)));
         given()
-            .queryParam("task", "rebuild")
+            .queryParam("action", "RepublishNotProcessedMails")
             .queryParam("olderThan", "1d")
         .when()
-            .post(RabbitMQRoutes.BASE_URL + "/spooler")
+            .post(MailQueueRoutes.BASE_URL + "/spooler")
         .then()
             .statusCode(HttpStatus.CREATED_201);
 
@@ -115,26 +115,26 @@ class RabbitMQRoutesTest {
     }
 
     @Test
-    void triggeringARebuildWhenTheQueueHasNotBeenInitializedShouldFail() {
+    void triggeringARepublishNotProcessedMailsWhenTheQueueHasNotBeenInitializedShouldFail() {
         when(mailQueueFactory.getQueue(any())).thenReturn(Optional.empty());
         given()
-            .queryParam("task", "rebuild")
+            .queryParam("action", "RepublishNotProcessedMails")
             .queryParam("olderThan", "1d")
         .when()
-            .post(RabbitMQRoutes.BASE_URL + "/spooler")
+            .post(MailQueueRoutes.BASE_URL + "/spooler")
         .then()
-            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR_500)
-            .body("message", containsString("Spooler MailQueue not created"));
+            .statusCode(HttpStatus.NOT_FOUND_404)
+            .body("message", containsString("MailQueueName{value=spooler} can not be found"));
     }
 
     @Test
-    void triggeringARebuildWithAnInvalidOlderThanShouldFail() {
+    void triggeringARepublishNotProcessedMailsWithAnInvalidOlderThanShouldFail() {
         when(mailQueueFactory.getQueue(any())).thenReturn(Optional.of(mock(RabbitMQMailQueue.class)));
         given()
-            .queryParam("task", "rebuild")
+            .queryParam("action", "RepublishNotProcessedMails")
             .queryParam("olderThan", "invalidValue")
         .when()
-            .post(RabbitMQRoutes.BASE_URL + "/spooler")
+            .post(MailQueueRoutes.BASE_URL + "/spooler")
         .then()
             .statusCode(HttpStatus.BAD_REQUEST_400)
             .body("message", containsString("Invalid olderThan"))

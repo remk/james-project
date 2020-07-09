@@ -801,8 +801,8 @@ class RabbitMQWebAdminServerTaskSerializationIntegrationTest {
     @Test
     void republishNotProcessedMailsOnSpoolShouldComplete() {
         String taskId = with()
-            .basePath("/rabbitMQ/mailQueues/spool")
-            .queryParam("task", "RepublishNotProcessedMails")
+            .basePath("/mailQueues/spool")
+            .queryParam("action", "RepublishNotProcessedMails")
             .queryParam("olderThan", "2d")
         .post()
             .jsonPath()
