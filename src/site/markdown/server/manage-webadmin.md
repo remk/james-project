@@ -2900,7 +2900,7 @@ The scheduled task will have the following type `reprocessing-one` and the follo
  - [Deleting mails from a mail queue](#Deleting_mails_from_a_mail_queue)
  - [Clearing a mail queue](#Clearing_a_mail_queue)
  - [Flushing mails from a mail queue](#Flushing_mails_from_a_mail_queue)
- - [RabbitMQ rebuild spooler mail queue from cassandra](#RabbitMQ_rebuild_spooler_mail_queue_from_cassandra)
+ - [RabbitMQ rebuild a mail queue from cassandra](#RabbitMQ_rebuild_a_mail_queue_from_cassandra)
 
 ### Listing mail queues
 
@@ -3050,15 +3050,15 @@ Response codes:
  - 400: Invalid request
  - 404: The mail queue does not exist
  
-### RabbitMQ rebuild spooler mail queue from cassandra
+### RabbitMQ rebuild a mail queue from cassandra
 
 ```
-curl -XPOST http://ip:port/rabbitMQ/mailQueues/spooler?task=rebuild&olderThan=1d
+curl -XPOST http://ip:port/mailQueues/{mailQueueName}?action=RepublishNotProcessedMails&olderThan=1d
 ```
 
 This method is specific to the distributed flavor of James, which relies on Cassandra and RabbitMQ.
 In case of a RabbitMQ crash resulting in a lost of messages. This task can be launched to repopulate the
-`spooler` queue in rabbitMQ using the information stored in Cassandra.
+`mailQueueName` queue in RabbitMQ using the information stored in Cassandra.
 
 The `olderThan` parameter is mandatory. It filters the mails to be restored, by taking into account only
 the mails older than the given value.
