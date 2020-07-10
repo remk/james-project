@@ -55,7 +55,7 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 
-class RabbitMQRoutesTest {
+class RabbitMQMailQueuesRoutesTest {
     final static ZonedDateTime DATE = ZonedDateTime.parse("2015-10-30T14:12:00Z");
 
     WebAdminServer webAdminServer;
@@ -67,7 +67,7 @@ class RabbitMQRoutesTest {
         JsonTransformer jsonTransformer = new JsonTransformer();
         clock = UpdatableTickingClock.fixed(DATE.toInstant(), ZoneOffset.UTC);
         return WebAdminUtils.createWebAdminServer(
-                new RabbitMQRoutes(mailQueueFactory, clock, jsonTransformer, taskManager),
+                new RabbitMQMailQueuesRoutes(mailQueueFactory, clock, jsonTransformer, taskManager),
                 new TasksRoutes(taskManager, jsonTransformer, DTOConverter.of()))
             .start();
     }

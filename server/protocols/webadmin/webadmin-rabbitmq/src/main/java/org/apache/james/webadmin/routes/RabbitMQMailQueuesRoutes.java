@@ -65,7 +65,7 @@ import spark.Service;
 @Api(tags = "MailQueues")
 @Path(BASE_URL)
 @Produces("application/json")
-public class RabbitMQRoutes implements Routes {
+public class RabbitMQMailQueuesRoutes implements Routes {
 
     private static final TaskRegistrationKey REPUBLISH_NOT_PROCESSED_MAILS_REGISTRATION_KEY = TaskRegistrationKey.of("RepublishNotProcessedMails");
 
@@ -77,8 +77,8 @@ public class RabbitMQRoutes implements Routes {
     @Inject
     @SuppressWarnings("unchecked")
     @VisibleForTesting
-    RabbitMQRoutes(MailQueueFactory<RabbitMQMailQueue> mailQueueFactory,
-                   Clock clock, JsonTransformer jsonTransformer, TaskManager taskManager) {
+    RabbitMQMailQueuesRoutes(MailQueueFactory<RabbitMQMailQueue> mailQueueFactory,
+                             Clock clock, JsonTransformer jsonTransformer, TaskManager taskManager) {
         this.mailQueueFactory = mailQueueFactory;
         this.clock = clock;
         this.jsonTransformer = jsonTransformer;

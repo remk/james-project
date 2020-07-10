@@ -20,7 +20,7 @@
 package org.apache.james.modules.server;
 
 import org.apache.james.webadmin.Routes;
-import org.apache.james.webadmin.routes.RabbitMQRoutes;
+import org.apache.james.webadmin.routes.RabbitMQMailQueuesRoutes;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
@@ -31,6 +31,6 @@ public class RabbitMailQueueRoutesModule extends AbstractModule {
         install(new RabbitMailQueueTaskSerializationModule());
 
         Multibinder<Routes> routesMultibinder = Multibinder.newSetBinder(binder(), Routes.class);
-        routesMultibinder.addBinding().to(RabbitMQRoutes.class);
+        routesMultibinder.addBinding().to(RabbitMQMailQueuesRoutes.class);
     }
 }
