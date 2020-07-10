@@ -2900,7 +2900,7 @@ The scheduled task will have the following type `reprocessing-one` and the follo
  - [Deleting mails from a mail queue](#Deleting_mails_from_a_mail_queue)
  - [Clearing a mail queue](#Clearing_a_mail_queue)
  - [Flushing mails from a mail queue](#Flushing_mails_from_a_mail_queue)
- - [RabbitMQ rebuild a mail queue from cassandra](#RabbitMQ_rebuild_a_mail_queue_from_cassandra)
+ - [RabbitMQ republishing a mail queue from cassandra](#RabbitMQ_republishing_a_mail_queue_from_cassandra)
 
 ### Listing mail queues
 
@@ -3050,7 +3050,7 @@ Response codes:
  - 400: Invalid request
  - 404: The mail queue does not exist
  
-### RabbitMQ rebuild a mail queue from cassandra
+### RabbitMQ republishing a mail queue from cassandra
 
 ```
 curl -XPOST http://ip:port/mailQueues/{mailQueueName}?action=RepublishNotProcessedMails&olderThan=1d
@@ -3077,7 +3077,7 @@ Response codes:
  - 201: Task created
  - 400: Invalid request
 
- The response body contains the id of the rebuild task.
+ The response body contains the id of the republishing task.
  ```
  {
      "taskId": "a650a66a-5984-431e-bdad-f1baad885856"
