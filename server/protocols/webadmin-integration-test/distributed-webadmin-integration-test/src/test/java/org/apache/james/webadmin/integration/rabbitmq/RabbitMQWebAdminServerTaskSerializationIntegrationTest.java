@@ -806,7 +806,6 @@ class RabbitMQWebAdminServerTaskSerializationIntegrationTest {
             .queryParam("olderThan", "2d")
         .post()
             .jsonPath()
-            .prettyPeek()
         .get("taskId");
 
         given()
