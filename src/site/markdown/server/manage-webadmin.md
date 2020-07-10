@@ -3053,11 +3053,11 @@ Response codes:
 ### RabbitMQ republishing a mail queue from cassandra
 
 ```
-curl -XPOST http://ip:port/mailQueues/{mailQueueName}?action=RepublishNotProcessedMails&olderThan=1d
+curl -XPOST 'http://ip:port/mailQueues/{mailQueueName}?action=RepublishNotProcessedMails&olderThan=1d'
 ```
 
-This method is specific to the distributed flavor of James, which relies on Cassandra and RabbitMQ.
-In case of a RabbitMQ crash resulting in a lost of messages. This task can be launched to repopulate the
+This method is specific to the distributed flavor of James, which relies on Cassandra and RabbitMQ for implementing a mail queue..
+In case of a RabbitMQ crash resulting in a lost of messages, this task can be launched to repopulate the
 `mailQueueName` queue in RabbitMQ using the information stored in Cassandra.
 
 The `olderThan` parameter is mandatory. It filters the mails to be restored, by taking into account only
