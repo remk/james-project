@@ -3056,7 +3056,7 @@ Response codes:
 curl -XPOST 'http://ip:port/mailQueues/{mailQueueName}?action=RepublishNotProcessedMails&olderThan=1d'
 ```
 
-This method is specific to the distributed flavor of James, which relies on Cassandra and RabbitMQ for implementing a mail queue..
+This method is specific to the distributed flavor of James, which relies on Cassandra and RabbitMQ for implementing a mail queue.
 In case of a RabbitMQ crash resulting in a lost of messages, this task can be launched to repopulate the
 `mailQueueName` queue in RabbitMQ using the information stored in Cassandra.
 
