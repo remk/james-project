@@ -300,13 +300,8 @@ class RabbitMQMailQueueTest {
 
             // Avoid early processing and prefetching
             Sender sender = rabbitMQExtension.getSender();
-            MailQueueName mailQueueName = MailQueueName.fromString(getMailQueue().getName().asString());
-            BindingSpecification mailQueuBinding = BindingSpecification.binding()
-                .exchange(mailQueueName.toRabbitExchangeName().asString())
-                .queue(mailQueueName.toWorkQueueName().asString())
-                .routingKey(EMPTY_ROUTING_KEY);
 
-            sender.unbindQueue(mailQueuBinding).block();
+            suspendDequeuing(sender);
 
             getMailQueue().enQueue(defaultMail()
                 .name(name1)
@@ -320,7 +315,7 @@ class RabbitMQMailQueueTest {
                 .name(name3)
                 .build());
 
-            sender.bindQueue(mailQueuBinding).block();
+            resumeDequeuing(sender);
             assertThat(getMailQueue()
                     .republishNotProcessedMails(Instant.now().minus(Duration.ofHours(1)))
                     .collectList()
@@ -334,7 +329,6 @@ class RabbitMQMailQueueTest {
                 .containsExactlyInAnyOrder(name1, name2, name3);
         }
 
-
         @Test
         void onlyOldMessagesShouldBeProcessedAfterNotPublishedMailsHaveBeenReprocessed() throws Exception {
             clock.setInstant(Instant.now().minus(Duration.ofHours(2)));
@@ -345,13 +339,8 @@ class RabbitMQMailQueueTest {
 
             // Avoid early processing and prefetching
             Sender sender = rabbitMQExtension.getSender();
-            MailQueueName mailQueueName = MailQueueName.fromString(getMailQueue().getName().asString());
-            BindingSpecification mailQueuBinding = BindingSpecification.binding()
-                    .exchange(mailQueueName.toRabbitExchangeName().asString())
-                    .queue(mailQueueName.toWorkQueueName().asString())
-                    .routingKey(EMPTY_ROUTING_KEY);
 
-            sender.unbindQueue(mailQueuBinding).block();
+            suspendDequeuing(sender);
 
             getMailQueue().enQueue(defaultMail()
                     .name(name1)
@@ -366,7 +355,7 @@ class RabbitMQMailQueueTest {
                     .name(name3)
                     .build());
 
-            sender.bindQueue(mailQueuBinding).block();
+            resumeDequeuing(sender);
             assertThat(getMailQueue()
                     .republishNotProcessedMails(Instant.now().minus(Duration.ofHours(1)))
                     .collectList()
@@ -390,13 +379,8 @@ class RabbitMQMailQueueTest {
 
             // Avoid early processing and prefetching
             Sender sender = rabbitMQExtension.getSender();
-            MailQueueName mailQueueName = MailQueueName.fromString(getMailQueue().getName().asString());
-            BindingSpecification mailQueuBinding = BindingSpecification.binding()
-                .exchange(mailQueueName.toRabbitExchangeName().asString())
-                .queue(mailQueueName.toWorkQueueName().asString())
-                .routingKey(EMPTY_ROUTING_KEY);
 
-            sender.unbindQueue(mailQueuBinding).block();
+            suspendDequeuing(sender);
 
             getMailQueue().enQueue(defaultMail()
                 .name(name1)
@@ -415,7 +399,7 @@ class RabbitMQMailQueueTest {
                     .collectList()
                     .block())
                 .containsExactlyInAnyOrder(name1, name2, name3);
-            sender.bindQueue(mailQueuBinding).block();
+            resumeDequeuing(sender);
             assertThat(getMailQueue()
                     .republishNotProcessedMails(Instant.now().minus(Duration.ofHours(1)))
                     .collectList()
@@ -439,18 +423,13 @@ class RabbitMQMailQueueTest {
 
             // Avoid early processing and prefetching
             Sender sender = rabbitMQExtension.getSender();
-            MailQueueName mailQueueName = MailQueueName.fromString(getMailQueue().getName().asString());
-            BindingSpecification mailQueuBinding = BindingSpecification.binding()
-                .exchange(mailQueueName.toRabbitExchangeName().asString())
-                .queue(mailQueueName.toWorkQueueName().asString())
-                .routingKey(EMPTY_ROUTING_KEY);
 
-            sender.unbindQueue(mailQueuBinding).block();
+            suspendDequeuing(sender);
             //mail send when rabbit down
             getMailQueue().enQueue(defaultMail()
                 .name(name1)
                 .build());
-            sender.bindQueue(mailQueuBinding).block();
+            resumeDequeuing(sender);
 
             //mail send when rabbit is up again and before rebuild
             clock.setInstant(Instant.now());
@@ -678,6 +657,22 @@ class RabbitMQMailQueueTest {
 
             Awaitility.await().atMost(org.awaitility.Duration.TEN_SECONDS)
                 .untilAsserted(() -> assertThat(deadLetteredCount.get()).isEqualTo(1));
+        }
+
+        private void resumeDequeuing(Sender sender) {
+            sender.bindQueue(getMailQueueBindingSpecification()).block();
+        }
+
+        private void suspendDequeuing(Sender sender) {
+            sender.unbindQueue(getMailQueueBindingSpecification()).block();
+        }
+
+        private BindingSpecification getMailQueueBindingSpecification() {
+            MailQueueName mailQueueName = MailQueueName.fromString(getMailQueue().getName().asString());
+            return BindingSpecification.binding()
+                    .exchange(mailQueueName.toRabbitExchangeName().asString())
+                    .queue(mailQueueName.toWorkQueueName().asString())
+                    .routingKey(EMPTY_ROUTING_KEY);
         }
     }
 
