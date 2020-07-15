@@ -99,7 +99,21 @@ public class RabbitMQMailQueuesRoutes implements Routes {
     @POST
     @Path("/{mailQueueName}")
     @ApiImplicitParams({
-        @ApiImplicitParam(required = true, dataType = "string", name = "mailQueueName", paramType = "path")
+        @ApiImplicitParam(required = true, dataType = "string", name = "mailQueueName", paramType = "path"),
+        @ApiImplicitParam(
+            required = true,
+            dataType = "String",
+            name = "action",
+            paramType = "query",
+            example = "?action=RepublishNotProcessedMails",
+            value = "Specify the action to perform on a RabbitMQ mail queue."),
+        @ApiImplicitParam(
+            required = true,
+            dataType = "String",
+            name = "olderThan",
+            paramType = "query",
+            example = "?olderThan=1w",
+            value = "Specify the messages minimum age to republish")
     })
     @ApiOperation(
         value = "republish the not processed mails of the RabbitMQ MailQueue using the cassandra mail queue view"

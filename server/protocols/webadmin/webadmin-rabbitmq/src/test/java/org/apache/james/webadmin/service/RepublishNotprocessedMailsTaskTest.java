@@ -17,6 +17,7 @@
 
 package org.apache.james.webadmin.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import static org.mockito.Mockito.mock;
@@ -26,6 +27,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import org.apache.james.JsonSerializationVerifier;
+import org.apache.james.json.JsonGenericSerializer;
 import org.apache.james.queue.api.MailQueueName;
 import org.apache.james.queue.rabbitmq.RabbitMQMailQueue;
 import org.apache.james.queue.rabbitmq.RabbitMQMailQueueFactory;
@@ -56,6 +58,21 @@ class RepublishNotprocessedMailsTaskTest {
     }
 
     @Test
+    void taskShouldBeDeserializable() throws Exception {
+        RabbitMQMailQueueFactory mockedQueueFactory = mock(RabbitMQMailQueueFactory.class);
+        RabbitMQMailQueue mockedQueue = mock(RabbitMQMailQueue.class);
+
+        when(mockedQueue.getName()).thenReturn(QUEUE_NAME);
+        when(mockedQueueFactory.getQueue(QUEUE_NAME)).thenReturn(Optional.of(mockedQueue));
+
+        RepublishNotprocessedMailsTask task = new RepublishNotprocessedMailsTask(mockedQueue, OLDER_THAN);
+        JsonSerializationVerifier.dtoModule(RepublishNotProcessedMailsTaskDTO.module(mockedQueueFactory))
+            .bean(task)
+            .json(SERIALIZED)
+            .verify();
+    }
+
+    @Test
     void taskDeserializationFromUnknownQueueNameShouldThrow() {
         RabbitMQMailQueueFactory mockedQueueFactory = mock(RabbitMQMailQueueFactory.class);
         RabbitMQMailQueue mockedQueue = mock(RabbitMQMailQueue.class);
@@ -78,5 +95,14 @@ class RepublishNotprocessedMailsTaskTest {
             .bean(details)
             .json(SERIALIZED_TASK_ADDITIONAL_INFORMATION)
             .verify();
+    }
+
+    @Test
+    void additionalInformationShouldBeDeserializable() throws Exception {
+        RepublishNotprocessedMailsTask.AdditionalInformation details = new RepublishNotprocessedMailsTask.AdditionalInformation(QUEUE_NAME, OLDER_THAN, NB_REQUEUED_MAILS, NOW);
+        RepublishNotprocessedMailsTask.AdditionalInformation deserialized = JsonGenericSerializer.forModules(RepublishNotProcessedMailsTaskAdditionalInformationDTO.module())
+            .withoutNestedType()
+            .deserialize(SERIALIZED_TASK_ADDITIONAL_INFORMATION);
+        assertThat(deserialized).isEqualToComparingFieldByField(details);
     }
 }
