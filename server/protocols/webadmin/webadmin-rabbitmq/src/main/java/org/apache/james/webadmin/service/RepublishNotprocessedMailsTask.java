@@ -22,6 +22,7 @@ package org.apache.james.webadmin.service;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.james.queue.api.MailQueueName;
 import org.apache.james.queue.rabbitmq.RabbitMQMailQueue;
@@ -68,16 +69,20 @@ public class RepublishNotprocessedMailsTask implements Task {
 
     private final Instant olderThan;
     private final RabbitMQMailQueue mailQueue;
-    private Integer nbRequeuedMails = 0;
+    private final AtomicInteger nbRequeuedMails;
 
     public RepublishNotprocessedMailsTask(RabbitMQMailQueue mailQueue, Instant olderThan) {
         this.olderThan = olderThan;
         this.mailQueue = mailQueue;
+        this.nbRequeuedMails = new AtomicInteger(0);
     }
 
     @Override
     public Result run() {
-        nbRequeuedMails = mailQueue.republishNotProcessedMails(olderThan).block();
+        mailQueue.republishNotProcessedMails(olderThan)
+            .doOnNext(mailName -> nbRequeuedMails.getAndIncrement())
+            .then()
+            .block();
 
         return Result.COMPLETED;
     }
@@ -89,7 +94,7 @@ public class RepublishNotprocessedMailsTask implements Task {
 
     @Override
     public Optional<TaskExecutionDetails.AdditionalInformation> details() {
-        return Optional.of(new AdditionalInformation(mailQueue.getName(), olderThan, nbRequeuedMails, Clock.systemUTC().instant()));
+        return Optional.of(new AdditionalInformation(mailQueue.getName(), olderThan, nbRequeuedMails.get(), Clock.systemUTC().instant()));
     }
 
     public Instant getOlderThan() {
