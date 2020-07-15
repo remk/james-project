@@ -323,8 +323,9 @@ class RabbitMQMailQueueTest {
             sender.bindQueue(mailQueuBinding).block();
             assertThat(getMailQueue()
                     .republishNotProcessedMails(Instant.now().minus(Duration.ofHours(1)))
+                    .collectList()
                     .block())
-                .isEqualTo(3);
+                .containsExactlyInAnyOrder(name1, name2, name3);
 
             List<MailQueue.MailQueueItem> items = dequeueFlux.take(Duration.ofSeconds(10)).collectList().block();
 
@@ -368,8 +369,9 @@ class RabbitMQMailQueueTest {
             sender.bindQueue(mailQueuBinding).block();
             assertThat(getMailQueue()
                     .republishNotProcessedMails(Instant.now().minus(Duration.ofHours(1)))
+                    .collectList()
                     .block())
-                .isEqualTo(2);
+                .containsExactlyInAnyOrder(name1, name2);
 
             List<MailQueue.MailQueueItem> items = dequeueFlux.take(Duration.ofSeconds(10)).collectList().block();
 
@@ -410,13 +412,15 @@ class RabbitMQMailQueueTest {
 
             assertThat(getMailQueue()
                     .republishNotProcessedMails(Instant.now().minus(Duration.ofHours(1)))
+                    .collectList()
                     .block())
-                .isEqualTo(3);
+                .containsExactlyInAnyOrder(name1, name2, name3);
             sender.bindQueue(mailQueuBinding).block();
             assertThat(getMailQueue()
                     .republishNotProcessedMails(Instant.now().minus(Duration.ofHours(1)))
+                    .collectList()
                     .block())
-                .isEqualTo(3);
+                .containsExactlyInAnyOrder(name1, name2, name3);
 
             List<MailQueue.MailQueueItem> items = dequeueFlux.take(Duration.ofSeconds(10)).collectList().block();
 
@@ -464,8 +468,9 @@ class RabbitMQMailQueueTest {
             }), Mono.fromRunnable(() ->
                 assertThat(getMailQueue()
                         .republishNotProcessedMails(Instant.now().minus(Duration.ofHours(1)))
+                        .collectList()
                         .block())
-                    .isEqualTo(1)
+                    .containsOnly(name1)
             ))
             .then()
             .block(Duration.ofSeconds(10));

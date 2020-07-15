@@ -77,12 +77,12 @@ class Enqueuer {
             .block();
     }
 
-    Mono<Boolean> reQueue(CassandraMailQueueBrowser.CassandraMailQueueItemView item) {
+    Mono<Void> reQueue(CassandraMailQueueBrowser.CassandraMailQueueItemView item) {
         Mail mail = item.getMail();
         EnqueuedItem enqueuedItem = item.getEnqueuedItem();
         return Mono.fromCallable(() -> new MailReference(enqueuedItem.getEnqueueId(), mail, enqueuedItem.getPartsId()))
             .flatMap(Throwing.function(this::publishReferenceToRabbit).sneakyThrow())
-            .thenReturn(true);
+            .then();
     }
 
     private Mono<MimeMessagePartsId> saveMail(Mail mail) throws MailQueue.MailQueueException {
