@@ -38,6 +38,7 @@ import org.apache.james.blob.api.Store;
 import org.apache.james.blob.mail.MimeMessagePartsId;
 import org.apache.james.blob.mail.MimeMessageStore;
 import org.apache.james.queue.api.ManageableMailQueue;
+import org.apache.james.queue.rabbitmq.EnqueueId;
 import org.apache.james.queue.rabbitmq.EnqueuedItem;
 import org.apache.james.queue.rabbitmq.MailQueueName;
 import org.apache.james.queue.rabbitmq.view.cassandra.configuration.CassandraMailQueueViewConfiguration;
@@ -182,8 +183,12 @@ public class CassandraMailQueueBrowser {
             this.mail = mail;
         }
 
-        public EnqueuedItem getEnqueuedItem() {
-            return enqueuedItem;
+        public EnqueueId getEnqueuedId() {
+            return enqueuedItem.getEnqueueId();
+        }
+
+        public MimeMessagePartsId getEnqueuedPartsId() {
+            return enqueuedItem.getPartsId();
         }
 
         @Override

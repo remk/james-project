@@ -79,8 +79,7 @@ class Enqueuer {
 
     Mono<Void> reQueue(CassandraMailQueueBrowser.CassandraMailQueueItemView item) {
         Mail mail = item.getMail();
-        EnqueuedItem enqueuedItem = item.getEnqueuedItem();
-        return Mono.fromCallable(() -> new MailReference(enqueuedItem.getEnqueueId(), mail, enqueuedItem.getPartsId()))
+        return Mono.fromCallable(() -> new MailReference(item.getEnqueuedId(), mail, item.getEnqueuedPartsId()))
             .flatMap(Throwing.function(this::publishReferenceToRabbit).sneakyThrow())
             .then();
     }
