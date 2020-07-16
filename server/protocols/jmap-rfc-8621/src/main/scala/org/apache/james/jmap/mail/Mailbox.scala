@@ -162,7 +162,7 @@ object Mailbox {
 
     requestedProperties match {
       case None => allProperties -- propertiesToHide
-      case Some(requested) => (Set("id") ++  requested.value.map(_.toString()).toSet) -- propertiesToHide
+      case Some(requested) => (Set("id") ++ requested.value.map(_.toString()).toSet) -- propertiesToHide
     }
   }
 }
