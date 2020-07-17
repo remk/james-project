@@ -52,13 +52,12 @@ public class ObjectStorageBlobStoreAWSPrefixTest implements MetricableBlobStoreC
             .secretKey(DockerAwsS3Container.SECRET_ACCESS_KEY)
             .build();
 
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageDumbBlobStoreBuilder dumbBlobStoreBuilder = ObjectStorageDumbBlobStore
             .builder(configuration)
-            .blobIdFactory(BLOB_ID_FACTORY)
             .bucketPrefix("prefix")
             .blobPutter(awsS3ObjectStorage.putBlob(configuration));
 
-        objectStorageBlobStore = builder.build();
+        objectStorageBlobStore = new ObjectStorageBlobStore(BLOB_ID_FACTORY, dumbBlobStoreBuilder.build());
         testee = new MetricableBlobStore(metricsTestExtension.getMetricFactory(), objectStorageBlobStore);
     }
 

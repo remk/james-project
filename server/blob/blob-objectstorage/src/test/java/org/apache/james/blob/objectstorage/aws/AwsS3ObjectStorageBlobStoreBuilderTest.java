@@ -24,8 +24,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreBuilder;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreContract;
+import org.apache.james.blob.objectstorage.ObjectStorageDumbBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDumbBlobStoreBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,22 +62,21 @@ class AwsS3ObjectStorageBlobStoreBuilderTest implements ObjectStorageBlobStoreCo
 
     @Test
     void blobIdFactoryIsMandatoryToBuildBlobStore() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageDumbBlobStore dumbBlobStore = ObjectStorageDumbBlobStore
             .builder(configuration)
-            .blobIdFactory(null)
-            .namespace(defaultBucketName);
+            .namespace(defaultBucketName)
+            .build();
 
-        assertThatThrownBy(builder::build).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new ObjectStorageBlobStore(null, dumbBlobStore)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void builtBlobStoreCanStoreAndRetrieve() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageDumbBlobStoreBuilder dumbBlobStoreBuilder = ObjectStorageDumbBlobStore
             .builder(configuration)
-            .blobIdFactory(new HashBlobId.Factory())
             .namespace(defaultBucketName)
             .blobPutter(awsS3ObjectStorage.putBlob(configuration));
 
-        assertBlobStoreCanStoreAndRetrieve(builder);
+        assertBlobStoreCanStoreAndRetrieve(new ObjectStorageBlobStore(new HashBlobId.Factory(), dumbBlobStoreBuilder.build()));
     }
 }

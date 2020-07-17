@@ -38,8 +38,7 @@ public interface ObjectStorageBlobStoreContract {
 
     BucketName defaultBucketName();
 
-    default void assertBlobStoreCanStoreAndRetrieve(ObjectStorageBlobStoreBuilder.ReadyToBuild builder) {
-        ObjectStorageBlobStore blobStore = builder.build();
+    default void assertBlobStoreCanStoreAndRetrieve(ObjectStorageBlobStore blobStore) {
 
         BlobId blobId = Mono.from(blobStore.save(blobStore.getDefaultBucketName(), CONTENT, LOW_COST)).block();
 

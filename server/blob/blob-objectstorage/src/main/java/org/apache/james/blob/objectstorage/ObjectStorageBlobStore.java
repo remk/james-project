@@ -19,11 +19,8 @@
 
 package org.apache.james.blob.objectstorage;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 import javax.annotation.PreDestroy;
 
@@ -31,132 +28,64 @@ import org.apache.commons.io.IOUtils;
 import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
-import org.apache.james.blob.api.ObjectNotFoundException;
 import org.apache.james.blob.api.ObjectStoreException;
-import org.apache.james.blob.objectstorage.aws.AwsS3AuthConfiguration;
-import org.apache.james.blob.objectstorage.aws.AwsS3ObjectStorage;
-import org.apache.james.blob.objectstorage.swift.SwiftKeystone2ObjectStorage;
-import org.apache.james.blob.objectstorage.swift.SwiftKeystone3ObjectStorage;
-import org.apache.james.blob.objectstorage.swift.SwiftTempAuthObjectStorage;
-import org.jclouds.blobstore.domain.Blob;
-import org.jclouds.blobstore.domain.StorageMetadata;
-import org.jclouds.blobstore.domain.StorageType;
 
+import com.github.fge.lambdas.Throwing;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingInputStream;
-
-import reactor.core.publisher.Flux;
+import com.google.common.io.FileBackedOutputStream;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import reactor.util.function.Tuples;
 
 public class ObjectStorageBlobStore implements BlobStore {
-    private static final int BUFFERED_SIZE = 256 * 1024;
+    public static final boolean LAZY_RESOURCE_CLEANUP = false;
+    public static final int FILE_THRESHOLD = 10000;
 
     private final BlobId.Factory blobIdFactory;
 
-    private final BucketName defaultBucketName;
-    private final org.jclouds.blobstore.BlobStore blobStore;
-    private final BlobPutter blobPutter;
-    private final PayloadCodec payloadCodec;
-    private final ObjectStorageBucketNameResolver bucketNameResolver;
 
-    ObjectStorageBlobStore(BucketName defaultBucketName, BlobId.Factory blobIdFactory,
-                           org.jclouds.blobstore.BlobStore blobStore,
-                           BlobPutter blobPutter,
-                           PayloadCodec payloadCodec, ObjectStorageBucketNameResolver bucketNameResolver) {
+    private final ObjectStorageDumbBlobStore dumbBlobStore;
+
+    public ObjectStorageBlobStore(BlobId.Factory blobIdFactory,
+                           ObjectStorageDumbBlobStore dumbBlobStore) {
+        Preconditions.checkState(blobIdFactory != null);
         this.blobIdFactory = blobIdFactory;
-        this.defaultBucketName = defaultBucketName;
-        this.blobStore = blobStore;
-        this.blobPutter = blobPutter;
-        this.payloadCodec = payloadCodec;
-        this.bucketNameResolver = bucketNameResolver;
-    }
-
-    public static ObjectStorageBlobStoreBuilder.RequireBlobIdFactory builder(SwiftTempAuthObjectStorage.Configuration testConfig) {
-        return SwiftTempAuthObjectStorage.blobStoreBuilder(testConfig);
-    }
-
-    public static ObjectStorageBlobStoreBuilder.RequireBlobIdFactory builder(SwiftKeystone2ObjectStorage.Configuration testConfig) {
-        return SwiftKeystone2ObjectStorage.blobStoreBuilder(testConfig);
-    }
-
-    public static ObjectStorageBlobStoreBuilder.RequireBlobIdFactory builder(SwiftKeystone3ObjectStorage.Configuration testConfig) {
-        return SwiftKeystone3ObjectStorage.blobStoreBuilder(testConfig);
-    }
-
-    public static ObjectStorageBlobStoreBuilder.RequireBlobIdFactory builder(AwsS3AuthConfiguration testConfig) {
-        return AwsS3ObjectStorage.blobStoreBuilder(testConfig);
+        this.dumbBlobStore = dumbBlobStore;
     }
 
     @PreDestroy
     public void close() throws IOException {
-        blobStore.getContext().close();
-        blobPutter.close();
+        dumbBlobStore.close();
     }
 
     @Override
     public Mono<BlobId> save(BucketName bucketName, byte[] data, StoragePolicy storagePolicy) {
         Preconditions.checkNotNull(data);
-        ObjectStorageBucketName resolvedBucketName = bucketNameResolver.resolve(bucketName);
-
-        return Mono.fromCallable(() -> blobIdFactory.forPayload(data))
-            .flatMap(blobId -> {
-                Payload payload = payloadCodec.write(data);
-
-                Blob blob = blobStore.blobBuilder(blobId.asString())
-                    .payload(payload.getPayload())
-                    .contentLength(payload.getLength().orElse(Long.valueOf(data.length)))
-                    .build();
-
-                return blobPutter.putDirectly(resolvedBucketName, blob)
-                    .thenReturn(blobId);
-            });
+        BlobId blobId = blobIdFactory.forPayload(data);
+        return Mono.from(dumbBlobStore.save(bucketName, blobId, data))
+            .then(Mono.just(blobId));
     }
 
     @Override
     public Mono<BlobId> save(BucketName bucketName, InputStream data, StoragePolicy storagePolicy) {
+        Preconditions.checkNotNull(bucketName);
         Preconditions.checkNotNull(data);
-
-        return Mono.defer(() -> savingStrategySelection(bucketName, data, storagePolicy));
+        HashingInputStream hashingInputStream = new HashingInputStream(Hashing.sha256(), data);
+        return Mono.using(
+            () -> new FileBackedOutputStream(FILE_THRESHOLD),
+            fileBackedOutputStream -> saveAndGenerateBlobId(bucketName, hashingInputStream, fileBackedOutputStream),
+            Throwing.consumer(FileBackedOutputStream::reset).sneakyThrow(),
+            LAZY_RESOURCE_CLEANUP);
     }
 
-    private Mono<BlobId> savingStrategySelection(BucketName bucketName, InputStream data, StoragePolicy storagePolicy) {
-        InputStream bufferedData = new BufferedInputStream(data, BUFFERED_SIZE + 1);
-        try {
-            if (isItABigStream(bufferedData)) {
-                return saveBigStream(bucketName, bufferedData);
-            } else {
-                return save(bucketName, IOUtils.toByteArray(bufferedData), storagePolicy);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private boolean isItABigStream(InputStream bufferedData) throws IOException {
-        bufferedData.mark(0);
-        bufferedData.skip(BUFFERED_SIZE);
-        boolean isItABigStream = bufferedData.read() != -1;
-        bufferedData.reset();
-        return isItABigStream;
-    }
-
-    private Mono<BlobId> saveBigStream(BucketName bucketName, InputStream data) {
-        ObjectStorageBucketName resolvedBucketName = bucketNameResolver.resolve(bucketName);
-
-        return Mono.fromCallable(blobIdFactory::randomId)
-            .flatMap(tmpId -> {
-                HashingInputStream hashingInputStream = new HashingInputStream(Hashing.sha256(), data);
-                Payload payload = payloadCodec.write(hashingInputStream);
-                Blob blob = blobStore.blobBuilder(tmpId.asString())
-                    .payload(payload.getPayload())
-                    .build();
-
-                Supplier<BlobId> blobIdSupplier = () -> blobIdFactory.from(hashingInputStream.hash().toString());
-                return blobPutter.putAndComputeId(resolvedBucketName, blob, blobIdSupplier);
-            });
+    private Mono<BlobId> saveAndGenerateBlobId(BucketName bucketName, HashingInputStream hashingInputStream, FileBackedOutputStream fileBackedOutputStream) {
+        return Mono.fromCallable(() -> {
+            IOUtils.copy(hashingInputStream, fileBackedOutputStream);
+            return Tuples.of(blobIdFactory.from(hashingInputStream.hash().toString()), fileBackedOutputStream.asByteSource());
+        })
+            .flatMap(tuple -> dumbBlobStore.save(bucketName, tuple.getT1(), tuple.getT2()).thenReturn(tuple.getT1()));
     }
 
     @Override
@@ -166,52 +95,30 @@ public class ObjectStorageBlobStore implements BlobStore {
 
     @Override
     public InputStream read(BucketName bucketName, BlobId blobId) throws ObjectStoreException {
-        ObjectStorageBucketName resolvedBucketName = bucketNameResolver.resolve(bucketName);
-        Blob blob = blobStore.getBlob(resolvedBucketName.asString(), blobId.asString());
-
-        try {
-            if (blob != null) {
-                return payloadCodec.read(new Payload(blob.getPayload(), Optional.empty()));
-            } else {
-                throw new ObjectNotFoundException("fail to load blob with id " + blobId);
-            }
-        } catch (IOException cause) {
-            throw new ObjectStoreException(
-                "Failed to readBytes blob " + blobId.asString(),
-                cause);
-        }
+        return dumbBlobStore.read(bucketName, blobId);
     }
 
     @Override
     public BucketName getDefaultBucketName() {
-        return defaultBucketName;
+        return dumbBlobStore.getDefaultBucketName();
     }
 
     @Override
     public Mono<Void> deleteBucket(BucketName bucketName) {
-        ObjectStorageBucketName resolvedBucketName = bucketNameResolver.resolve(bucketName);
-        return Mono.<Void>fromRunnable(() -> blobStore.deleteContainer(resolvedBucketName.asString()))
-            .subscribeOn(Schedulers.elastic());
+        return dumbBlobStore.deleteBucket(bucketName);
     }
 
     public PayloadCodec getPayloadCodec() {
-        return payloadCodec;
+        return dumbBlobStore.getPayloadCodec();
     }
 
     @VisibleForTesting
     Mono<Void> deleteAllBuckets() {
-        return Flux.fromIterable(blobStore.list())
-            .publishOn(Schedulers.elastic())
-            .filter(storageMetadata -> storageMetadata.getType().equals(StorageType.CONTAINER))
-            .map(StorageMetadata::getName)
-            .doOnNext(blobStore::deleteContainer)
-            .then();
+        return dumbBlobStore.deleteAllBuckets();
     }
 
     @Override
     public Mono<Void> delete(BucketName bucketName, BlobId blobId) {
-        ObjectStorageBucketName resolvedBucketName = bucketNameResolver.resolve(bucketName);
-        return Mono.<Void>fromRunnable(() -> blobStore.removeBlob(resolvedBucketName.asString(), blobId.asString()))
-            .subscribeOn(Schedulers.elastic());
+        return dumbBlobStore.delete(bucketName, blobId);
     }
 }

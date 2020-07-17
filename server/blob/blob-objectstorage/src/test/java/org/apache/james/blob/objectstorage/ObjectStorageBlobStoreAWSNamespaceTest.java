@@ -53,13 +53,12 @@ public class ObjectStorageBlobStoreAWSNamespaceTest implements MetricableBlobSto
             .secretKey(DockerAwsS3Container.SECRET_ACCESS_KEY)
             .build();
 
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageDumbBlobStoreBuilder dumbBlobStoreBuilder = ObjectStorageDumbBlobStore
             .builder(configuration)
-            .blobIdFactory(BLOB_ID_FACTORY)
             .namespace(BucketName.of("namespace"))
             .blobPutter(awsS3ObjectStorage.putBlob(configuration));
 
-        objectStorageBlobStore = builder.build();
+        objectStorageBlobStore = new ObjectStorageBlobStore(BLOB_ID_FACTORY, dumbBlobStoreBuilder.build());
         testee = new MetricableBlobStore(metricsTestExtension.getMetricFactory(), objectStorageBlobStore);
     }
 

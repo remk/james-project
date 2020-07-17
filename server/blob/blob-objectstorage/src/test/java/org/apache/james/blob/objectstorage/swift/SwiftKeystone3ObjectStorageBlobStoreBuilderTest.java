@@ -29,8 +29,9 @@ import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.objectstorage.DockerSwift;
 import org.apache.james.blob.objectstorage.DockerSwiftExtension;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreBuilder;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreContract;
+import org.apache.james.blob.objectstorage.ObjectStorageDumbBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDumbBlobStoreBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -96,12 +97,11 @@ class SwiftKeystone3ObjectStorageBlobStoreBuilderTest implements ObjectStorageBl
 
     @Test
     void blobIdFactoryIsMandatoryToBuildBlobStore() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageDumbBlobStoreBuilder dumbBlobStoreBuilder = ObjectStorageDumbBlobStore
             .builder(testConfig)
-            .blobIdFactory(null)
             .namespace(defaultBucketName);
 
-        assertThatThrownBy(builder::build).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new ObjectStorageBlobStore(null, dumbBlobStoreBuilder.build())).isInstanceOf(IllegalStateException.class);
     }
 
     @ParameterizedTest
@@ -109,11 +109,10 @@ class SwiftKeystone3ObjectStorageBlobStoreBuilderTest implements ObjectStorageBl
     void builtBlobStoreCanStoreAndRetrieve(String key) {
         SwiftKeystone3ObjectStorage.Configuration config =
             configBuilders.get(key).endpoint(dockerSwift.keystoneV3Endpoint()).build();
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
+        ObjectStorageDumbBlobStoreBuilder builder = ObjectStorageDumbBlobStore
             .builder(config)
-            .blobIdFactory(new HashBlobId.Factory())
             .namespace(defaultBucketName);
 
-        assertBlobStoreCanStoreAndRetrieve(builder);
+        assertBlobStoreCanStoreAndRetrieve(new ObjectStorageBlobStore(new HashBlobId.Factory(), builder.build()));
     }
 }

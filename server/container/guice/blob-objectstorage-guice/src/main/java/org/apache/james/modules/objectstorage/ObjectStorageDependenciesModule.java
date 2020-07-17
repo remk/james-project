@@ -30,7 +30,8 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.objectstorage.BlobPutter;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreBuilder;
+import org.apache.james.blob.objectstorage.ObjectStorageDumbBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDumbBlobStoreBuilder;
 import org.apache.james.blob.objectstorage.aws.AwsS3AuthConfiguration;
 import org.apache.james.blob.objectstorage.aws.AwsS3ObjectStorage;
 import org.apache.james.modules.mailbox.ConfigurationComponent;
@@ -60,18 +61,24 @@ public class ObjectStorageDependenciesModule extends AbstractModule {
 
     @Provides
     @Singleton
-    private ObjectStorageBlobStore buildObjectStore(ObjectStorageBlobConfiguration configuration, BlobId.Factory blobIdFactory, Provider<AwsS3ObjectStorage> awsS3ObjectStorageProvider) {
-        ObjectStorageBlobStore blobStore = selectBlobStoreBuilder(configuration)
-            .blobIdFactory(blobIdFactory)
+    private ObjectStorageDumbBlobStore buildDumbObjectStore(ObjectStorageBlobConfiguration configuration, Provider<AwsS3ObjectStorage> awsS3ObjectStorageProvider) {
+        ObjectStorageDumbBlobStore dumbBlobStore = selectDumbBlobStoreBuilder(configuration)
             .payloadCodec(configuration.getPayloadCodec())
             .blobPutter(putBlob(configuration, awsS3ObjectStorageProvider))
             .namespace(configuration.getNamespace())
             .bucketPrefix(configuration.getBucketPrefix())
             .build();
+        return dumbBlobStore;
+    }
+
+    @Provides
+    @Singleton
+    private ObjectStorageBlobStore buildObjectStore(BlobId.Factory blobIdFactory, Provider<ObjectStorageDumbBlobStore> dumbBlobStoreProvider) {
+        ObjectStorageBlobStore blobStore = new ObjectStorageBlobStore(blobIdFactory, dumbBlobStoreProvider.get());
         return blobStore;
     }
 
-    private ObjectStorageBlobStoreBuilder.RequireBlobIdFactory selectBlobStoreBuilder(ObjectStorageBlobConfiguration configuration) {
+    private ObjectStorageDumbBlobStoreBuilder selectDumbBlobStoreBuilder(ObjectStorageBlobConfiguration configuration) {
         switch (configuration.getProvider()) {
             case SWIFT:
                 return SwiftObjectStorage.builder(configuration);

@@ -36,8 +36,8 @@ import javax.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.objectstorage.BlobPutter;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreBuilder;
 import org.apache.james.blob.objectstorage.ObjectStorageBucketName;
+import org.apache.james.blob.objectstorage.ObjectStorageDumbBlobStoreBuilder;
 import org.apache.james.util.Size;
 import org.apache.james.util.concurrent.NamedThreadFactory;
 import org.jclouds.ContextBuilder;
@@ -97,8 +97,8 @@ public class AwsS3ObjectStorage {
         executorService.shutdownNow();
     }
 
-    public static ObjectStorageBlobStoreBuilder.RequireBlobIdFactory blobStoreBuilder(AwsS3AuthConfiguration configuration) {
-        return ObjectStorageBlobStoreBuilder.forBlobStore(new BlobStoreBuilder(configuration));
+    public static ObjectStorageDumbBlobStoreBuilder blobStoreBuilder(AwsS3AuthConfiguration configuration) {
+        return new ObjectStorageDumbBlobStoreBuilder(new BlobStoreBuilder(configuration));
     }
 
     public Optional<BlobPutter> putBlob(AwsS3AuthConfiguration configuration) {

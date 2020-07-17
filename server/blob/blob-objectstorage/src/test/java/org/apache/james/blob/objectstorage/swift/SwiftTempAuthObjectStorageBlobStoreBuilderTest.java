@@ -28,8 +28,9 @@ import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.objectstorage.DockerSwift;
 import org.apache.james.blob.objectstorage.DockerSwiftExtension;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStore;
-import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreBuilder;
 import org.apache.james.blob.objectstorage.ObjectStorageBlobStoreContract;
+import org.apache.james.blob.objectstorage.ObjectStorageDumbBlobStore;
+import org.apache.james.blob.objectstorage.ObjectStorageDumbBlobStoreBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,7 @@ class SwiftTempAuthObjectStorageBlobStoreBuilderTest implements ObjectStorageBlo
     private BucketName defaultBucketName;
     private URI endpoint;
     private SwiftTempAuthObjectStorage.Configuration testConfig;
+    private ObjectStorageDumbBlobStoreBuilder dumbBlobStoreBuilder;
 
     @BeforeEach
     void setUp(DockerSwift dockerSwift) {
@@ -56,6 +58,10 @@ class SwiftTempAuthObjectStorageBlobStoreBuilderTest implements ObjectStorageBlo
             .tempAuthHeaderUserName(UserHeaderName.of("X-Storage-User"))
             .tempAuthHeaderPassName(PassHeaderName.of("X-Storage-Pass"))
             .build();
+
+        dumbBlobStoreBuilder = ObjectStorageDumbBlobStore
+            .builder(testConfig)
+            .namespace(defaultBucketName);
     }
 
     @Override
@@ -65,21 +71,11 @@ class SwiftTempAuthObjectStorageBlobStoreBuilderTest implements ObjectStorageBlo
 
     @Test
     void blobIdFactoryIsMandatoryToBuildBlobStore() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
-            .builder(testConfig)
-            .blobIdFactory(null)
-            .namespace(defaultBucketName);
-
-        assertThatThrownBy(builder::build).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new ObjectStorageBlobStore(null, dumbBlobStoreBuilder.build())).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void builtBlobStoreCanStoreAndRetrieve() {
-        ObjectStorageBlobStoreBuilder.ReadyToBuild builder = ObjectStorageBlobStore
-            .builder(testConfig)
-            .blobIdFactory(new HashBlobId.Factory())
-            .namespace(defaultBucketName);
-
-        assertBlobStoreCanStoreAndRetrieve(builder);
+        assertBlobStoreCanStoreAndRetrieve(new ObjectStorageBlobStore(new HashBlobId.Factory(), dumbBlobStoreBuilder.build()));
     }
 }

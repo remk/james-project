@@ -29,28 +29,14 @@ import org.jclouds.blobstore.BlobStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
-public class ObjectStorageBlobStoreBuilder {
-
-    public static RequireBlobIdFactory forBlobStore(Supplier<BlobStore> supplier) {
-        return blobIdFactory -> new ReadyToBuild(supplier, blobIdFactory);
-    }
-
-    @FunctionalInterface
-    public interface RequireBlobIdFactory {
-        ReadyToBuild blobIdFactory(BlobId.Factory blobIdFactory);
-    }
-
-    public static class ReadyToBuild {
-
+public class ObjectStorageDumbBlobStoreBuilder {
         private final Supplier<BlobStore> supplier;
-        private final BlobId.Factory blobIdFactory;
         private Optional<PayloadCodec> payloadCodec;
         private Optional<BlobPutter> blobPutter;
         private Optional<BucketName> namespace;
         private Optional<String> bucketPrefix;
 
-        public ReadyToBuild(Supplier<BlobStore> supplier, BlobId.Factory blobIdFactory) {
-            this.blobIdFactory = blobIdFactory;
+        public ObjectStorageDumbBlobStoreBuilder(Supplier<BlobStore> supplier) {
             this.payloadCodec = Optional.empty();
             this.supplier = supplier;
             this.blobPutter = Optional.empty();
@@ -58,44 +44,42 @@ public class ObjectStorageBlobStoreBuilder {
             this.bucketPrefix = Optional.empty();
         }
 
-        public ReadyToBuild payloadCodec(PayloadCodec payloadCodec) {
+        public ObjectStorageDumbBlobStoreBuilder payloadCodec(PayloadCodec payloadCodec) {
             this.payloadCodec = Optional.of(payloadCodec);
             return this;
         }
 
-        public ReadyToBuild payloadCodec(Optional<PayloadCodec> payloadCodec) {
+        public ObjectStorageDumbBlobStoreBuilder payloadCodec(Optional<PayloadCodec> payloadCodec) {
             this.payloadCodec = payloadCodec;
             return this;
         }
 
-        public ReadyToBuild blobPutter(Optional<BlobPutter> blobPutter) {
+        public ObjectStorageDumbBlobStoreBuilder blobPutter(Optional<BlobPutter> blobPutter) {
             this.blobPutter = blobPutter;
             return this;
         }
 
-        public ReadyToBuild namespace(Optional<BucketName> namespace) {
+        public ObjectStorageDumbBlobStoreBuilder namespace(Optional<BucketName> namespace) {
             this.namespace = namespace;
             return this;
         }
 
-        public ReadyToBuild namespace(BucketName namespace) {
+        public ObjectStorageDumbBlobStoreBuilder namespace(BucketName namespace) {
             this.namespace = Optional.ofNullable(namespace);
             return this;
         }
 
-        public ReadyToBuild bucketPrefix(Optional<String> bucketPrefix) {
+        public ObjectStorageDumbBlobStoreBuilder bucketPrefix(Optional<String> bucketPrefix) {
             this.bucketPrefix = bucketPrefix;
             return this;
         }
 
-        public ReadyToBuild bucketPrefix(String prefix) {
+        public ObjectStorageDumbBlobStoreBuilder bucketPrefix(String prefix) {
             this.bucketPrefix = Optional.ofNullable(prefix);
             return this;
         }
 
-        public ObjectStorageBlobStore build() {
-            Preconditions.checkState(blobIdFactory != null);
-
+        public ObjectStorageDumbBlobStore build() {
             BlobStore blobStore = supplier.get();
 
             ObjectStorageBucketNameResolver bucketNameResolver = ObjectStorageBucketNameResolver.builder()
@@ -103,8 +87,7 @@ public class ObjectStorageBlobStoreBuilder {
                 .namespace(namespace)
                 .build();
 
-            return new ObjectStorageBlobStore(namespace.orElse(BucketName.DEFAULT),
-                blobIdFactory,
+            return new ObjectStorageDumbBlobStore(namespace.orElse(BucketName.DEFAULT),
                 blobStore,
                 blobPutter.orElseGet(() -> defaultPutBlob(blobStore)),
                 payloadCodec.orElse(PayloadCodec.DEFAULT_CODEC),
@@ -119,6 +102,6 @@ public class ObjectStorageBlobStoreBuilder {
         Supplier<BlobStore> getSupplier() {
             return supplier;
         }
-    }
+
 
 }

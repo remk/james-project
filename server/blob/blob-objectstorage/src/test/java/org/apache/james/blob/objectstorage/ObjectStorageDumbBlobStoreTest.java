@@ -19,7 +19,7 @@
 
 package org.apache.james.blob.objectstorage;
 
-import static org.apache.james.blob.api.BlobStore.StoragePolicy.LOW_COST;
+import static org.apache.james.blob.api.DumbBlobStoreFixture.TEST_BLOB_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
@@ -28,12 +28,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
-import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.blob.api.MetricableBlobStore;
-import org.apache.james.blob.api.MetricableBlobStoreContract;
+import org.apache.james.blob.api.DumbBlobStore;
+import org.apache.james.blob.api.DumbBlobStoreContract;
 import org.apache.james.blob.objectstorage.crypto.CryptoConfig;
 import org.apache.james.blob.objectstorage.swift.Credentials;
 import org.apache.james.blob.objectstorage.swift.Identity;
@@ -55,7 +52,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @ExtendWith(DockerSwiftExtension.class)
-public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
+public class ObjectStorageDumbBlobStoreTest implements DumbBlobStoreContract {
 
     private static final String BIG_STRING = Strings.repeat("big blob content", 10 * 1024);
     private static final TenantName TENANT_NAME = TenantName.of("test");
@@ -69,10 +66,9 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
         .build();
 
     private BucketName defaultBucketName;
-    private org.jclouds.blobstore.BlobStore blobStore;
     private SwiftTempAuthObjectStorage.Configuration testConfig;
-    private ObjectStorageBlobStore objectStorageBlobStore;
-    private BlobStore testee;
+    private ObjectStorageDumbBlobStore testee;
+    private org.jclouds.blobstore.BlobStore blobStore;
 
     @BeforeEach
     void setUp(DockerSwift dockerSwift) {
@@ -84,29 +80,23 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
             .tempAuthHeaderUserName(UserHeaderName.of("X-Storage-User"))
             .tempAuthHeaderPassName(PassHeaderName.of("X-Storage-Pass"))
             .build();
-        BlobId.Factory blobIdFactory = blobIdFactory();
+
         ObjectStorageDumbBlobStoreBuilder dumbBlobStoreBuilder = ObjectStorageDumbBlobStore
             .builder(testConfig)
             .namespace(defaultBucketName);
         blobStore = dumbBlobStoreBuilder.getSupplier().get();
-        objectStorageBlobStore = new ObjectStorageBlobStore(blobIdFactory, dumbBlobStoreBuilder.build());
-        testee = new MetricableBlobStore(metricsTestExtension.getMetricFactory(), objectStorageBlobStore);
+        testee = dumbBlobStoreBuilder.build();
     }
 
     @AfterEach
     void tearDown() throws IOException {
-        objectStorageBlobStore.deleteAllBuckets().block();
-        objectStorageBlobStore.close();
+        testee.deleteAllBuckets().block();
+        testee.close();
     }
 
     @Override
-    public BlobStore testee() {
+    public DumbBlobStore testee() {
         return testee;
-    }
-
-    @Override
-    public BlobId.Factory blobIdFactory() {
-        return new HashBlobId.Factory();
     }
 
     @Test
@@ -117,11 +107,10 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
             .namespace(defaultBucketName)
             .build();
 
-        ObjectStorageBlobStore encryptedBlobStore = new ObjectStorageBlobStore(blobIdFactory(), encryptedDumbBlobStore);
         String content = "James is the best!";
-        BlobId blobId = Mono.from(encryptedBlobStore.save(encryptedBlobStore.getDefaultBucketName(), content, LOW_COST)).block();
+        Mono.from(encryptedDumbBlobStore.save(encryptedDumbBlobStore.getDefaultBucketName(), TEST_BLOB_ID, content)).block();
 
-        InputStream read = encryptedBlobStore.read(encryptedBlobStore.getDefaultBucketName(), blobId);
+        InputStream read = encryptedDumbBlobStore.read(encryptedDumbBlobStore.getDefaultBucketName(), TEST_BLOB_ID);
         String expectedContent = IOUtils.toString(read, Charsets.UTF_8);
         assertThat(content).isEqualTo(expectedContent);
     }
@@ -133,16 +122,15 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
             .payloadCodec(new AESPayloadCodec(CRYPTO_CONFIG))
             .namespace(defaultBucketName)
             .build();
-        ObjectStorageBlobStore encryptedBlobStore = new ObjectStorageBlobStore(blobIdFactory(), encryptedDumbBlobStore);
         String content = "James is the best!";
-        BlobId blobId = Mono.from(encryptedBlobStore.save(encryptedBlobStore.getDefaultBucketName(), content, LOW_COST)).block();
+        Mono.from(encryptedDumbBlobStore.save(encryptedDumbBlobStore.getDefaultBucketName(), TEST_BLOB_ID, content)).block();
 
-        InputStream encryptedIs = testee.read(encryptedBlobStore.getDefaultBucketName(), blobId);
+        InputStream encryptedIs = testee.read(encryptedDumbBlobStore.getDefaultBucketName(), TEST_BLOB_ID);
         assertThat(encryptedIs).isNotNull();
         String encryptedString = IOUtils.toString(encryptedIs, Charsets.UTF_8);
         assertThat(encryptedString).isNotEqualTo(content);
 
-        InputStream clearTextIs = encryptedBlobStore.read(encryptedBlobStore.getDefaultBucketName(), blobId);
+        InputStream clearTextIs = encryptedDumbBlobStore.read(encryptedDumbBlobStore.getDefaultBucketName(), TEST_BLOB_ID);
         String expectedContent = IOUtils.toString(clearTextIs, Charsets.UTF_8);
         assertThat(content).isEqualTo(expectedContent);
     }
@@ -150,9 +138,9 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
     @Test
     void deleteBucketShouldDeleteSwiftContainer() {
         BucketName bucketName = BucketName.of("azerty");
-        Mono.from(objectStorageBlobStore.save(bucketName, "data", LOW_COST)).block();
+        Mono.from(testee.save(bucketName, TEST_BLOB_ID, "data")).block();
 
-        objectStorageBlobStore.deleteBucket(bucketName).block();
+        testee.deleteBucket(bucketName).block();
 
         assertThat(blobStore.containerExists(bucketName.asString()))
             .isFalse();
@@ -165,7 +153,7 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
         blobStore.createContainerInLocation(defaultLocation, "bucket2");
         blobStore.createContainerInLocation(defaultLocation, "bucket3");
 
-        objectStorageBlobStore.deleteAllBuckets().block();
+        testee.deleteAllBuckets().block();
 
         assertThat(blobStore.list()
                 .stream()
@@ -176,32 +164,32 @@ public class ObjectStorageBlobStoreTest implements MetricableBlobStoreContract {
     @Test
     void saveBytesShouldNotCompleteWhenDoesNotAwait() {
         // String need to be big enough to get async thread busy hence could not return result instantly
-        Mono<BlobId> blobIdFuture = Mono.from(testee
-            .save(testee.getDefaultBucketName(), BIG_STRING.getBytes(StandardCharsets.UTF_8), LOW_COST))
+        Mono<Void> saveBytes = Mono.from(testee
+            .save(testee.getDefaultBucketName(), TEST_BLOB_ID, BIG_STRING.getBytes(StandardCharsets.UTF_8)))
             .subscribeOn(Schedulers.elastic());
-        assertThat(blobIdFuture.toFuture()).isNotCompleted();
+        assertThat(saveBytes.toFuture()).isNotCompleted();
     }
 
     @Test
     void saveStringShouldNotCompleteWhenDoesNotAwait() {
-        Mono<BlobId> blobIdFuture = Mono.from(testee
-            .save(testee.getDefaultBucketName(), BIG_STRING, LOW_COST))
+        Mono<Void> saveString = Mono.from(testee
+            .save(testee.getDefaultBucketName(), TEST_BLOB_ID, BIG_STRING))
             .subscribeOn(Schedulers.elastic());
-        assertThat(blobIdFuture.toFuture()).isNotCompleted();
+        assertThat(saveString.toFuture()).isNotCompleted();
     }
 
     @Test
     void saveInputStreamShouldNotCompleteWhenDoesNotAwait() {
-        Mono<BlobId> blobIdFuture = Mono.from(testee
-            .save(testee.getDefaultBucketName(), new ByteArrayInputStream(BIG_STRING.getBytes(StandardCharsets.UTF_8)), LOW_COST))
+        Mono<Void> saveStream = Mono.from(testee
+            .save(testee.getDefaultBucketName(), TEST_BLOB_ID, new ByteArrayInputStream(BIG_STRING.getBytes(StandardCharsets.UTF_8))))
             .subscribeOn(Schedulers.elastic());
-        assertThat(blobIdFuture.toFuture()).isNotCompleted();
+        assertThat(saveStream.toFuture()).isNotCompleted();
     }
 
     @Test
     void readBytesShouldNotCompleteWhenDoesNotAwait() {
-        BlobId blobId = Mono.from(testee().save(testee.getDefaultBucketName(), BIG_STRING, LOW_COST)).block();
-        Mono<byte[]> resultFuture = Mono.from(testee.readBytes(testee.getDefaultBucketName(), blobId)).subscribeOn(Schedulers.elastic());
+        Mono.from(testee().save(testee.getDefaultBucketName(), TEST_BLOB_ID, BIG_STRING)).block();
+        Mono<byte[]> resultFuture = Mono.from(testee.readBytes(testee.getDefaultBucketName(), TEST_BLOB_ID)).subscribeOn(Schedulers.elastic());
         assertThat(resultFuture.toFuture()).isNotCompleted();
     }
 }
