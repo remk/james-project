@@ -467,9 +467,9 @@ trait MailboxGetMethodContract {
     val response: String = `given`
       .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
       .body(GET_ALL_MAILBOXES_REQUEST)
-      .when
+    .when
       .post
-      .`then`
+    .`then`
       .statusCode(SC_OK)
       .contentType(JSON)
       .extract
@@ -522,9 +522,9 @@ trait MailboxGetMethodContract {
     val response: String = `given`
       .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
       .body(GET_ALL_MAILBOXES_REQUEST_NULL_PROPERTIES)
-      .when
+    .when
       .post
-      .`then`
+    .`then`
       .statusCode(SC_OK)
       .contentType(JSON)
       .extract
@@ -577,9 +577,9 @@ trait MailboxGetMethodContract {
     val response: String = `given`
       .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
       .body(GET_ALL_MAILBOXES_REQUEST_EMPTY_PROPERTIES)
-      .when
+    .when
       .post
-      .`then`
+    .`then`
       .statusCode(SC_OK)
       .contentType(JSON)
       .extract
@@ -613,9 +613,9 @@ trait MailboxGetMethodContract {
     val response: String = `given`
       .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
       .body(GET_ALL_MAILBOXES_REQUEST_NAME_AND_ID_PROPERTIES)
-      .when
+    .when
       .post
-      .`then`
+    .`then`
       .statusCode(SC_OK)
       .contentType(JSON)
       .extract
@@ -651,9 +651,9 @@ trait MailboxGetMethodContract {
     val response: String = `given`
       .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
       .body(GET_ALL_MAILBOXES_REQUEST_NAME_PROPERTIES)
-      .when
+    .when
       .post
-      .`then`
+    .`then`
       .statusCode(SC_OK)
       .contentType(JSON)
       .extract
@@ -689,9 +689,9 @@ trait MailboxGetMethodContract {
     val response: String = `given`
       .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
       .body(GET_ALL_MAILBOXES_REQUEST_WITH_SHARES_WITH_ONLY_ID_NAME_AND_RIGHTS)
-      .when
+    .when
       .post
-      .`then`
+    .`then`
       .statusCode(SC_OK)
       .contentType(JSON)
       .extract
@@ -727,9 +727,9 @@ trait MailboxGetMethodContract {
     val response: String = `given`
       .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
       .body(GET_ALL_MAILBOXES_REQUEST_INVALID_PROPERTIES)
-      .when
+    .when
       .post
-      .`then`
+    .`then`
       .statusCode(SC_OK)
       .contentType(JSON)
       .extract
