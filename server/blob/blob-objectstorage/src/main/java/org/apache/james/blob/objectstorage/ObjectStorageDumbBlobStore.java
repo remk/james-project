@@ -19,7 +19,6 @@
 
 package org.apache.james.blob.objectstorage;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -32,7 +31,6 @@ import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.DumbBlobStore;
 import org.apache.james.blob.api.ObjectNotFoundException;
 import org.apache.james.blob.api.ObjectStoreException;
-import org.apache.james.blob.api.ObjectStoreIOException;
 import org.apache.james.blob.objectstorage.aws.AwsS3AuthConfiguration;
 import org.apache.james.blob.objectstorage.aws.AwsS3ObjectStorage;
 import org.apache.james.blob.objectstorage.swift.SwiftKeystone2ObjectStorage;
@@ -46,12 +44,12 @@ import com.github.fge.lambdas.Throwing;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteSource;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 public class ObjectStorageDumbBlobStore implements DumbBlobStore {
-    private static final int BUFFERED_SIZE = 256 * 1024;
     public static final boolean LAZY = false;
 
     private final BucketName defaultBucketName;
@@ -93,27 +91,6 @@ public class ObjectStorageDumbBlobStore implements DumbBlobStore {
         blobPutter.close();
     }
 
-    private boolean isItABigStream(InputStream bufferedData) throws IOException {
-        bufferedData.mark(0);
-        bufferedData.skip(BUFFERED_SIZE);
-        boolean isItABigStream = bufferedData.read() != -1;
-        bufferedData.reset();
-        return isItABigStream;
-    }
-
-    private Mono<Void> saveBigStream(BucketName bucketName, BlobId blobId, InputStream data) {
-        ObjectStorageBucketName resolvedBucketName = bucketNameResolver.resolve(bucketName);
-
-        return Mono.fromCallable(() -> {
-            Payload payload = payloadCodec.write(data);
-            return blobStore.blobBuilder(blobId.asString())
-                .payload(payload.getPayload())
-                .build();
-        })
-            .flatMap(blob -> blobPutter.putDirectly(resolvedBucketName, blob))
-            .then();
-    }
-
     @Override
     public Mono<Void> save(BucketName bucketName, BlobId blobId, byte[] data) {
         ObjectStorageBucketName resolvedBucketName = bucketNameResolver.resolve(bucketName);
@@ -128,16 +105,16 @@ public class ObjectStorageDumbBlobStore implements DumbBlobStore {
     @Override
     public Mono<Void> save(BucketName bucketName, BlobId blobId, InputStream inputStream) {
         Preconditions.checkNotNull(inputStream);
-        InputStream bufferedData = new BufferedInputStream(inputStream, BUFFERED_SIZE + 1);
-        try {
-            if (isItABigStream(bufferedData)) {
-                return saveBigStream(bucketName, blobId, bufferedData);
-            } else {
-                return save(bucketName, blobId, IOUtils.toByteArray(bufferedData));
-            }
-        } catch (IOException e) {
-            throw new ObjectStoreIOException("Error while saving blob", e);
-        }
+
+        ObjectStorageBucketName resolvedBucketName = bucketNameResolver.resolve(bucketName);
+        return Mono.fromCallable(() -> {
+            Payload payload = payloadCodec.write(inputStream);
+            return blobStore.blobBuilder(blobId.asString())
+                .payload(payload.getPayload())
+                .build();
+        })
+            .flatMap(blob -> blobPutter.putDirectly(resolvedBucketName, blob))
+            .then();
     }
 
     @Override
