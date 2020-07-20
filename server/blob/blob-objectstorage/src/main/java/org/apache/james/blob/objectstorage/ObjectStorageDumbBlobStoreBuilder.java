@@ -22,12 +22,10 @@ package org.apache.james.blob.objectstorage;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.api.BucketName;
 import org.jclouds.blobstore.BlobStore;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 
 public class ObjectStorageDumbBlobStoreBuilder {
         private final Supplier<BlobStore> supplier;
