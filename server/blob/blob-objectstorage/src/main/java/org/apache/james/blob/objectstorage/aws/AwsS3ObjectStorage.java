@@ -131,7 +131,6 @@ public class AwsS3ObjectStorage {
         private static final int NOT_FOUND_STATUS_CODE = 404;
         private static final String BUCKET_NOT_FOUND_ERROR_CODE = "NoSuchBucket";
         private static final Duration FIRST_BACK_OFF = Duration.ofMillis(100);
-        private static final Duration FOREVER = Duration.ofMillis(Long.MAX_VALUE);
 
         private final AmazonS3 s3Client;
         private final TransferManager transferManager;
