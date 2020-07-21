@@ -42,7 +42,6 @@ import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.memory.MemoryBlobStoreFactory;
 import org.apache.james.metrics.tests.RecordingMetricFactory;
-import org.apache.james.server.blob.deduplication.StorageStrategy;
 import org.apache.james.utils.UpdatableTickingClock;
 import org.apache.james.vault.DeletedMessageVault;
 import org.apache.james.vault.DeletedMessageVaultContract;
@@ -68,7 +67,7 @@ class BlobStoreDeletedMessageVaultTest implements DeletedMessageVaultContract, D
             MemoryBlobStoreFactory.builder()
                 .blobIdFactory(new HashBlobId.Factory())
                 .defaultBucketName()
-                .strategy(StorageStrategy.PASSTHROUGH),
+                .passthrough(),
             new BucketNameGenerator(clock), clock, RetentionConfiguration.DEFAULT);
     }
 

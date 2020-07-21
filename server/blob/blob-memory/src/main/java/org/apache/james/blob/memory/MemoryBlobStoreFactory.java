@@ -45,20 +45,29 @@ public class MemoryBlobStoreFactory {
     @FunctionalInterface
     public interface RequireStoringStrategy {
         BlobStore strategy(StorageStrategy storageStrategy);
+
+        default BlobStore passthrough() {
+            return strategy(StorageStrategy.PASSTHROUGH);
+        }
+
+        default BlobStore deduplication() {
+            return strategy(StorageStrategy.DEDUPLICATION);
+        }
     }
 
     public static RequireBlobIdFactory builder() {
         return blobIdFactory -> defaultBucketName -> storageStrategy -> {
-            if (StorageStrategy.PASSTHROUGH == storageStrategy) {
-                return new DeDuplicationBlobStore(
-                    new MemoryDumbBlobStore(),
-                    defaultBucketName, blobIdFactory);
-            } else if (StorageStrategy.DEDUPLICATION == storageStrategy) {
-                return new PassThroughBlobStore(
-                    new MemoryDumbBlobStore(),
-                    defaultBucketName, blobIdFactory);
-            } else {
-                throw new IllegalArgumentException("Unknown storage strategy");
+            switch (storageStrategy) {
+                case PASSTHROUGH:
+                    return new DeDuplicationBlobStore(
+                        new MemoryDumbBlobStore(),
+                        defaultBucketName, blobIdFactory);
+                case DEDUPLICATION:
+                    return new PassThroughBlobStore(
+                        new MemoryDumbBlobStore(),
+                        defaultBucketName, blobIdFactory);
+                default:
+                    throw new IllegalArgumentException("Unknown storage strategy");
             }
         };
     }

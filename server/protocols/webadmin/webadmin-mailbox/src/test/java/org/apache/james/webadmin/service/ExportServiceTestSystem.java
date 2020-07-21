@@ -45,7 +45,6 @@ import org.apache.james.mailbox.backup.zip.ZipArchivesLoader;
 import org.apache.james.mailbox.backup.zip.Zipper;
 import org.apache.james.mailbox.inmemory.InMemoryMailboxManager;
 import org.apache.james.mailbox.inmemory.manager.InMemoryIntegrationResources;
-import org.apache.james.server.blob.deduplication.StorageStrategy;
 import org.apache.james.user.memory.MemoryUsersRepository;
 import org.apache.mailet.base.MailAddressFixture;
 import org.apache.mailet.base.test.FakeMailContext;
@@ -80,7 +79,7 @@ public class ExportServiceTestSystem {
         blobStore = Mockito.spy(MemoryBlobStoreFactory.builder()
             .blobIdFactory(FACTORY)
             .defaultBucketName()
-            .strategy(StorageStrategy.PASSTHROUGH));
+            .passthrough());
         mailetContext = FakeMailContext.builder().postmaster(MailAddressFixture.POSTMASTER_AT_JAMES).build();
         blobExport = new LocalFileBlobExportMechanism(mailetContext, blobStore, fileSystem, dnsService,
             LocalFileBlobExportMechanism.Configuration.DEFAULT_CONFIGURATION);

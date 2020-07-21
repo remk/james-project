@@ -24,7 +24,6 @@ import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.api.MetricableBlobStore;
 import org.apache.james.blob.api.MetricableBlobStoreContract;
-import org.apache.james.server.blob.deduplication.StorageStrategy;
 import org.junit.jupiter.api.BeforeEach;
 
 public class MemoryBlobStorePassThroughTest implements MetricableBlobStoreContract {
@@ -37,7 +36,7 @@ public class MemoryBlobStorePassThroughTest implements MetricableBlobStoreContra
         blobStore = new MetricableBlobStore(metricsTestExtension.getMetricFactory(), MemoryBlobStoreFactory.builder()
                 .blobIdFactory(BLOB_ID_FACTORY)
                 .defaultBucketName()
-                .strategy(StorageStrategy.PASSTHROUGH));
+                .passthrough());
     }
 
     @Override

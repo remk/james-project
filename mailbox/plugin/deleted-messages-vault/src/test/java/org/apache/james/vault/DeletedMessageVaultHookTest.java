@@ -50,7 +50,6 @@ import org.apache.james.mailbox.model.MessageRange;
 import org.apache.james.mailbox.model.SearchQuery;
 import org.apache.james.metrics.tests.RecordingMetricFactory;
 import org.apache.james.mime4j.dom.Message;
-import org.apache.james.server.blob.deduplication.StorageStrategy;
 import org.apache.james.vault.blob.BlobStoreDeletedMessageVault;
 import org.apache.james.vault.blob.BucketNameGenerator;
 import org.apache.james.vault.memory.metadata.MemoryDeletedMessageMetadataVault;
@@ -113,7 +112,7 @@ class DeletedMessageVaultHookTest {
             MemoryBlobStoreFactory.builder()
                 .blobIdFactory(new HashBlobId.Factory())
                 .defaultBucketName()
-                .strategy(StorageStrategy.PASSTHROUGH), new BucketNameGenerator(clock), clock,
+                .passthrough(), new BucketNameGenerator(clock), clock,
             RetentionConfiguration.DEFAULT);
 
         DeletedMessageConverter deletedMessageConverter = new DeletedMessageConverter();

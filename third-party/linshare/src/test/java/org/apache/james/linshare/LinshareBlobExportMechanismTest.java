@@ -62,7 +62,7 @@ class LinshareBlobExportMechanismTest {
         blobStore = MemoryBlobStoreFactory.builder()
             .blobIdFactory(blobIdFactory)
             .defaultBucketName()
-            .strategy(StorageStrategy.PASSTHROUGH);
+            .passthrough();
 
         testee = new LinshareBlobExportMechanism(
             linshareExtension.getDelegationAccountAPI(),

@@ -24,6 +24,7 @@ import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.server.blob.deduplication.DeDuplicationBlobStore;
+import org.apache.james.server.blob.deduplication.PassThroughBlobStore;
 import org.apache.james.server.blob.deduplication.StorageStrategy;
 
 import com.datastax.driver.core.Session;
@@ -33,12 +34,13 @@ public class CassandraBlobStoreFactory {
                                        BucketName defaultBucketName,
                                        CassandraDumbBlobStore dumbBlobStore,
                                        StorageStrategy storageStrategy) {
-        if (StorageStrategy.PASSTHROUGH == storageStrategy) {
-            return new DeDuplicationBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
-        } else if (StorageStrategy.DEDUPLICATION == storageStrategy) {
-            return new DeDuplicationBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
-        } else {
-            throw new IllegalArgumentException("Unknown Storage strategy");
+        switch (storageStrategy) {
+            case PASSTHROUGH:
+                return new PassThroughBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
+            case DEDUPLICATION:
+                return new DeDuplicationBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
+            default:
+                throw new IllegalArgumentException("Unknown Storage strategy");
         }
     }
 
