@@ -36,6 +36,7 @@ import org.apache.james.blob.export.api.FileExtension;
 import org.apache.james.blob.memory.MemoryBlobStoreFactory;
 import org.apache.james.core.MailAddress;
 import org.apache.james.linshare.client.Document;
+import org.apache.james.server.blob.deduplication.StorageStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -58,7 +59,10 @@ class LinshareBlobExportMechanismTest {
     @BeforeEach
     void setUp() throws Exception {
         blobIdFactory = new HashBlobId.Factory();
-        blobStore = MemoryBlobStoreFactory.create(blobIdFactory);
+        blobStore = MemoryBlobStoreFactory.builder()
+            .blobIdFactory(blobIdFactory)
+            .defaultBucketName()
+            .strategy(StorageStrategy.PASSTHROUGH);
 
         testee = new LinshareBlobExportMechanism(
             linshareExtension.getDelegationAccountAPI(),

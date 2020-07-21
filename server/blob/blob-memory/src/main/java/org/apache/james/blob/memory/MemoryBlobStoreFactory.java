@@ -23,15 +23,43 @@ import org.apache.james.blob.api.BlobId;
 import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.server.blob.deduplication.DeDuplicationBlobStore;
+import org.apache.james.server.blob.deduplication.PassThroughBlobStore;
+import org.apache.james.server.blob.deduplication.StorageStrategy;
 
 public class MemoryBlobStoreFactory {
-    public static BlobStore create(BlobId.Factory factory) {
-        return create(factory, BucketName.DEFAULT);
+
+    @FunctionalInterface
+    public interface RequireBlobIdFactory {
+        RequireBucketName blobIdFactory(BlobId.Factory blobIdFactory);
     }
 
-    public static BlobStore create(BlobId.Factory factory, BucketName defaultBucketName) {
-        return new DeDuplicationBlobStore(
-            new MemoryDumbBlobStore(),
-            defaultBucketName, factory);
+    @FunctionalInterface
+    public interface RequireBucketName {
+        RequireStoringStrategy bucket(BucketName defaultBucketName);
+
+        default RequireStoringStrategy defaultBucketName() {
+            return bucket(BucketName.DEFAULT);
+        }
+    }
+
+    @FunctionalInterface
+    public interface RequireStoringStrategy {
+        BlobStore strategy(StorageStrategy storageStrategy);
+    }
+
+    public static RequireBlobIdFactory builder() {
+        return blobIdFactory -> defaultBucketName -> storageStrategy -> {
+            if (StorageStrategy.PASSTHROUGH == storageStrategy) {
+                return new DeDuplicationBlobStore(
+                    new MemoryDumbBlobStore(),
+                    defaultBucketName, blobIdFactory);
+            } else if (StorageStrategy.DEDUPLICATION == storageStrategy) {
+                return new PassThroughBlobStore(
+                    new MemoryDumbBlobStore(),
+                    defaultBucketName, blobIdFactory);
+            } else {
+                throw new IllegalArgumentException("Unknown storage strategy");
+            }
+        };
     }
 }

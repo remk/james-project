@@ -44,6 +44,7 @@ import org.apache.james.blob.export.file.LocalFileBlobExportMechanism.Configurat
 import org.apache.james.blob.memory.MemoryBlobStoreFactory;
 import org.apache.james.dnsservice.api.DNSService;
 import org.apache.james.filesystem.api.FileSystem;
+import org.apache.james.server.blob.deduplication.StorageStrategy;
 import org.apache.james.util.MimeMessageUtil;
 import org.apache.mailet.base.MailAddressFixture;
 import org.apache.mailet.base.test.FakeMailContext;
@@ -67,7 +68,10 @@ class LocalFileBlobExportMechanismTest {
     @BeforeEach
     void setUp(FileSystem fileSystem) throws Exception {
         mailetContext = FakeMailContext.builder().postmaster(MailAddressFixture.POSTMASTER_AT_JAMES).build();
-        blobStore = MemoryBlobStoreFactory.create(new HashBlobId.Factory());
+        blobStore = MemoryBlobStoreFactory.builder()
+            .blobIdFactory(new HashBlobId.Factory())
+            .defaultBucketName()
+            .strategy(StorageStrategy.PASSTHROUGH);
 
         InetAddress localHost = mock(InetAddress.class);
         when(localHost.getHostName()).thenReturn(JAMES_HOST);

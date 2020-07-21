@@ -24,14 +24,22 @@ import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.server.blob.deduplication.DeDuplicationBlobStore;
+import org.apache.james.server.blob.deduplication.StorageStrategy;
 
 import com.datastax.driver.core.Session;
 
 public class CassandraBlobStoreFactory {
     public static BlobStore forTesting(HashBlobId.Factory blobIdFactory,
-                       BucketName defaultBucketName,
-                       CassandraDumbBlobStore dumbBlobStore) {
-        return new DeDuplicationBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
+                                       BucketName defaultBucketName,
+                                       CassandraDumbBlobStore dumbBlobStore,
+                                       StorageStrategy storageStrategy) {
+        if (StorageStrategy.PASSTHROUGH == storageStrategy) {
+            return new DeDuplicationBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
+        } else if (StorageStrategy.DEDUPLICATION == storageStrategy) {
+            return new DeDuplicationBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
+        } else {
+            throw new IllegalArgumentException("Unknown Storage strategy");
+        }
     }
 
     public static BlobStore forTesting(Session session) {
@@ -41,6 +49,7 @@ public class CassandraBlobStoreFactory {
         return forTesting(
             blobIdFactory,
             BucketName.DEFAULT,
-            new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, CassandraConfiguration.DEFAULT_CONFIGURATION, BucketName.DEFAULT));
+            new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, CassandraConfiguration.DEFAULT_CONFIGURATION, BucketName.DEFAULT),
+            StorageStrategy.PASSTHROUGH);
     }
 }
