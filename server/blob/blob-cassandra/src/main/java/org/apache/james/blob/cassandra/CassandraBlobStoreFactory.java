@@ -23,35 +23,19 @@ import org.apache.james.backends.cassandra.init.configuration.CassandraConfigura
 import org.apache.james.blob.api.BlobStore;
 import org.apache.james.blob.api.BucketName;
 import org.apache.james.blob.api.HashBlobId;
-import org.apache.james.server.blob.deduplication.DeDuplicationBlobStore;
-import org.apache.james.server.blob.deduplication.PassThroughBlobStore;
-import org.apache.james.server.blob.deduplication.StorageStrategy;
+import org.apache.james.server.blob.deduplication.BlobStoreFactory;
 
 import com.datastax.driver.core.Session;
 
 public class CassandraBlobStoreFactory {
-    public static BlobStore forTesting(HashBlobId.Factory blobIdFactory,
-                                       BucketName defaultBucketName,
-                                       CassandraDumbBlobStore dumbBlobStore,
-                                       StorageStrategy storageStrategy) {
-        switch (storageStrategy) {
-            case PASSTHROUGH:
-                return new PassThroughBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
-            case DEDUPLICATION:
-                return new DeDuplicationBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
-            default:
-                throw new IllegalArgumentException("Unknown Storage strategy");
-        }
-    }
-
     public static BlobStore forTesting(Session session) {
         HashBlobId.Factory blobIdFactory = new HashBlobId.Factory();
         CassandraBucketDAO bucketDAO = new CassandraBucketDAO(blobIdFactory, session);
         CassandraDefaultBucketDAO defaultBucketDAO = new CassandraDefaultBucketDAO(session);
-        return forTesting(
-            blobIdFactory,
-            BucketName.DEFAULT,
-            new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, CassandraConfiguration.DEFAULT_CONFIGURATION, BucketName.DEFAULT),
-            StorageStrategy.PASSTHROUGH);
+        CassandraDumbBlobStore dumbBlobStore = new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, CassandraConfiguration.DEFAULT_CONFIGURATION, BucketName.DEFAULT);
+        return BlobStoreFactory.builder().dumbBlobStore(dumbBlobStore)
+            .blobIdFactory(blobIdFactory)
+            .defaultBucketName()
+            .passthrough();
     }
 }

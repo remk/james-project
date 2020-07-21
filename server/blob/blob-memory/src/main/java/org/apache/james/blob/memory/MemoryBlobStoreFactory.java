@@ -19,56 +19,10 @@
 
 package org.apache.james.blob.memory;
 
-import org.apache.james.blob.api.BlobId;
-import org.apache.james.blob.api.BlobStore;
-import org.apache.james.blob.api.BucketName;
-import org.apache.james.server.blob.deduplication.DeDuplicationBlobStore;
-import org.apache.james.server.blob.deduplication.PassThroughBlobStore;
-import org.apache.james.server.blob.deduplication.StorageStrategy;
+import org.apache.james.server.blob.deduplication.BlobStoreFactory;
 
 public class MemoryBlobStoreFactory {
-
-    @FunctionalInterface
-    public interface RequireBlobIdFactory {
-        RequireBucketName blobIdFactory(BlobId.Factory blobIdFactory);
-    }
-
-    @FunctionalInterface
-    public interface RequireBucketName {
-        RequireStoringStrategy bucket(BucketName defaultBucketName);
-
-        default RequireStoringStrategy defaultBucketName() {
-            return bucket(BucketName.DEFAULT);
-        }
-    }
-
-    @FunctionalInterface
-    public interface RequireStoringStrategy {
-        BlobStore strategy(StorageStrategy storageStrategy);
-
-        default BlobStore passthrough() {
-            return strategy(StorageStrategy.PASSTHROUGH);
-        }
-
-        default BlobStore deduplication() {
-            return strategy(StorageStrategy.DEDUPLICATION);
-        }
-    }
-
-    public static RequireBlobIdFactory builder() {
-        return blobIdFactory -> defaultBucketName -> storageStrategy -> {
-            switch (storageStrategy) {
-                case PASSTHROUGH:
-                    return new DeDuplicationBlobStore(
-                        new MemoryDumbBlobStore(),
-                        defaultBucketName, blobIdFactory);
-                case DEDUPLICATION:
-                    return new PassThroughBlobStore(
-                        new MemoryDumbBlobStore(),
-                        defaultBucketName, blobIdFactory);
-                default:
-                    throw new IllegalArgumentException("Unknown storage strategy");
-            }
-        };
+    public static BlobStoreFactory.RequireBlobIdFactory builder() {
+        return BlobStoreFactory.builder().dumbBlobStore(new MemoryDumbBlobStore());
     }
 }

@@ -40,7 +40,7 @@ import org.apache.james.blob.api.HashBlobId;
 import org.apache.james.blob.api.MetricableBlobStore;
 import org.apache.james.blob.api.MetricableBlobStoreContract;
 import org.apache.james.blob.api.ObjectStoreException;
-import org.apache.james.server.blob.deduplication.StorageStrategy;
+import org.apache.james.server.blob.deduplication.BlobStoreFactory;
 import org.apache.james.util.io.ZeroedInputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,11 +71,11 @@ public class CassandraPassTroughBlobStoreTest implements MetricableBlobStoreCont
             .build();
         testee = new MetricableBlobStore(
             metricsTestExtension.getMetricFactory(),
-            CassandraBlobStoreFactory.forTesting(
-                blobIdFactory,
-                BucketName.DEFAULT,
-                new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, cassandraConfiguration, BucketName.DEFAULT),
-                StorageStrategy.PASSTHROUGH));
+                BlobStoreFactory.builder()
+                    .dumbBlobStore(new CassandraDumbBlobStore(defaultBucketDAO, bucketDAO, cassandraConfiguration, BucketName.DEFAULT))
+                    .blobIdFactory(blobIdFactory)
+                    .defaultBucketName()
+                    .passthrough());
     }
 
     @Override

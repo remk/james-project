@@ -36,7 +36,6 @@ import org.apache.james.blob.export.api.FileExtension;
 import org.apache.james.blob.memory.MemoryBlobStoreFactory;
 import org.apache.james.core.MailAddress;
 import org.apache.james.linshare.client.Document;
-import org.apache.james.server.blob.deduplication.StorageStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
