@@ -61,9 +61,9 @@ public abstract class BlobStoreFactory {
         return dumbBlobStore -> blobIdFactory -> defaultBucketName -> storageStrategy -> {
             switch (storageStrategy) {
                 case PASSTHROUGH:
-                    return new DeDuplicationBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
-                case DEDUPLICATION:
                     return new PassThroughBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
+                case DEDUPLICATION:
+                    return new DeDuplicationBlobStore(dumbBlobStore, defaultBucketName, blobIdFactory);
                 default:
                     throw new IllegalArgumentException("Unknown storage strategy");
             }
