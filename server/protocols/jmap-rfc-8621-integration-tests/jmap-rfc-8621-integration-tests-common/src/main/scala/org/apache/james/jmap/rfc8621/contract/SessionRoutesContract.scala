@@ -22,13 +22,14 @@ import io.netty.handler.codec.http.HttpHeaderNames.ACCEPT
 import io.restassured.RestAssured._
 import io.restassured.http.ContentType.JSON
 import net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson
-import org.apache.http.HttpStatus.{SC_NOT_FOUND, SC_OK}
+import org.apache.http.HttpStatus.SC_OK
 import org.apache.james.GuiceJamesServer
 import org.apache.james.jmap.http.UserCredential
 import org.apache.james.jmap.rfc8621.contract.Fixture._
 import org.apache.james.jmap.rfc8621.contract.SessionRoutesContract.session_object_json
+import org.apache.james.jmap.rfc8621.contract.tags.CategoryTags
 import org.apache.james.utils.DataProbeImpl
-import org.junit.jupiter.api.{BeforeEach, Test}
+import org.junit.jupiter.api.{BeforeEach, Tag, Test}
 import play.api.libs.json.Json
 
 object SessionRoutesContract {
@@ -110,6 +111,7 @@ trait SessionRoutesContract {
   }
 
   @Test
+  @Tag(CategoryTags.BASIC_FEATURE)
   def getShouldReturnCorrectSession() {
     val sessionJson: String = `given`()
       .when()
@@ -123,24 +125,5 @@ trait SessionRoutesContract {
         .asString()
 
     assertThatJson(Json.parse(sessionJson)).isEqualTo(session_object_json)
-  }
-
-  @Test
-  def getWithoutRFC8621HeaderShouldReturn404() {
-    `given`()
-      .when()
-        .get("/session")
-      .`then`
-        .statusCode(SC_NOT_FOUND)
-  }
-
-  @Test
-  def wrongHttpMethodShouldReturn404() {
-    `given`()
-      .when()
-        .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
-        .post("/session")
-      .`then`
-        .statusCode(SC_NOT_FOUND)
   }
 }
