@@ -26,11 +26,11 @@ import org.apache.http.HttpStatus.SC_OK
 import org.apache.james.GuiceJamesServer
 import org.apache.james.jmap.http.UserCredential
 import org.apache.james.jmap.rfc8621.contract.Fixture._
-import org.apache.james.jmap.rfc8621.contract.SessionRoutesContract.session_object_json
+import org.apache.james.jmap.rfc8621.contract.SessionRoutesContract.session_object_json_expected
 import org.apache.james.jmap.rfc8621.contract.tags.CategoryTags
 import org.apache.james.utils.DataProbeImpl
 import org.junit.jupiter.api.{BeforeEach, Tag, Test}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 
 object SessionRoutesContract {
   private val expected_session_object = """{
@@ -92,7 +92,7 @@ object SessionRoutesContract {
                          |  "eventSourceUrl" : "http://this-url-is-hardcoded.org/eventSource",
                          |  "state" : "000001"
                          |}""".stripMargin
-  private val session_object_json = Json.parse(expected_session_object);
+  private val session_object_json_expected: JsValue = Json.parse(expected_session_object)
 }
 
 trait SessionRoutesContract {
@@ -124,6 +124,6 @@ trait SessionRoutesContract {
         .body()
         .asString()
 
-    assertThatJson(Json.parse(sessionJson)).isEqualTo(session_object_json)
+    assertThatJson(Json.parse(sessionJson)).isEqualTo(session_object_json_expected)
   }
 }

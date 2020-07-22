@@ -23,8 +23,8 @@ import eu.timepit.refined.auto._
 import org.apache.james.jmap.model.CapabilityIdentifier.CapabilityIdentifier
 import org.apache.james.jmap.model.Id.Id
 import org.apache.james.jmap.model.Invocation.{Arguments, MethodCallId, MethodName}
-import org.apache.james.jmap.model._
-import play.api.libs.json.Json
+import org.apache.james.jmap.model.{ClientId, CreatedIds, Invocation, ResponseObject, ServerId}
+import play.api.libs.json.{JsValue, Json}
 
 object Fixture {
   val id: Id = "aHR0cHM6Ly93d3cuYmFzZTY0ZW5jb2RlLm9yZy8"
@@ -48,8 +48,8 @@ object Fixture {
   val responseObject2: ResponseObject = ResponseObject(ResponseObject.SESSION_STATE, Seq(invocation2))
   val responseObjectWithUnsupportedMethod: ResponseObject = ResponseObject(ResponseObject.SESSION_STATE, Seq(invocation1, unsupportedInvocation))
 
-  val session_object_json = Json.parse(expected_session_object);
-  val expected_session_object = """{
+  val session_object_json: JsValue = Json.parse(expected_session_object)
+  val expected_session_object: String = """{
                          |  "capabilities" : {
                          |    "urn:ietf:params:jmap:core" : {
                          |      "maxSizeUpload" : 10000000,
