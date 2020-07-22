@@ -48,7 +48,6 @@ object Fixture {
   val responseObject2: ResponseObject = ResponseObject(ResponseObject.SESSION_STATE, Seq(invocation2))
   val responseObjectWithUnsupportedMethod: ResponseObject = ResponseObject(ResponseObject.SESSION_STATE, Seq(invocation1, unsupportedInvocation))
 
-  val session_object_json: JsValue = Json.parse(expected_session_object)
   val expected_session_object: String = """{
                          |  "capabilities" : {
                          |    "urn:ietf:params:jmap:core" : {
@@ -108,4 +107,5 @@ object Fixture {
                          |  "eventSourceUrl" : "http://this-url-is-hardcoded.org/eventSource",
                          |  "state" : "000001"
                          |}""".stripMargin
+  val expected_session_object_json: JsValue = Json.parse(expected_session_object)
 }

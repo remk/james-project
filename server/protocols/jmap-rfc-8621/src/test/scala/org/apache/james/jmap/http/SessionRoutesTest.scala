@@ -31,7 +31,7 @@ import org.apache.http.HttpStatus
 import org.apache.james.core.Username
 import org.apache.james.jmap._
 import org.apache.james.jmap.http.SessionRoutesTest.{BOB, TEST_CONFIGURATION}
-import org.apache.james.jmap.json.Fixture.session_object_json
+import org.apache.james.jmap.json.Fixture.expected_session_object_json
 import org.apache.james.jmap.json.Serializer
 import org.apache.james.mailbox.MailboxSession
 import org.apache.james.mailbox.model.TestId
@@ -102,6 +102,6 @@ class SessionRoutesTest extends AnyFlatSpec with BeforeAndAfter with Matchers {
         .getBody
         .asString()
 
-    Json.parse(sessionJson) should equal(session_object_json)
+    Json.parse(sessionJson) should equal(expected_session_object_json)
   }
 }
