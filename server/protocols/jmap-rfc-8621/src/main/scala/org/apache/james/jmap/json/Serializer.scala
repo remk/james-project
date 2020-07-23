@@ -93,8 +93,8 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
   private implicit val urlWrites: Writes[URL] = url => JsString(url.toString)
   private implicit val coreCapabilityWrites: Writes[CoreCapabilityProperties] = Json.writes[CoreCapabilityProperties]
   private implicit val mailCapabilityWrites: Writes[MailCapabilityProperties] = Json.writes[MailCapabilityProperties]
-  private implicit val quotaCapabilityWrites: Writes[MailQuotaProperties] = Json.writes[MailQuotaProperties]
-  private implicit val shareCapabilityWrites: Writes[MailSharesProperties] = Json.writes[MailSharesProperties]
+
+  private implicit val shareCapabilityWrites: Writes[MailSharesProperties] = Json.valueWrites[MailSharesProperties]
 
   private implicit def setCapabilityWrites(implicit corePropertiesWriter: Writes[CoreCapabilityProperties],
                                            mailCapabilityWrites: Writes[MailCapabilityProperties],
@@ -116,10 +116,6 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
       })
     }
 
-  private implicit val capabilitiesWrites: Writes[Capabilities] = capabilities => setCapabilityWrites.writes(
-    Set(capabilities.coreCapability, capabilities.mailCapability, capabilities.mailQuotaCapability, capabilities.mailSharesCapability
-  ))
-
   private implicit val accountIdWrites: Format[AccountId] = Json.valueFormat[AccountId]
   private implicit def identifierMapWrite[Any](implicit idWriter: Writes[AccountId]): Writes[immutable.Map[CapabilityIdentifier, Any]] =
     (m: immutable.Map[CapabilityIdentifier, Any]) => {
@@ -131,17 +127,9 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
 
   private implicit val isPersonalFormat: Format[IsPersonal] = Json.valueFormat[IsPersonal]
   private implicit val isReadOnlyFormat: Format[IsReadOnly] = Json.valueFormat[IsReadOnly]
-  private implicit val accountWrites: Writes[Account] = (
-      (JsPath \ Account.NAME).write[Username] and
-      (JsPath \ Account.IS_PERSONAL).write[IsPersonal] and
-      (JsPath \ Account.IS_READ_ONLY).write[IsReadOnly] and
-      (JsPath \ Account.ACCOUNT_CAPABILITIES).write[immutable.Set[_ <: Capability]]
-    ) (unlift(Account.unapplyIgnoreAccountId))
 
   private implicit def accountListWrites(implicit accountWrites: Writes[Account]): Writes[List[Account]] =
     (list: List[Account]) => JsObject(list.map(account => (account.accountId.id.value, accountWrites.writes(account))))
-
-  private implicit val sessionWrites: Writes[Session] = Json.writes[Session]
 
   private implicit val mailboxIdWrites: Writes[MailboxId] = mailboxId => JsString(mailboxId.serialize)
   private implicit val mailboxIdReads: Reads[MailboxId] = {
@@ -197,31 +185,40 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
   private implicit val quotaValueWrites: Writes[Value] = Json.writes[Value]
 
 
-  private implicit def quotaMapWrites(implicit valueWriter: Writes[Value]): Writes[immutable.Map[Quotas.Type, Value]] =
+  private implicit val quotaMapWrites: Writes[immutable.Map[Quotas.Type, Value]] =
     (m: immutable.Map[Quotas.Type, Value]) => {
       m.foldLeft(JsObject.empty)((jsObject, kv) => {
         val (quotaType: Quotas.Type, value: Value) = kv
-        jsObject.+(quotaType.toString, valueWriter.writes(value))
+        jsObject.+(quotaType.toString, quotaValueWrites.writes(value))
       })
     }
 
-  private implicit def quotaWrites(implicit quotaWriter: Writes[immutable.Map[Quotas.Type, Value]]): Writes[Quota] = {
-    implicit val write: Writes[immutable.Map[Quotas.Type, Value]] = quotaWriter
-    Json.valueWrites[Quota]
-  }
+  private implicit val quotaWrites: Writes[Quota] = Json.valueWrites[Quota]
 
-  private implicit def quotasMapWrites(implicit quotaWriter: Writes[Quota]): Writes[immutable.Map[QuotaId, Quota]] =
+  private implicit val quotasMapWrites: Writes[immutable.Map[QuotaId, Quota]] =
     (m: immutable.Map[QuotaId, Quota]) => {
       m.foldLeft(JsObject.empty)((jsObject, kv) => {
         val (quotaId: QuotaId, quota: Quota) = kv
-        jsObject.+(quotaId.getName, quotaWriter.writes(quota))
+        jsObject.+(quotaId.getName, quotaWrites.writes(quota))
       })
     }
 
-  private implicit def quotasWrite(implicit quotaWrite: Writes[immutable.Map[QuotaId, Quota]]): Writes[Quotas] = {
-    implicit val write: Writes[immutable.Map[QuotaId, Quota]] = quotaWrite
-    Json.writes[Quotas]
-  }
+  private implicit val quotasWrite: Writes[Quotas] = Json.valueWrites[Quotas]
+
+  private implicit val quotaCapabilityWrites: Writes[MailQuotaProperties] = Json.valueWrites[MailQuotaProperties]
+
+  private implicit val capabilitiesWrites: Writes[Capabilities] = capabilities => setCapabilityWrites.writes(
+    Set(capabilities.coreCapability, capabilities.mailCapability, capabilities.mailQuotaCapability, capabilities.mailSharesCapability
+    ))
+
+  private implicit def accountWrites(implicit setCapabilityWrites: Writes[Set[_ <: Capability]]): Writes[Account] = (
+    (JsPath \ Account.NAME).write[Username] and
+      (JsPath \ Account.IS_PERSONAL).write[IsPersonal] and
+      (JsPath \ Account.IS_READ_ONLY).write[IsReadOnly] and
+      (JsPath \ Account.ACCOUNT_CAPABILITIES).write[immutable.Set[_ <: Capability]]
+    ) (unlift(Account.unapplyIgnoreAccountId))
+
+  private implicit def sessionWrites(implicit accountWrites: Writes[Account], capabilitiesWrites: Writes[Capabilities]): Writes[Session] = Json.writes[Session]
 
   implicit def mailboxWrites(propertiesToHide: immutable.Set[String]): Writes[Mailbox] = Json.writes[Mailbox]
     .transform((o: JsObject) => JsObject(o.fields.filterNot(entry => propertiesToHide.contains(entry._1))))

@@ -24,13 +24,13 @@ import java.net.URL
 import eu.timepit.refined.auto._
 import org.apache.james.core.Username
 import org.apache.james.jmap.json.SessionSerializationTest.SESSION
+import org.apache.james.jmap.mail.Quotas
 import org.apache.james.jmap.model.CapabilityIdentifier.CapabilityIdentifier
 import org.apache.james.jmap.model.CoreCapabilityProperties.CollationAlgorithm
 import org.apache.james.jmap.model.MailCapability.EmailQuerySortOption
 import org.apache.james.jmap.model.State.State
 import org.apache.james.jmap.model._
 import org.apache.james.mailbox.model.TestId
-import org.apache.mailet.Mail
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
@@ -80,8 +80,8 @@ object SessionSerializationTest {
     emailQuerySortOptions = EMAIL_QUERY_SORT_OPTIONS,
     mayCreateTopLevelMailbox = MAY_CREATE_TOP_LEVEL_MAILBOX))
 
-  private val MAIL_QUOTA_CAPABILITY: MailQuotaCapability = MailQuotaCapability(properties = MailQuotaProperties())
-  private val MAIL_SHARE_CAPABILITY: MailSharesCapability = MailSharesCapability(properties = MailSharesProperties())
+  private val MAIL_QUOTA_CAPABILITY: MailQuotaCapability = MailQuotaCapability(properties = MailQuotaProperties(Quotas(Map.empty)))
+  private val MAIL_SHARE_CAPABILITY: MailSharesCapability = MailSharesCapability(properties = MailSharesProperties(Map.empty))
   private val CAPABILITIES = Capabilities(CORE_CAPABILITY, MAIL_CAPABILITY, MAIL_QUOTA_CAPABILITY, MAIL_SHARE_CAPABILITY)
 
   private val IS_PERSONAL : IsPersonal = IsPersonal(true)
@@ -151,7 +151,9 @@ class SessionSerializationTest extends AnyWordSpec with Matchers {
           |      "maxSizeAttachmentsPerEmail": 890099,
           |      "emailQuerySortOptions": ["size"],
           |      "mayCreateTopLevelMailbox": true
-          |    }
+          |    },
+          |    "urn:apache:james:params:jmap:mail:quota":{},
+          |    "urn:apache:james:params:jmap:mail:shares":{}
           |  },
           |  "accounts": {
           |    "807a5306ccb4527af7790a0f9b48a776514bdbfba064e355461a76bcffbf2c90": {
