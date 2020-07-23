@@ -19,6 +19,7 @@
 package org.apache.james.jmap.model
 
 import eu.timepit.refined.auto._
+import org.apache.james.jmap.mail.Quotas
 
 object DefaultCapabilities {
   val CORE_CAPABILITY = CoreCapability(
@@ -43,9 +44,11 @@ object DefaultCapabilities {
     )
   )
 
-  val SUPPORTED = Capabilities(CORE_CAPABILITY, MAIL_CAPABILITY)
+  val MAIL_QUOTA_CAPABILITY = MailQuotaCapability(properties = MailQuotaProperties(Quotas(Map.empty)))
+  val MAIL_SHARE_CAPABILITY = MailSharesCapability(properties = MailSharesProperties(Map.empty))
+  val SUPPORTED = Capabilities(CORE_CAPABILITY, MAIL_CAPABILITY, MAIL_QUOTA_CAPABILITY, MAIL_SHARE_CAPABILITY)
 }
 
-case class Capabilities(coreCapability: CoreCapability, mailCapability: MailCapability) {
-  def toSet : Set[Capability] = Set(coreCapability, mailCapability)
+case class Capabilities(coreCapability: CoreCapability, mailCapability: MailCapability, mailQuotaCapability: MailQuotaCapability, mailSharesCapability: MailSharesCapability) {
+  def toSet : Set[Capability] = Set(coreCapability, mailCapability, mailQuotaCapability, mailSharesCapability)
 }

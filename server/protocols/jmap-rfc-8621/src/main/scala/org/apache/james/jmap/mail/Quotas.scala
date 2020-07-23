@@ -23,6 +23,7 @@ import org.apache.james.core.Domain
 import org.apache.james.jmap.model.UnsignedInt.UnsignedInt
 import org.apache.james.mailbox.model.{QuotaRoot => ModelQuotaRoot}
 
+import scala.collection.immutable
 import scala.compat.java8.OptionConverters._
 
 object QuotaRoot{
@@ -52,11 +53,11 @@ case class QuotaId(quotaRoot: QuotaRoot) extends AnyVal {
 }
 
 object Quota {
-  def from(quota: Map[Quotas.Type, Value]) = new Quota(quota)
+  def from(quota: immutable.Map[Quotas.Type, Value]) = new Quota(quota)
 }
 
-case class Quota(quota: Map[Quotas.Type, Value]) extends AnyVal
+case class Quota(quota: immutable.Map[Quotas.Type, Value]) extends AnyVal
 
 case class Value(used: UnsignedInt, max: Option[UnsignedInt])
 
-case class Quotas(quotas: Map[QuotaId, Quota]) extends AnyVal
+case class Quotas(quotas: immutable.Map[QuotaId, Quota]) extends AnyVal

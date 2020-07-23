@@ -23,10 +23,13 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.auto._
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.string.Uri
-import org.apache.james.jmap.model.CapabilityIdentifier.{CapabilityIdentifier, JMAP_CORE, JMAP_MAIL}
+import org.apache.james.jmap.mail.{Quotas, Rights}
+import org.apache.james.jmap.model.CapabilityIdentifier.{CapabilityIdentifier, JAMES_QUOTA, JAMES_SHARES, JMAP_CORE, JMAP_MAIL}
 import org.apache.james.jmap.model.CoreCapabilityProperties.CollationAlgorithm
 import org.apache.james.jmap.model.MailCapability.EmailQuerySortOption
 import org.apache.james.jmap.model.UnsignedInt.UnsignedInt
+
+import scala.collection.immutable
 
 object CapabilityIdentifier {
   type CapabilityIdentifier = String Refined Uri
@@ -87,5 +90,21 @@ final case class MailCapabilityProperties(maxMailboxesPerEmail: MaxMailboxesPerE
                                           maxSizeAttachmentsPerEmail: MaxSizeAttachmentsPerEmail,
                                           emailQuerySortOptions: List[EmailQuerySortOption],
                                           mayCreateTopLevelMailbox: MayCreateTopLevelMailbox) extends CapabilityProperties {
+}
+
+final case class MailQuotaProperties(value: Quotas) extends CapabilityProperties {
+}
+
+final case class MailQuotaCapability(properties: MailQuotaProperties,
+                                identifier: CapabilityIdentifier = JAMES_QUOTA) extends Capability {
+
+}
+
+final case class MailSharesProperties(value: immutable.Map[String, String]) extends CapabilityProperties {
+}
+
+final case class MailSharesCapability(properties: MailSharesProperties,
+                                identifier: CapabilityIdentifier = JAMES_SHARES) extends Capability {
+
 }
 

@@ -34,7 +34,7 @@ import org.apache.james.mailbox.model.{MailboxACL, MailboxId}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
-import scala.collection.{Seq => LegacySeq}
+import scala.collection.{immutable, Seq => LegacySeq}
 import scala.util.Try
 
 class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
@@ -43,15 +43,15 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
   private implicit val serverIdFormat: Format[ServerId] = Json.valueFormat[ServerId]
   private implicit val createdIdsFormat: Format[CreatedIds] = Json.valueFormat[CreatedIds]
 
-  private implicit def createdIdsIdWrites(implicit serverIdWriter: Writes[ServerId]): Writes[Map[ClientId, ServerId]] =
-    (ids: Map[ClientId, ServerId]) => {
+  private implicit def createdIdsIdWrites(implicit serverIdWriter: Writes[ServerId]): Writes[immutable.Map[ClientId, ServerId]] =
+    (ids: immutable.Map[ClientId, ServerId]) => {
       ids.foldLeft(JsObject.empty)((jsObject, kv) => {
         val (clientId: ClientId, serverId: ServerId) = kv
         jsObject.+(clientId.value.value, serverIdWriter.writes(serverId))
       })
     }
 
-  private implicit def createdIdsIdRead(implicit serverIdReader: Reads[ServerId]): Reads[Map[ClientId, ServerId]] =
+  private implicit def createdIdsIdRead(implicit serverIdReader: Reads[ServerId]): Reads[immutable.Map[ClientId, ServerId]] =
     Reads.mapReads[ClientId, ServerId] {
       clientIdString => Json.fromJson[ClientId](JsString(clientIdString))
     }
@@ -93,26 +93,36 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
   private implicit val urlWrites: Writes[URL] = url => JsString(url.toString)
   private implicit val coreCapabilityWrites: Writes[CoreCapabilityProperties] = Json.writes[CoreCapabilityProperties]
   private implicit val mailCapabilityWrites: Writes[MailCapabilityProperties] = Json.writes[MailCapabilityProperties]
+  private implicit val quotaCapabilityWrites: Writes[MailQuotaProperties] = Json.writes[MailQuotaProperties]
+  private implicit val shareCapabilityWrites: Writes[MailSharesProperties] = Json.writes[MailSharesProperties]
 
   private implicit def setCapabilityWrites(implicit corePropertiesWriter: Writes[CoreCapabilityProperties],
-                                   mailCapabilityWrites: Writes[MailCapabilityProperties]): Writes[Set[_ <: Capability]] =
+                                           mailCapabilityWrites: Writes[MailCapabilityProperties],
+                                           quotaPropertiesWrites: Writes[MailQuotaProperties],
+                                           sharesPropertiesWrites: Writes[MailSharesProperties]): Writes[Set[_ <: Capability]] =
     (set: Set[_ <: Capability]) => {
       set.foldLeft(JsObject.empty)((jsObject, capability) => {
         capability match {
-          case capability: CoreCapability => (
-            jsObject.+(capability.identifier.value, corePropertiesWriter.writes(capability.properties)))
-          case capability: MailCapability => (
-            jsObject.+(capability.identifier.value, mailCapabilityWrites.writes(capability.properties)))
+          case capability: CoreCapability =>
+            jsObject.+(capability.identifier.value, corePropertiesWriter.writes(capability.properties))
+          case capability: MailCapability =>
+            jsObject.+(capability.identifier.value, mailCapabilityWrites.writes(capability.properties))
+          case capability: MailQuotaCapability =>
+            jsObject.+(capability.identifier.value, quotaPropertiesWrites.writes(capability.properties))
+          case capability: MailSharesCapability =>
+            jsObject.+(capability.identifier.value, sharesPropertiesWrites.writes(capability.properties))
           case _ => jsObject
         }
       })
     }
 
-  private implicit val capabilitiesWrites: Writes[Capabilities] = capabilities => setCapabilityWrites.writes(Set(capabilities.coreCapability, capabilities.mailCapability))
+  private implicit val capabilitiesWrites: Writes[Capabilities] = capabilities => setCapabilityWrites.writes(
+    Set(capabilities.coreCapability, capabilities.mailCapability, capabilities.mailQuotaCapability, capabilities.mailSharesCapability
+  ))
 
   private implicit val accountIdWrites: Format[AccountId] = Json.valueFormat[AccountId]
-  private implicit def identifierMapWrite[Any](implicit idWriter: Writes[AccountId]): Writes[Map[CapabilityIdentifier, Any]] =
-    (m: Map[CapabilityIdentifier, Any]) => {
+  private implicit def identifierMapWrite[Any](implicit idWriter: Writes[AccountId]): Writes[immutable.Map[CapabilityIdentifier, Any]] =
+    (m: immutable.Map[CapabilityIdentifier, Any]) => {
       m.foldLeft(JsObject.empty)((jsObject, kv) => {
         val (identifier: CapabilityIdentifier, id: AccountId) = kv
         jsObject.+(identifier.value, idWriter.writes(id))
@@ -125,7 +135,7 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
       (JsPath \ Account.NAME).write[Username] and
       (JsPath \ Account.IS_PERSONAL).write[IsPersonal] and
       (JsPath \ Account.IS_READ_ONLY).write[IsReadOnly] and
-      (JsPath \ Account.ACCOUNT_CAPABILITIES).write[Set[_ <: Capability]]
+      (JsPath \ Account.ACCOUNT_CAPABILITIES).write[immutable.Set[_ <: Capability]]
     ) (unlift(Account.unapplyIgnoreAccountId))
 
   private implicit def accountListWrites(implicit accountWrites: Writes[Account]): Writes[List[Account]] =
@@ -166,42 +176,54 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
   private implicit val mailboxACLWrites: Writes[MailboxACL.Right] = right => JsString(right.asCharacter.toString)
 
   private implicit val rightWrites: Writes[Right] = Json.valueWrites[Right]
-  private implicit val rightsWrites: Writes[Rights] = Json.valueWrites[Rights]
 
-  private implicit def rightsMapWrites(implicit rightWriter: Writes[Seq[Right]]): Writes[Map[Username, Seq[Right]]] =
-    (m: Map[Username, Seq[Right]]) => {
+  private implicit def rightsMapWrites(implicit rightWriter: Writes[immutable.Set[Right]]): Writes[immutable.Map[Username, immutable.Set[Right]]] =
+    (m: immutable.Map[Username, immutable.Set[Right]]) => {
       m.foldLeft(JsObject.empty)((jsObject, kv) => {
-        val (username: Username, rights: Seq[Right]) = kv
+        val (username: Username, rights: immutable.Set[Right]) = kv
         jsObject.+(username.asString, rightWriter.writes(rights))
       })
     }
+
+  private implicit def rightsWrite(implicit rightWrite: Writes[immutable.Map[Username, immutable.Set[Right]]]): Writes[Rights] = {
+    implicit val write = rightWrite
+    Json.writes[Rights]
+  }
 
   private implicit val domainWrites: Writes[Domain] = domain => JsString(domain.asString)
   private implicit val quotaRootWrites: Writes[QuotaRoot] = Json.writes[QuotaRoot]
   private implicit val quotaIdWrites: Writes[QuotaId] = Json.valueWrites[QuotaId]
 
   private implicit val quotaValueWrites: Writes[Value] = Json.writes[Value]
-  private implicit val quotaWrites: Writes[Quota] = Json.valueWrites[Quota]
 
-  private implicit def quotaMapWrites(implicit valueWriter: Writes[Value]): Writes[Map[Quotas.Type, Value]] =
-    (m: Map[Quotas.Type, Value]) => {
+
+  private implicit def quotaMapWrites(implicit valueWriter: Writes[Value]): Writes[immutable.Map[Quotas.Type, Value]] =
+    (m: immutable.Map[Quotas.Type, Value]) => {
       m.foldLeft(JsObject.empty)((jsObject, kv) => {
         val (quotaType: Quotas.Type, value: Value) = kv
         jsObject.+(quotaType.toString, valueWriter.writes(value))
       })
     }
 
-  private implicit val quotasWrites: Writes[Quotas] = Json.valueWrites[Quotas]
+  private implicit def quotaWrites(implicit quotaWriter: Writes[immutable.Map[Quotas.Type, Value]]): Writes[Quota] = {
+    implicit val write: Writes[immutable.Map[Quotas.Type, Value]] = quotaWriter
+    Json.valueWrites[Quota]
+  }
 
-  private implicit def quotasMapWrites(implicit quotaWriter: Writes[Quota]): Writes[Map[QuotaId, Quota]] =
-    (m: Map[QuotaId, Quota]) => {
+  private implicit def quotasMapWrites(implicit quotaWriter: Writes[Quota]): Writes[immutable.Map[QuotaId, Quota]] =
+    (m: immutable.Map[QuotaId, Quota]) => {
       m.foldLeft(JsObject.empty)((jsObject, kv) => {
         val (quotaId: QuotaId, quota: Quota) = kv
         jsObject.+(quotaId.getName, quotaWriter.writes(quota))
       })
     }
 
-  implicit def mailboxWrites(propertiesToHide: Set[String]): Writes[Mailbox] = Json.writes[Mailbox]
+  private implicit def quotasWrite(implicit quotaWrite: Writes[immutable.Map[QuotaId, Quota]]): Writes[Quotas] = {
+    implicit val write: Writes[immutable.Map[QuotaId, Quota]] = quotaWrite
+    Json.writes[Quotas]
+  }
+
+  implicit def mailboxWrites(propertiesToHide: immutable.Set[String]): Writes[Mailbox] = Json.writes[Mailbox]
     .transform((o: JsObject) => JsObject(o.fields.filterNot(entry => propertiesToHide.contains(entry._1))))
 
   private implicit val idsRead: Reads[Ids] = Json.valueReads[Ids]
@@ -230,8 +252,8 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
       })
     }
 
-  private def mailboxWritesWithFilteredProperties(capabilities: Set[CapabilityIdentifier]): Writes[Mailbox] = {
-    val propertiesForCapabitilites: Map[CapabilityIdentifier, Set[String]] = Map(
+  private def mailboxWritesWithFilteredProperties(capabilities: immutable.Set[CapabilityIdentifier]): Writes[Mailbox] = {
+    val propertiesForCapabitilites: immutable.Map[CapabilityIdentifier, immutable.Set[String]] = Map(
       CapabilityIdentifier.JAMES_QUOTA -> Set("quotas"),
       CapabilityIdentifier.JAMES_SHARES -> Set("namespace", "rights")
     )
@@ -253,7 +275,7 @@ class Serializer @Inject() (mailboxIdFactory: MailboxId.Factory) {
 
   def serialize(mailboxGetResponse: MailboxGetResponse)(implicit mailboxWrites: Writes[Mailbox]): JsValue = Json.toJson(mailboxGetResponse)
 
-  def serialize(mailboxGetResponse: MailboxGetResponse, capabilities: Set[CapabilityIdentifier]): JsValue = {
+  def serialize(mailboxGetResponse: MailboxGetResponse, capabilities: immutable.Set[CapabilityIdentifier]): JsValue = {
     serialize(mailboxGetResponse)(mailboxWritesWithFilteredProperties(capabilities))
   }
 

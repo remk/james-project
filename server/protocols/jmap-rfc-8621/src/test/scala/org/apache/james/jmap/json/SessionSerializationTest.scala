@@ -30,6 +30,7 @@ import org.apache.james.jmap.model.MailCapability.EmailQuerySortOption
 import org.apache.james.jmap.model.State.State
 import org.apache.james.jmap.model._
 import org.apache.james.mailbox.model.TestId
+import org.apache.mailet.Mail
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
@@ -79,7 +80,9 @@ object SessionSerializationTest {
     emailQuerySortOptions = EMAIL_QUERY_SORT_OPTIONS,
     mayCreateTopLevelMailbox = MAY_CREATE_TOP_LEVEL_MAILBOX))
 
-  private val CAPABILITIES = Capabilities(CORE_CAPABILITY, MAIL_CAPABILITY)
+  private val MAIL_QUOTA_CAPABILITY: MailQuotaCapability = MailQuotaCapability(properties = MailQuotaProperties())
+  private val MAIL_SHARE_CAPABILITY: MailSharesCapability = MailSharesCapability(properties = MailSharesProperties())
+  private val CAPABILITIES = Capabilities(CORE_CAPABILITY, MAIL_CAPABILITY, MAIL_QUOTA_CAPABILITY, MAIL_SHARE_CAPABILITY)
 
   private val IS_PERSONAL : IsPersonal = IsPersonal(true)
   private val IS_NOT_PERSONAL : IsPersonal = IsPersonal(false)

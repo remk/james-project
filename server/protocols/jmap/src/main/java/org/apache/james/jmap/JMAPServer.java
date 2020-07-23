@@ -78,6 +78,7 @@ public class JMAPServer implements Startable {
         try {
             return jmapRoutesHandlers.stream()
                 .flatMap(jmapRoutesHandler -> jmapRoutesHandler.routes(versionParser.parseRequestVersionHeader(request)))
+
                 .filter(jmapRoute -> jmapRoute.matches(request))
                 .map(JMAPRoute::getAction)
                 .findFirst()
