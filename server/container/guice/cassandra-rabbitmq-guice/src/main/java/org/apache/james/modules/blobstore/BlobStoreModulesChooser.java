@@ -61,9 +61,15 @@ public class BlobStoreModulesChooser {
 
     @VisibleForTesting
     public static List<Module> chooseModules(BlobStoreConfiguration choosingConfiguration) {
-        return ImmutableList.of(
-            chooseDumBlobStoreModule(choosingConfiguration.getImplementation()),
-            chooseStoragePolicyModule(choosingConfiguration.storageStrategy()));
+        ImmutableList.Builder<Module> moduleBuilder = ImmutableList.<Module>builder().add(
+            chooseDumBlobStoreModule(choosingConfiguration.getImplementation()));
+
+        //TODO JAMES-3028 add the storage policy module for all implementation and unbind the ObjectStorageBlobStore
+        if(choosingConfiguration.getImplementation() == BlobStoreConfiguration.BlobStoreImplName.CASSANDRA) {
+            moduleBuilder.add(
+                chooseStoragePolicyModule(choosingConfiguration.storageStrategy()));
+        }
+        return moduleBuilder.build();
     }
 
     public static Module chooseDumBlobStoreModule(BlobStoreConfiguration.BlobStoreImplName implementation) {
