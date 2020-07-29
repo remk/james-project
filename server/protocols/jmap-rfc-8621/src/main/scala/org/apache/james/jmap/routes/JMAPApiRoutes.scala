@@ -154,7 +154,7 @@ class JMAPApiRoutes (val authenticator: Authenticator,
       ProblemDetails(RequestLevelErrorType.UNKNOWN_CAPABILITY,
         SC_BAD_REQUEST, None,
         s"The request used unsupported capabilities: ${exception.capabilities}"))
-    case _ => SMono.fromPublisher(handleInternalError(httpServerResponse, throwable))
+    case _ => SMono.fromPublisher(handleInternalError(httpServerResponse, JMAPApiRoutes.LOGGER, throwable))
   }
 
   private def respondDetails(httpServerResponse: HttpServerResponse, details: ProblemDetails): SMono[Void] =
