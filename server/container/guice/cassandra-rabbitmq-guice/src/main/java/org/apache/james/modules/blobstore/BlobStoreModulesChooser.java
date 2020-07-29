@@ -65,7 +65,7 @@ public class BlobStoreModulesChooser {
             chooseDumBlobStoreModule(choosingConfiguration.getImplementation()));
 
         //TODO JAMES-3028 add the storage policy module for all implementation and unbind the ObjectStorageBlobStore
-        if(choosingConfiguration.getImplementation() == BlobStoreConfiguration.BlobStoreImplName.CASSANDRA) {
+        if (choosingConfiguration.getImplementation() == BlobStoreConfiguration.BlobStoreImplName.CASSANDRA) {
             moduleBuilder.add(
                 chooseStoragePolicyModule(choosingConfiguration.storageStrategy()));
         }
