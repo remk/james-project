@@ -57,7 +57,8 @@ class MailboxSetMethod @Inject() (serializer: Serializer,
   private def parseCreateRequests(mailboxSetRequest: MailboxSetRequest): (immutable.Iterable[(MailboxCreationId, MailboxSetError)], immutable.Iterable[(MailboxCreationId, MailboxCreationRequest)]) = {
     mailboxSetRequest.create
       .getOrElse(Map.empty)
-      .view.mapValues(value => Json.fromJson(value)(serializer.mailboxCreationRequest))
+      .view
+      .mapValues(value => Json.fromJson(value)(serializer.mailboxCreationRequest))
       .toMap
       .partitionMap { case (creationId, creationRequestParseResult) =>
         creationRequestParseResult match {
