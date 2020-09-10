@@ -104,7 +104,7 @@ trait EmailQueryMethodContract {
         .body
         .asString
 
-      assertThatJson(response).withThreadDumpOnError().isEqualTo(
+      assertThatJson(response).isEqualTo(
         s"""{
            |    "sessionState": "75128aab4b1b",
            |    "methodResponses": [[
