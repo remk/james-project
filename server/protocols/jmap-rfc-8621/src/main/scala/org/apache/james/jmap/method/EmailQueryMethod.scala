@@ -21,12 +21,13 @@ package org.apache.james.jmap.method
 import eu.timepit.refined.auto._
 import javax.inject.Inject
 import org.apache.james.jmap.json.Serializer
-import org.apache.james.jmap.mail.{EmailQueryRequest, EmailQueryResponse, QueryState}
+import org.apache.james.jmap.mail.{EmailQueryRequest, EmailQueryResponse, Position, QueryState}
 import org.apache.james.jmap.model.CapabilityIdentifier.CapabilityIdentifier
 import org.apache.james.jmap.model.DefaultCapabilities.{CORE_CAPABILITY, MAIL_CAPABILITY}
 import org.apache.james.jmap.model.Invocation.{Arguments, MethodName}
 import org.apache.james.jmap.model._
 import org.apache.james.jmap.routes.ProcessingContext
+import org.apache.james.mailbox.model.SearchQuery.Sort.SortClause
 import org.apache.james.mailbox.model.{MultimailboxesSearchQuery, SearchQuery}
 import org.apache.james.mailbox.{MailboxManager, MailboxSession}
 import org.apache.james.metrics.api.MetricFactory
@@ -56,9 +57,10 @@ class EmailQueryMethod @Inject() (serializer: Serializer,
         .map(invocationResult => (invocationResult, processingContext)))
 
   private def processRequest(mailboxSession: MailboxSession, invocation: Invocation, request: EmailQueryRequest): SMono[Invocation] = {
-    SFlux.fromPublisher(mailboxManager.search(MultimailboxesSearchQuery.from(SearchQuery.matchAll()).build(), mailboxSession, EmailQueryMethod.DEFAULT_MAXIMUM_LIMIT))
+    val searchQuery = MultimailboxesSearchQuery.from(new SearchQuery.Builder().sorts(new SearchQuery.Sort(SortClause.Arrival, SearchQuery.Sort.Order.REVERSE)).build()).build()
+    SFlux.fromPublisher(mailboxManager.search(searchQuery, mailboxSession, EmailQueryMethod.DEFAULT_MAXIMUM_LIMIT))
       .collectSeq()
-      .map(ids => EmailQueryResponse(accountId = request.accountId, queryState = QueryState.forIds(ids), canCalculateChanges = false, ids = ids, position = 0))
+      .map(ids => EmailQueryResponse(accountId = request.accountId, queryState = QueryState.forIds(ids), canCalculateChanges = false, ids = ids, position = Position.zero))
       .map(response => Invocation(methodName = methodName, arguments = Arguments(serializer.serialize(response)), methodCallId = invocation.methodCallId))
   }
 

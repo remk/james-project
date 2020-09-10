@@ -36,7 +36,7 @@ import org.apache.james.mailbox.model.{MailboxPath, MessageId}
 import org.apache.james.mime4j.dom.Message
 import org.apache.james.modules.MailboxProbeImpl
 import org.apache.james.utils.DataProbeImpl
-import org.awaitility.{Awaitility}
+import org.awaitility.Awaitility
 import org.awaitility.Duration.ONE_HUNDRED_MILLISECONDS
 import org.junit.jupiter.api.{BeforeEach, Test}
 import play.api.libs.json.Json
@@ -73,9 +73,8 @@ trait EmailQueryMethodContract {
     val messageId1: MessageId = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
       .getMessageId
-
     val messageId2: MessageId = server.getProbe(classOf[MailboxProbeImpl])
-      .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
+      .appendMessage(BOB.asString, otherMailboxPath, AppendCommand.from(message))
       .getMessageId
 
     val request =
@@ -95,9 +94,9 @@ trait EmailQueryMethodContract {
       val response = `given`
         .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
         .body(request)
-        .when
-        .post.prettyPeek()
-        .`then`
+      .when
+        .post
+      .`then`
         .statusCode(SC_OK)
         .contentType(JSON)
         .extract
@@ -156,9 +155,9 @@ trait EmailQueryMethodContract {
       val response = `given`
         .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
         .body(request)
-        .when
+      .when
         .post
-        .`then`
+      .`then`
         .statusCode(SC_OK)
         .contentType(JSON)
         .extract
@@ -219,26 +218,28 @@ trait EmailQueryMethodContract {
       val response = `given`
         .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
         .body(request)
-        .when
+      .when
         .post
-        .`then`
+      .`then`
         .statusCode(SC_OK)
         .contentType(JSON)
         .extract
         .body
         .asString
 
-      val expectedResult = List(composedMessageId1, composedMessageId2, composedMessageId3)
-        .sortBy(_.getUid)
-        .map(_.getMessageId)
-        .map(_.serialize())
+    val expectedResult = Json.stringify(Json.toJson(List(composedMessageId1, composedMessageId2, composedMessageId3)
+      .sortBy(_.getUid)
+      .map(_.getMessageId)
+      .map(_.serialize())))
 
-      assertThatJson(Json.parse(response).\\("ids").head).isEqualTo(Json.toJson(expectedResult))
+    assertThatJson(response)
+      .inPath("$.methodResponses[0][1].ids")
+      .isEqualTo(expectedResult)
     }
   }
 
   @Test
-  def shouldListMailsShouldBeIdempotent(server: GuiceJamesServer): Unit = {
+  def listMailsShouldBeIdempotent(server: GuiceJamesServer): Unit = {
     val message: Message = Message.Builder
       .of
       .setSubject("test")
@@ -271,9 +272,9 @@ trait EmailQueryMethodContract {
       val responseFirstCall = `given`
         .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
         .body(request)
-        .when
+      .when
         .post
-        .`then`
+      .`then`
         .statusCode(SC_OK)
         .contentType(JSON)
         .extract
@@ -283,9 +284,9 @@ trait EmailQueryMethodContract {
       val responseSecondCall = `given`
         .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
         .body(request)
-        .when
+      .when
         .post
-        .`then`
+      .`then`
         .statusCode(SC_OK)
         .contentType(JSON)
         .extract

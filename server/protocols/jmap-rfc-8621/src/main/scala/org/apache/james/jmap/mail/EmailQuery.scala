@@ -25,20 +25,21 @@ import org.apache.james.mailbox.model.{MailboxId, MessageId}
 
 case class EmailQueryRequest(accountId: AccountId, inMailbox: Option[MailboxId])
 
+case class Position(value: Int) extends AnyVal
+object Position{
+  val zero: Position = Position(0)
+}
 case class QueryState(value: String) extends AnyVal
 
 object QueryState {
-  def forIds(ids: Seq[MessageId]): QueryState = {
-
-    QueryState(
-      Hashing.murmur3_32()
-        .hashUnencodedChars(ids.map(_.serialize()).mkString(" "))
-        .toString)
-  }
+  def forIds(ids: Seq[MessageId]): QueryState = QueryState(
+    Hashing.murmur3_32()
+      .hashUnencodedChars(ids.map(_.serialize()).mkString(" "))
+      .toString)
 }
 
 case class EmailQueryResponse(accountId: AccountId,
                               queryState: QueryState,
                               canCalculateChanges: Boolean,
                               ids: Seq[MessageId],
-                              position: Int)
+                              position: Position)
