@@ -114,6 +114,7 @@ trait EmailQueryMethodContract {
            |                "queryState": "${generateQueryState(messageId2, messageId1)}",
            |                "canCalculateChanges": false,
            |                "position": 0,
+           |                "limit": 256,
            |                "ids": ["${messageId2.serialize()}", "${messageId1.serialize()}"]
            |            },
            |            "c1"
@@ -175,6 +176,7 @@ trait EmailQueryMethodContract {
            |                "queryState": "${generateQueryState(messageId1)}",
            |                "canCalculateChanges": false,
            |                "position": 0,
+           |                "limit": 256,
            |                "ids": ["${messageId1.serialize()}"]
            |            },
            |            "c1"
