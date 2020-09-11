@@ -76,7 +76,7 @@ trait EmailQueryMethodContract {
     val messageId1: MessageId = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
       .getMessageId
-    Thread.sleep(100) // To enforce receivedAt ordering
+    Thread.sleep(1000) // To enforce receivedAt ordering
     val messageId2: MessageId = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, otherMailboxPath, AppendCommand.from(message))
       .getMessageId
@@ -201,15 +201,15 @@ trait EmailQueryMethodContract {
     val messageId1 = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
       .getMessageId
-    Thread.sleep(100) // To enforce receivedAt ordering
+    Thread.sleep(1000) // To enforce receivedAt ordering
     val messageId2 = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
       .getMessageId
-    Thread.sleep(100) // To enforce receivedAt ordering
+    Thread.sleep(1000) // To enforce receivedAt ordering
     val messageId3 = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
       .getMessageId
-    Thread.sleep(100) // To enforce receivedAt ordering
+    Thread.sleep(1000) // To enforce receivedAt ordering
     val request =
       s"""{
          |  "using": [
