@@ -44,7 +44,10 @@ import play.api.libs.json.Json
 trait EmailQueryMethodContract {
 
   private lazy val slowPacedPollInterval = ONE_HUNDRED_MILLISECONDS
-  private lazy val calmlyAwait = Awaitility.`with`.pollInterval(slowPacedPollInterval).and.`with`.pollDelay(slowPacedPollInterval).await
+  private lazy val calmlyAwait = Awaitility.`with`
+    .pollInterval(slowPacedPollInterval)
+    .and.`with`.pollDelay(slowPacedPollInterval)
+    .await
   private lazy val awaitAtMostTenSeconds = calmlyAwait.atMost(10, TimeUnit.SECONDS)
 
   @BeforeEach
@@ -73,7 +76,7 @@ trait EmailQueryMethodContract {
     val messageId1: MessageId = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
       .getMessageId
-    Thread.sleep(1000)
+    Thread.sleep(100) // To enforce receivedAt ordering
     val messageId2: MessageId = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, otherMailboxPath, AppendCommand.from(message))
       .getMessageId
@@ -198,15 +201,15 @@ trait EmailQueryMethodContract {
     val messageId1 = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
       .getMessageId
-    Thread.sleep(1000)
+    Thread.sleep(100) // To enforce receivedAt ordering
     val messageId2 = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
       .getMessageId
-    Thread.sleep(1000)
+    Thread.sleep(100) // To enforce receivedAt ordering
     val messageId3 = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.from(message))
       .getMessageId
-    Thread.sleep(1000)
+    Thread.sleep(100) // To enforce receivedAt ordering
     val request =
       s"""{
          |  "using": [
