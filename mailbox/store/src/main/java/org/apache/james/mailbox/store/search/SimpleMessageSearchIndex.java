@@ -204,7 +204,6 @@ public class SimpleMessageSearchIndex implements MessageSearchIndex {
 
     private Stream<MailboxMessage> getSearchResultStream(MailboxSession session, SearchQuery query, Mailbox mailbox) {
         try {
-
             return searchResults(session, mailbox, query).stream();
         } catch (MailboxException e) {
             throw new RuntimeException(e);
