@@ -61,7 +61,7 @@ object MailboxFilter {
 
   object QueryFilter {
     def buildQuery(request: EmailQueryRequest): SearchQuery.Builder = {
-      List(ReceivedBefore, ReceivedAfter, HasKeyWord).foldLeft(new SearchQuery.Builder())((builder, filter) => filter.toQuery(builder, request))
+      List(ReceivedBefore, ReceivedAfter, HasKeyWord, NotKeyWord).foldLeft(new SearchQuery.Builder())((builder, filter) => filter.toQuery(builder, request))
     }
   }
 
@@ -92,6 +92,16 @@ object MailboxFilter {
         keyword.asSystemFlag match {
           case Some(systemFlag) => builder.andCriteria(SearchQuery.flagIsSet(systemFlag))
           case None => builder.andCriteria(SearchQuery.flagIsSet(keyword.flagName))
+        }
+      case None => builder
+    }
+  }
+  case object NotKeyWord extends QueryFilter {
+    override def toQuery(builder: SearchQuery.Builder, request: EmailQueryRequest): SearchQuery.Builder =  request.filter.flatMap(_.notKeyword) match {
+      case Some(keyword) =>
+        keyword.asSystemFlag match {
+          case Some(systemFlag) => builder.andCriteria(SearchQuery.flagIsUnSet(systemFlag))
+          case None => builder.andCriteria(SearchQuery.flagIsUnSet(keyword.flagName))
         }
       case None => builder
     }
