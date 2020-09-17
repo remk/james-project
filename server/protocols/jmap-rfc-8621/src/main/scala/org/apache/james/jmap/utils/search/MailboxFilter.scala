@@ -55,7 +55,7 @@ object MailboxFilter {
 
 
   sealed trait QueryFilter {
-    def toQuery(builder: SearchQuery.Builder , request: EmailQueryRequest): SearchQuery.Builder
+    def toQuery(builder: SearchQuery.Builder, request: EmailQueryRequest): SearchQuery.Builder
   }
 
   object QueryFilter {
@@ -66,12 +66,11 @@ object MailboxFilter {
 
   case object ReceivedBefore extends QueryFilter {
     override def toQuery(builder: SearchQuery.Builder, request: EmailQueryRequest): SearchQuery.Builder =  request.filter.flatMap(_.before) match {
-      case Some(before) => {
+      case Some(before) =>
         val strictlyBefore = new InternalDateCriterion(new DateOperator(DateComparator.BEFORE, Date.from(before.asUTC.toInstant), DateResolution.Second))
         val sameDate = new InternalDateCriterion(new DateOperator(DateComparator.ON, Date.from(before.asUTC.toInstant), DateResolution.Second))
         new SearchQuery.Builder()
           .andCriteria(new ConjunctionCriterion(Conjunction.OR, List[Criterion](strictlyBefore, sameDate).asJava))
-      }
       case None => builder
     }
   }

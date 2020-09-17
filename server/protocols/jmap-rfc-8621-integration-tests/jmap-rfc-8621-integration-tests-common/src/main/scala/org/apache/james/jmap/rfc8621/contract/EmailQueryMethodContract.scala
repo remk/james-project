@@ -765,7 +765,7 @@ trait EmailQueryMethodContract {
     val otherMailboxPath = MailboxPath.forUser(BOB, "other")
     server.getProbe(classOf[MailboxProbeImpl]).createMailbox(otherMailboxPath)
     val receivedDateMessage2 = ZonedDateTime.now().minusDays(1).plusHours(2)
-    val messageId2 =server.getProbe(classOf[MailboxProbeImpl])
+    val messageId2 = server.getProbe(classOf[MailboxProbeImpl])
       .appendMessage(BOB.asString, otherMailboxPath, AppendCommand.builder().withInternalDate(Date.from(receivedDateMessage2.toInstant)).build(message))
       .getMessageId
 
