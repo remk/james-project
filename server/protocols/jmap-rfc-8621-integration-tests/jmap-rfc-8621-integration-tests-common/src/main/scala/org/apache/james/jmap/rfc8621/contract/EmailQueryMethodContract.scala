@@ -805,7 +805,7 @@ trait EmailQueryMethodContract {
   }
 
   @Test
-  def listMailsReceivedAftereADateShouldBeExclusive(server: GuiceJamesServer): Unit = {
+  def listMailsReceivedAfterADateShouldBeExclusive(server: GuiceJamesServer): Unit = {
     val message: Message = Message.Builder
       .of
       .setSubject("test")
