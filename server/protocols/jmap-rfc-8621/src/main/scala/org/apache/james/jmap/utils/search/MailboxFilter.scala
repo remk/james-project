@@ -70,7 +70,7 @@ object MailboxFilter {
       case Some(before) =>
         val strictlyBefore = new InternalDateCriterion(new DateOperator(DateComparator.BEFORE, Date.from(before.asUTC.toInstant), DateResolution.Second))
         val sameDate = new InternalDateCriterion(new DateOperator(DateComparator.ON, Date.from(before.asUTC.toInstant), DateResolution.Second))
-        new SearchQuery.Builder()
+        builder
           .andCriteria(new ConjunctionCriterion(Conjunction.OR, List[Criterion](strictlyBefore, sameDate).asJava))
       case None => builder
     }
@@ -79,7 +79,7 @@ object MailboxFilter {
     override def toQuery(builder: SearchQuery.Builder, request: EmailQueryRequest): SearchQuery.Builder =  request.filter.flatMap(_.after) match {
       case Some(after) => {
         val strictlyAfter = new InternalDateCriterion(new DateOperator(DateComparator.AFTER, Date.from(after.asUTC.toInstant), DateResolution.Second))
-        new SearchQuery.Builder()
+        builder
           .andCriteria(strictlyAfter)
       }
       case None => builder
