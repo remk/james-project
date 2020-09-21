@@ -1189,22 +1189,6 @@ trait EmailQueryMethodContract {
 
   @Test
   def shouldReturnAnIllegalArgumentExceptionIfTheLimitIsNegative(server: GuiceJamesServer): Unit = {
-    val message: Message = Message.Builder
-      .of
-      .setSubject("test")
-      .setBody("testmail", StandardCharsets.UTF_8)
-      .build
-    server.getProbe(classOf[MailboxProbeImpl]).createMailbox(MailboxPath.inbox(BOB))
-    val requestDate = Date.from(ZonedDateTime.now().minusDays(1).toInstant)
-    sendMessageToBobInbox(server, message, Date.from(requestDate.toInstant))
-
-    val otherMailboxPath = MailboxPath.forUser(BOB, "other")
-    server.getProbe(classOf[MailboxProbeImpl]).createMailbox(otherMailboxPath)
-
-    server.getProbe(classOf[MailboxProbeImpl])
-      .appendMessage(BOB.asString, otherMailboxPath, AppendCommand.from(message))
-      .getMessageId
-
     val request =
       s"""{
          |  "using": [

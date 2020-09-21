@@ -70,7 +70,7 @@ class EmailQueryMethod @Inject() (serializer: EmailQuerySerializer,
       .collectSeq()
       .map(ids => EmailQueryResponse(accountId = request.accountId,
         queryState = QueryState.forIds(ids),
-        canCalculateChanges = CanCalculateChanges.CANT,
+        canCalculateChanges = CanCalculateChanges.CANNOT,
         ids = ids,
         position = Position.zero,
         limit = Some(limitToUse).filterNot(used => request.limit.map(_.value).contains(used.value))))

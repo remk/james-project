@@ -43,7 +43,7 @@ object Limit {
 
     refinedLimit match {
       case Some(Left(_))  =>  SMono.raiseError(new IllegalArgumentException(s"The limit can not be negative. ${requestLimit.map(_.value).getOrElse("")} was provided."))
-      case Some(Right(limit)) if limit.value < default.value=> SMono.just(limit)
+      case Some(Right(limit)) if limit.value < default.value => SMono.just(limit)
       case _ => SMono.just(default)
     }
   }
@@ -66,5 +66,5 @@ object QueryState {
 case class CanCalculateChanges(value: Boolean) extends AnyVal
 
 object CanCalculateChanges {
-  val CANT: CanCalculateChanges = CanCalculateChanges(false)
+  val CANNOT: CanCalculateChanges = CanCalculateChanges(false)
 }
