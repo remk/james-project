@@ -1801,13 +1801,15 @@ trait EmailQueryMethodContract {
       .setBody("testmail", StandardCharsets.UTF_8)
       .build
     server.getProbe(classOf[MailboxProbeImpl]).createMailbox(MailboxPath.inbox(BOB))
-    val otherMailboxPath = MailboxPath.forUser(BOB, "other")
-    val requestDate = Date.from(ZonedDateTime.now().minusDays(1).toInstant)
-    val messageId1: MessageId =  sendMessageToBobInbox(server, message, Date.from(requestDate.toInstant))
-
-    server.getProbe(classOf[MailboxProbeImpl]).createMailbox(otherMailboxPath)
-    server.getProbe(classOf[MailboxProbeImpl])
-        .appendMessage(BOB.asString, otherMailboxPath, AppendCommand.from(message))
+    val messageId1: MessageId = server.getProbe(classOf[MailboxProbeImpl])
+        .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.builder()
+          .withInternalDate(Date.from(ZonedDateTime.now().minusDays(2).toInstant))
+          .build(message))
+        .getMessageId
+    val messageId2: MessageId = server.getProbe(classOf[MailboxProbeImpl])
+        .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.builder()
+          .withInternalDate(Date.from(ZonedDateTime.now().minusDays(1).toInstant))
+          .build(message))
         .getMessageId
 
     val request =
@@ -1828,9 +1830,9 @@ trait EmailQueryMethodContract {
       val response = `given`
         .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
         .body(request)
-        .when
+      .when
         .post
-        .`then`
+      .`then`
         .statusCode(SC_OK)
         .contentType(JSON)
         .extract
@@ -1849,6 +1851,71 @@ trait EmailQueryMethodContract {
            |                "limit": 256,
            |                "canCalculateChanges": false,
            |                "ids": ["${messageId1.serialize()}"]
+           |            },
+           |            "c1"
+           |        ]]
+           |}""".stripMargin)
+    }
+  }
+
+  @Test
+  def zeroPositionQueryShouldReturnItemsFromTheStart(server: GuiceJamesServer): Unit = {
+    val message: Message = Message.Builder
+      .of
+      .setSubject("test")
+      .setBody("testmail", StandardCharsets.UTF_8)
+      .build
+    server.getProbe(classOf[MailboxProbeImpl]).createMailbox(MailboxPath.inbox(BOB))
+    val messageId1: MessageId = server.getProbe(classOf[MailboxProbeImpl])
+        .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.builder()
+          .withInternalDate(Date.from(ZonedDateTime.now().minusDays(2).toInstant))
+          .build(message))
+        .getMessageId
+    val messageId2: MessageId = server.getProbe(classOf[MailboxProbeImpl])
+        .appendMessage(BOB.asString, MailboxPath.inbox(BOB), AppendCommand.builder()
+          .withInternalDate(Date.from(ZonedDateTime.now().minusDays(1).toInstant))
+          .build(message))
+        .getMessageId
+
+    val request =
+      s"""{
+         |  "using": [
+         |    "urn:ietf:params:jmap:core",
+         |    "urn:ietf:params:jmap:mail"],
+         |  "methodCalls": [[
+         |    "Email/query",
+         |    {
+         |      "accountId": "29883977c13473ae7cb7678ef767cbfbaffc8a44a6e463d971d23a65c1dc4af6",
+         |      "position": 0
+         |    },
+         |    "c1"]]
+         |}""".stripMargin
+
+    awaitAtMostTenSeconds.untilAsserted { () =>
+      val response = `given`
+        .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
+        .body(request)
+      .when
+        .post
+      .`then`
+        .statusCode(SC_OK)
+        .contentType(JSON)
+        .extract
+        .body
+        .asString
+
+      assertThatJson(response).isEqualTo(
+        s"""{
+           |    "sessionState": "75128aab4b1b",
+           |    "methodResponses": [[
+           |            "Email/query",
+           |            {
+           |                "accountId": "29883977c13473ae7cb7678ef767cbfbaffc8a44a6e463d971d23a65c1dc4af6",
+           |                "queryState": "${generateQueryState(messageId2, messageId1)}",
+           |                "position": 0,
+           |                "limit": 256,
+           |                "canCalculateChanges": false,
+           |                "ids": ["${messageId2.serialize()}", "${messageId1.serialize()}"]
            |            },
            |            "c1"
            |        ]]
@@ -1891,9 +1958,9 @@ trait EmailQueryMethodContract {
       val response = `given`
         .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
         .body(request)
-        .when
+      .when
         .post
-        .`then`
+      .`then`
         .statusCode(SC_OK)
         .contentType(JSON)
         .extract
@@ -1955,9 +2022,9 @@ trait EmailQueryMethodContract {
       val response = `given`
         .header(ACCEPT.toString, ACCEPT_RFC8621_VERSION_HEADER)
         .body(request)
-        .when
+      .when
         .post
-        .`then`
+      .`then`
         .statusCode(SC_OK)
         .contentType(JSON)
         .extract
