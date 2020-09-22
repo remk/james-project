@@ -38,6 +38,7 @@ object Position{
     refinedPosition match {
       case Some(Left(_))  =>  SMono.raiseError(new IllegalArgumentException(s"Negative position are not supported yet. ${requestPosition.map(_.value).getOrElse("")} was provided."))
       case Some(Right(position)) => SMono.just(position)
+      case None => SMono.just(Position.zero)
     }
   }
 }
