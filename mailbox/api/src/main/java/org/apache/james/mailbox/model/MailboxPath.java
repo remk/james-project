@@ -115,7 +115,7 @@ public class MailboxPath {
     }
 
     public MailboxPath child(String childName, char delimiter) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(childName), "'childName' should not be null or empty");
+        Preconditions.checkArgument(!StringUtils.isBlank(childName), "'childName' should not be null or empty");
         Preconditions.checkArgument(!childName.contains(String.valueOf(delimiter)), "'childName' should not contain delimiter");
 
         return new MailboxPath(namespace, user, name + delimiter + childName);
