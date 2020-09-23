@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.james.core.Username;
 import org.apache.james.mailbox.DefaultMailboxes;
 import org.apache.james.mailbox.MailboxSession;
@@ -194,10 +195,11 @@ public class MailboxPath {
 
     boolean hasEmptyNameInHierarchy(char pathDelimiter) {
         String delimiterString = String.valueOf(pathDelimiter);
-        return this.name.isEmpty()
-            || this.name.contains(delimiterString + delimiterString)
-            || this.name.startsWith(delimiterString)
-            || this.name.endsWith(delimiterString);
+        String nameWithoutSpaces = name.replaceAll("\\s", "");
+        return StringUtils.isBlank(nameWithoutSpaces)
+            || nameWithoutSpaces.contains(delimiterString + delimiterString)
+            || nameWithoutSpaces.startsWith(delimiterString)
+            || nameWithoutSpaces.endsWith(delimiterString);
     }
 
     public String asString() {
