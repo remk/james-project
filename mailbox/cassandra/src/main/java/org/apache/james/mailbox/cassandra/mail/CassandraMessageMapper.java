@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import javax.mail.Flags;
 import javax.mail.Flags.Flag;
@@ -262,8 +263,9 @@ public class CassandraMessageMapper implements MessageMapper {
         CassandraId mailboxId = (CassandraId) mailbox.getMailboxId();
 
         return block(addUidAndModseq(message, mailboxId)
-            .flatMap(Throwing.function(messageWithUidAndModSeq -> save(mailbox, messageWithUidAndModSeq)
-                .thenReturn(messageWithUidAndModSeq)))
+            .flatMap(messageWithUidAndModSeq -> Mono.fromCallable(() -> save(mailbox, messageWithUidAndModSeq))
+                .flatMap(Function.identity())
+                .thenReturn(messageWithUidAndModSeq))
             .map(MailboxMessage::metaData));
     }
 
