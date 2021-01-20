@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.net.smtp.AuthenticatingSMTPClient;
 import org.apache.james.dnsservice.api.DNSService;
 import org.apache.james.dnsservice.api.InMemoryDNSService;
-import org.apache.james.mailetcontainer.impl.matchers.Not;
 import org.apache.james.mailets.TemporaryJamesServer;
 import org.apache.james.mailets.configuration.CommonProcessors;
 import org.apache.james.mailets.configuration.MailetConfiguration;
@@ -53,7 +52,7 @@ import org.apache.james.transport.mailets.ToProcessor;
 import org.apache.james.transport.matchers.All;
 import org.apache.james.transport.matchers.DSNFailureRequested;
 import org.apache.james.transport.matchers.DSNSuccessRequested;
-import org.apache.james.transport.matchers.RecipientIsLocal;
+import org.apache.james.transport.matchers.RecipientIs;
 import org.apache.james.transport.matchers.RecipientIsRegex;
 import org.apache.james.utils.DataProbeImpl;
 import org.apache.james.utils.SMTPMessageSender;
@@ -75,7 +74,7 @@ public class DSNLocalIntegrationTest {
 
     private static final String FROM = "from@" + DEFAULT_DOMAIN;
     private static final String RECIPIENT = "touser@" + DEFAULT_DOMAIN;
-    private static final String UNKNOWN_RECIPIENT = "touser1@" + DEFAULT_DOMAIN;
+    private static final String FAILING_RECIPIENT = "failing@" + DEFAULT_DOMAIN;
     public static final ConditionFactory AWAIT_NO_MESSAGE = Awaitility.with().pollDelay(new Duration(2, TimeUnit.SECONDS)).timeout(Duration.FIVE_SECONDS);
 
     private InMemoryDNSService inMemoryDNSService;
@@ -121,6 +120,7 @@ public class DSNLocalIntegrationTest {
             .fluent()
             .addDomain(DEFAULT_DOMAIN)
             .addUser(FROM, PASSWORD)
+            .addUser(FAILING_RECIPIENT, PASSWORD)
             .addUser(RECIPIENT, PASSWORD);
 
     }
@@ -132,7 +132,7 @@ public class DSNLocalIntegrationTest {
                 .matcher(All.class)
                 .mailet(RecipientRewriteTable.class))
             .addMailet(MailetConfiguration.builder()
-                .matcher(RecipientIsRegex.class).matcherCondition("touser1.*")
+                .matcher(RecipientIs.class).matcherCondition(FAILING_RECIPIENT)
                 .mailet(ToProcessor.class)
                 .addProperty("processor", ProcessorConfiguration.STATE_BOUNCES))
             .addMailet(MailetConfiguration.builder()
@@ -244,7 +244,7 @@ public class DSNLocalIntegrationTest {
             smtpClient.connect("localhost", jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort().getValue());
             smtpClient.ehlo(DEFAULT_DOMAIN);
             smtpClient.mail("<" + FROM + ">");
-            smtpClient.rcpt("<" + UNKNOWN_RECIPIENT + ">");
+            smtpClient.rcpt("<" + FAILING_RECIPIENT + ">");
             smtpClient.sendShortMessageData("A short message...");
         } finally {
             smtpClient.disconnect();
@@ -267,7 +267,7 @@ public class DSNLocalIntegrationTest {
             smtpClient.connect("localhost", jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort().getValue());
             smtpClient.ehlo(DEFAULT_DOMAIN);
             smtpClient.mail("<" + FROM + ">");
-            smtpClient.rcpt("<" + UNKNOWN_RECIPIENT + "> NOTIFY=NEVER");
+            smtpClient.rcpt("<" + FAILING_RECIPIENT + "> NOTIFY=NEVER");
             smtpClient.sendShortMessageData("A short message...");
         } finally {
             smtpClient.disconnect();
@@ -287,7 +287,7 @@ public class DSNLocalIntegrationTest {
             smtpClient.connect("localhost", jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort().getValue());
             smtpClient.ehlo(DEFAULT_DOMAIN);
             smtpClient.mail("<" + FROM + ">");
-            smtpClient.rcpt("<" + UNKNOWN_RECIPIENT + "> NOTIFY=SUCCESS");
+            smtpClient.rcpt("<" + FAILING_RECIPIENT + "> NOTIFY=SUCCESS");
             smtpClient.sendShortMessageData("A short message...");
         } finally {
             smtpClient.disconnect();
@@ -307,7 +307,7 @@ public class DSNLocalIntegrationTest {
             smtpClient.connect("localhost", jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort().getValue());
             smtpClient.ehlo(DEFAULT_DOMAIN);
             smtpClient.mail("<" + FROM + ">");
-            smtpClient.rcpt("<" + UNKNOWN_RECIPIENT + "> NOTIFY=FAILURE");
+            smtpClient.rcpt("<" + FAILING_RECIPIENT + "> NOTIFY=FAILURE");
             smtpClient.sendShortMessageData("A short message...");
         } finally {
             smtpClient.disconnect();
@@ -323,7 +323,7 @@ public class DSNLocalIntegrationTest {
         Assertions.assertThat(dsnMessage).contains("Status: 5.0.0");
         Assertions.assertThat(dsnMessage).contains("Your message failed to be delivered\n" +
             "Failed recipient(s):\n" +
-            "touser@james.org");
+            "failing@james.org");
     }
 
     @AfterEach
