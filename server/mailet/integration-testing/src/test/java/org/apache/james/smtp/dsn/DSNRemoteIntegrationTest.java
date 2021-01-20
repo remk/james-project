@@ -235,7 +235,7 @@ public class DSNRemoteIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNoNotifyWhenItFailsThenARegularBounceIsSentBack() throws IOException {
+    public void givenAMailWithNoNotifyWhenItFailsThenADSNBounceIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
