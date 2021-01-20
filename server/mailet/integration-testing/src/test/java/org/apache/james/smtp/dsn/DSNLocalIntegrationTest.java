@@ -280,7 +280,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifySuccessWhenItFailsThenARegularBounceIsSentBack() throws IOException {
+    public void givenAMailWithNotifySuccessWhenItFailsThenNoBounceIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -293,13 +293,10 @@ public class DSNLocalIntegrationTest {
             smtpClient.disconnect();
         }
 
-        String bounceMessage = testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
+        testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
-            .awaitMessageCount(awaitAtMostOneMinute, 1)
-            .readFirstMessage();
-
-        Assertions.assertThat(bounceMessage).contains("I'm afraid I wasn't able to deliver your message to the following addresses.\nThis is a permanent error; I've given up. Sorry it didn't work out.  Below\nI include the list of recipients and the reason why I was unable to deliver\nyour message.\n");
+            .awaitNoMessage(awaitAtMostOneMinute);
     }
 
     @Test
