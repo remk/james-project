@@ -24,6 +24,9 @@ import static org.apache.james.mailets.configuration.Constants.DEFAULT_DOMAIN;
 import static org.apache.james.mailets.configuration.Constants.LOCALHOST_IP;
 import static org.apache.james.mailets.configuration.Constants.PASSWORD;
 import static org.apache.james.mailets.configuration.Constants.awaitAtMostOneMinute;
+import static org.apache.james.mock.smtp.server.ConfigurationClient.BehaviorsParamsBuilder.ResponseStep.doesNotAcceptAnyMail;
+import static org.apache.james.mock.smtp.server.model.Condition.MATCH_ALL;
+import static org.apache.james.mock.smtp.server.model.SMTPCommand.RCPT_TO;
 import static org.apache.james.util.docker.Images.MOCK_SMTP_SERVER;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -231,6 +234,12 @@ public class DSNRemoteIntegrationTest {
     @Test
     public void givenAMailWithNoNotifyWhenItFailsThenADSNBounceIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
+        mockSMTPConfiguration.addNewBehavior()
+            .expect(RCPT_TO)
+            .matching(MATCH_ALL)
+            .thenRespond(doesNotAcceptAnyMail("mock response"))
+            .anyTimes()
+            .post();
 
         try {
             smtpClient.connect("localhost", jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort().getValue());
@@ -271,6 +280,12 @@ public class DSNRemoteIntegrationTest {
     @Test
     public void givenAMailWithNotifyFailureWhenItFailsThenADsnBounceIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
+        mockSMTPConfiguration.addNewBehavior()
+            .expect(RCPT_TO)
+            .matching(MATCH_ALL)
+            .thenRespond(doesNotAcceptAnyMail("mock response"))
+            .anyTimes()
+            .post();
 
         try {
             smtpClient.connect("localhost", jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort().getValue());
