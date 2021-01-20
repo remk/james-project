@@ -69,7 +69,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DSNLocalIntegrationTest {
+class DSNLocalIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DSNLocalIntegrationTest.class);
 
     private static final String FROM = "from@" + DEFAULT_DOMAIN;
@@ -87,7 +87,7 @@ public class DSNLocalIntegrationTest {
     private TemporaryJamesServer jamesServer;
 
     @BeforeEach
-    public void setUp(@TempDir File temporaryFolder) throws Exception {
+    void setUp(@TempDir File temporaryFolder) throws Exception {
         inMemoryDNSService = new InMemoryDNSService()
             .registerMxRecord(DEFAULT_DOMAIN, LOCALHOST_IP);
 
@@ -150,7 +150,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNoNotifyWhenItSucceedThenNoDsnIsSentBack() throws IOException {
+    void givenAMailWithNoNotifyWhenItSucceedThenNoDsnIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -170,7 +170,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifyNeverWhenItSucceedThenNoDsnIsSentBack() throws IOException {
+    void givenAMailWithNotifyNeverWhenItSucceedThenNoDsnIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -190,7 +190,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifySuccessWhenItSucceedThenADsnSuccessIsSentBack() throws IOException {
+    void givenAMailWithNotifySuccessWhenItSucceedThenADsnSuccessIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -217,7 +217,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifyFailureWhenItSucceedThenNoDsnIsSentBack() throws IOException {
+    void givenAMailWithNotifyFailureWhenItSucceedThenNoDsnIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -237,7 +237,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNoNotifyWhenItFailsThenADSNBounceIsSentBack() throws IOException {
+    void givenAMailWithNoNotifyWhenItFailsThenADSNBounceIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -264,7 +264,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifyNeverWhenItFailsThenNoEmailIsSentBack() throws IOException, InterruptedException {
+    void givenAMailWithNotifyNeverWhenItFailsThenNoEmailIsSentBack() throws IOException, InterruptedException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -284,7 +284,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifySuccessWhenItFailsThenNoBounceIsSentBack() throws IOException {
+    void givenAMailWithNotifySuccessWhenItFailsThenNoBounceIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -304,7 +304,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifyFailureWhenItFailsThenADsnBounceIsSentBack() throws IOException {
+    void givenAMailWithNotifyFailureWhenItFailsThenADsnBounceIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -331,7 +331,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         jamesServer.shutdown();
     }
 }

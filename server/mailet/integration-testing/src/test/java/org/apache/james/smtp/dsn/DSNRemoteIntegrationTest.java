@@ -72,7 +72,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DSNRemoteIntegrationTest {
+class DSNRemoteIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DSNRemoteIntegrationTest.class);
 
     private static final String ANOTHER_DOMAIN = "other.com";
@@ -94,7 +94,7 @@ public class DSNRemoteIntegrationTest {
     private TemporaryJamesServer jamesServer;
 
     @BeforeEach
-    public void setUp(@TempDir File temporaryFolder) throws Exception {
+    void setUp(@TempDir File temporaryFolder) throws Exception {
         inMemoryDNSService = new InMemoryDNSService()
             .registerMxRecord(DEFAULT_DOMAIN, LOCALHOST_IP)
             .registerMxRecord(ANOTHER_DOMAIN, mockSmtp.getContainerIp());
@@ -151,7 +151,7 @@ public class DSNRemoteIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNoNotifyWhenItSucceedThenNoEmailIsSentBack() throws IOException {
+    void givenAMailWithNoNotifyWhenItSucceedThenNoEmailIsSentBack() throws Exception {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -171,7 +171,7 @@ public class DSNRemoteIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifyNeverWhenItSucceedThenNoDsnIsSentBack() throws IOException {
+    void givenAMailWithNotifyNeverWhenItSucceedThenNoDsnIsSentBack() throws Exception {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -192,7 +192,7 @@ public class DSNRemoteIntegrationTest {
 
     @Disabled("JAMES-3431 DSN relayed notifications cannot be generated as RemoteDelivery lacks a 'success' callback")
     @Test
-    public void givenAMailWithNotifySuccessWhenItSucceedThenADsnSuccessIsSentBack() throws IOException {
+    void givenAMailWithNotifySuccessWhenItSucceedThenADsnSuccessIsSentBack() throws Exception {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -212,7 +212,7 @@ public class DSNRemoteIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifyFailureWhenItSucceedThenNoEmailIsSentBack() throws IOException {
+    void givenAMailWithNotifyFailureWhenItSucceedThenNoEmailIsSentBack() throws Exception {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -232,7 +232,7 @@ public class DSNRemoteIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNoNotifyWhenItFailsThenADSNBounceIsSentBack() throws IOException {
+    void givenAMailWithNoNotifyWhenItFailsThenADSNBounceIsSentBack() throws Exception {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
         mockSMTPConfiguration.addNewBehavior()
             .expect(RCPT_TO)
@@ -258,7 +258,7 @@ public class DSNRemoteIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifyNeverWhenItFailsThenNoEmailIsSentBack() throws IOException {
+    void givenAMailWithNotifyNeverWhenItFailsThenNoEmailIsSentBack() throws Exception {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -278,7 +278,7 @@ public class DSNRemoteIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifyFailureWhenItFailsThenADsnBounceIsSentBack() throws IOException {
+    void givenAMailWithNotifyFailureWhenItFailsThenADsnBounceIsSentBack() throws Exception {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
         mockSMTPConfiguration.addNewBehavior()
             .expect(RCPT_TO)
@@ -304,7 +304,7 @@ public class DSNRemoteIntegrationTest {
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         jamesServer.shutdown();
         mockSMTPConfiguration.cleanServer();
     }
