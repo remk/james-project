@@ -273,26 +273,6 @@ public class DSNRemoteIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNotifySuccessWhenItSucceedThenARegularBounceIsSentBack() throws IOException {
-        AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
-
-        try {
-            smtpClient.connect("localhost", jamesServer.getProbe(SmtpGuiceProbe.class).getSmtpPort().getValue());
-            smtpClient.ehlo(DEFAULT_DOMAIN);
-            smtpClient.mail("<" + FROM + ">");
-            smtpClient.rcpt("<" + RECIPIENT + "> NOTIFY=SUCCESS");
-            smtpClient.sendShortMessageData("A short message...");
-        } finally {
-            smtpClient.disconnect();
-        }
-
-        testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
-            .login(FROM, PASSWORD)
-            .select(TestIMAPClient.INBOX)
-            .awaitMessageCount(awaitAtMostOneMinute, 1);
-    }
-
-    @Test
     public void givenAMailWithNotifyFailureWhenItFailsThenADsnBounceIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
