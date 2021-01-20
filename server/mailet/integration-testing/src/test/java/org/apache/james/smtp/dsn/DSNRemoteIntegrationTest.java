@@ -54,7 +54,7 @@ import org.apache.james.transport.mailets.RecipientRewriteTable;
 import org.apache.james.transport.mailets.RemoteDelivery;
 import org.apache.james.transport.matchers.All;
 import org.apache.james.transport.matchers.DSNFailureRequested;
-import org.apache.james.transport.matchers.DSNSuccessRequested;
+import org.apache.james.transport.matchers.RecipientIsLocal;
 import org.apache.james.util.Host;
 import org.apache.james.util.docker.DockerContainer;
 import org.apache.james.utils.DataProbeImpl;
@@ -103,6 +103,15 @@ public class DSNRemoteIntegrationTest {
                 .putProcessor(CommonProcessors.simpleRoot())
                 .putProcessor(CommonProcessors.error())
                 .putProcessor(directResolutionTransport())
+                .putProcessor(ProcessorConfiguration.builder().state("relay-bounces")
+                    .enableJmx(false)
+                    .addMailet(MailetConfiguration.builder()
+                        .matcher(DSNFailureRequested.class)
+                        .mailet(DSNBounce.class)
+                        .addProperty("defaultStatus", "5.0.0")
+                        .addProperty("action", "failed")
+                        .addProperty("prefix", "[FAILURE]")
+                        .addProperty("messageString", "Your message failed to be delivered")))
                 .putProcessor(CommonProcessors.bounces()))
             .withSmtpConfiguration(SmtpConfiguration.builder()
                 .addHook(DSNEhloHook.class.getName())
@@ -129,28 +138,13 @@ public class DSNRemoteIntegrationTest {
                 .matcher(All.class)
                 .mailet(RecipientRewriteTable.class))
             .addMailet(MailetConfiguration.builder()
+                .mailet(LocalDelivery.class)
+                .matcher(RecipientIsLocal.class))
+            .addMailet(MailetConfiguration.builder()
                 .mailet(RemoteDelivery.class)
                 .matcher(All.class)
-                .addProperty("sendpartial", "true"))
-            .addMailet(MailetConfiguration.builder()
-                .mailet(LocalDelivery.class)
-                .matcher(All.class))
-            .addMailet(MailetConfiguration.builder()
-                .matcher(DSNSuccessRequested.class)
-                .mailet(DSNBounce.class)
-                .addProperty("defaultStatus", "2.0.0")
-                .addProperty("action", "delivered")
-                .addProperty("prefix", "[SUCCESS]")
-                .addProperty("messageString", "Your message was successfully delivered")
-            )
-            .addMailet(MailetConfiguration.builder()
-                .matcher(DSNFailureRequested.class)
-                .mailet(DSNBounce.class)
-                .addProperty("defaultStatus", "5.0.0")
-                .addProperty("action", "failed")
-                .addProperty("prefix", "[FAILURE]")
-                .addProperty("messageString", "Your message failed to be delivered")
-            );
+                .addProperty("sendpartial", "true")
+                .addProperty("bounceProcessor", "relay-bounces"));
     }
 
     @Test
