@@ -237,7 +237,7 @@ public class DSNLocalIntegrationTest {
     }
 
     @Test
-    public void givenAMailWithNoNotifyWhenItFailsThenARegularBounceIsSentBack() throws IOException {
+    public void givenAMailWithNoNotifyWhenItFailsThenADSNBounceIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
@@ -250,13 +250,17 @@ public class DSNLocalIntegrationTest {
             smtpClient.disconnect();
         }
 
-        String bounceMessage = testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
+        String dsnMessage = testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
             .awaitMessageCount(awaitAtMostOneMinute, 1)
             .readFirstMessage();
 
-        Assertions.assertThat(bounceMessage).contains("I'm afraid I wasn't able to deliver your message to the following addresses.\nThis is a permanent error; I've given up. Sorry it didn't work out.  Below\nI include the list of recipients and the reason why I was unable to deliver\nyour message.\n");
+        Assertions.assertThat(dsnMessage).contains("Subject: [FAILURE]");
+        Assertions.assertThat(dsnMessage).contains("Status: 5.0.0");
+        Assertions.assertThat(dsnMessage).contains("Your message failed to be delivered\n" +
+            "Failed recipient(s):\n" +
+            "failing@james.org");
     }
 
     @Test
