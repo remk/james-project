@@ -53,7 +53,6 @@ import org.apache.james.transport.matchers.All;
 import org.apache.james.transport.matchers.DSNFailureRequested;
 import org.apache.james.transport.matchers.DSNSuccessRequested;
 import org.apache.james.transport.matchers.RecipientIs;
-import org.apache.james.transport.matchers.RecipientIsRegex;
 import org.apache.james.utils.DataProbeImpl;
 import org.apache.james.utils.SMTPMessageSender;
 import org.apache.james.utils.TestIMAPClient;
@@ -300,7 +299,7 @@ class DSNLocalIntegrationTest {
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
-            .awaitNoMessage(awaitAtMostOneMinute);
+            .awaitNoMessage(AWAIT_NO_MESSAGE);
     }
 
     @Test

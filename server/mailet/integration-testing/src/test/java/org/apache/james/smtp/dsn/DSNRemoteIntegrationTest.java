@@ -31,7 +31,7 @@ import static org.apache.james.util.docker.Images.MOCK_SMTP_SERVER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.net.smtp.AuthenticatingSMTPClient;
 import org.apache.james.dnsservice.api.DNSService;
@@ -63,6 +63,9 @@ import org.apache.james.util.docker.DockerContainer;
 import org.apache.james.utils.DataProbeImpl;
 import org.apache.james.utils.SMTPMessageSender;
 import org.apache.james.utils.TestIMAPClient;
+import org.awaitility.Awaitility;
+import org.awaitility.Duration;
+import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -78,6 +81,7 @@ class DSNRemoteIntegrationTest {
     private static final String ANOTHER_DOMAIN = "other.com";
     private static final String FROM = "from@" + DEFAULT_DOMAIN;
     private static final String RECIPIENT = "touser@" + ANOTHER_DOMAIN;
+    private static final ConditionFactory AWAIT_NO_MESSAGE = Awaitility.with().pollDelay(new Duration(2, TimeUnit.SECONDS)).timeout(Duration.FIVE_SECONDS);
 
     private InMemoryDNSService inMemoryDNSService;
     private ConfigurationClient mockSMTPConfiguration;
@@ -167,7 +171,7 @@ class DSNRemoteIntegrationTest {
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
-            .awaitNoMessage(awaitAtMostOneMinute);
+            .awaitNoMessage(AWAIT_NO_MESSAGE);
     }
 
     @Test
@@ -187,7 +191,7 @@ class DSNRemoteIntegrationTest {
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
-            .awaitNoMessage(awaitAtMostOneMinute);
+            .awaitNoMessage(AWAIT_NO_MESSAGE);
     }
 
     @Disabled("JAMES-3431 DSN relayed notifications cannot be generated as RemoteDelivery lacks a 'success' callback")
@@ -228,7 +232,7 @@ class DSNRemoteIntegrationTest {
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
-            .awaitNoMessage(awaitAtMostOneMinute);
+            .awaitNoMessage(AWAIT_NO_MESSAGE);
     }
 
     @Test
@@ -274,7 +278,7 @@ class DSNRemoteIntegrationTest {
         testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
-            .awaitNoMessage(awaitAtMostOneMinute);
+            .awaitNoMessage(AWAIT_NO_MESSAGE);
     }
 
     @Test
