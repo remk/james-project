@@ -62,6 +62,7 @@ import org.apache.james.utils.SMTPMessageSender;
 import org.apache.james.utils.TestIMAPClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
@@ -192,6 +193,7 @@ public class DSNRemoteIntegrationTest {
             .awaitNoMessage(awaitAtMostOneMinute);
     }
 
+    @Disabled("JAMES-3431 DSN relayed notifications cannot be generated as RemoteDelivery lacks a 'success' callback")
     @Test
     public void givenAMailWithNotifySuccessWhenItSucceedThenADsnSuccessIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
