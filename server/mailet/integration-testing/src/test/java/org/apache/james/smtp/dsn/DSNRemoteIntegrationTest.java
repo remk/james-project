@@ -63,6 +63,7 @@ import org.apache.james.util.docker.DockerContainer;
 import org.apache.james.utils.DataProbeImpl;
 import org.apache.james.utils.SMTPMessageSender;
 import org.apache.james.utils.TestIMAPClient;
+import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.awaitility.core.ConditionFactory;
@@ -209,10 +210,17 @@ class DSNRemoteIntegrationTest {
             smtpClient.disconnect();
         }
 
-        testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
+        String dsnMessage = testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
-            .awaitMessageCount(awaitAtMostOneMinute, 1);
+            .awaitMessageCount(awaitAtMostOneMinute, 1)
+            .readFirstMessage();
+
+        Assertions.assertThat(dsnMessage).contains("Subject: [SUCCESS]");
+        Assertions.assertThat(dsnMessage).contains("Status: 2.0.0");
+        Assertions.assertThat(dsnMessage).contains("Your message was successfully delivered\n" +
+            "Delivered recipient(s):\n" +
+            "touser@other.com");
     }
 
     @Test
@@ -255,10 +263,17 @@ class DSNRemoteIntegrationTest {
             smtpClient.disconnect();
         }
 
-        testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
+        String dsnMessage = testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
-            .awaitMessageCount(awaitAtMostOneMinute, 1);
+            .awaitMessageCount(awaitAtMostOneMinute, 1)
+            .readFirstMessage();
+
+        Assertions.assertThat(dsnMessage).contains("Subject: [FAILURE]");
+        Assertions.assertThat(dsnMessage).contains("Status: 521 mock response");
+        Assertions.assertThat(dsnMessage).contains("Your message failed to be delivered\n" +
+            "Failed recipient(s):\n" +
+            "touser@other.com");
     }
 
     @Test
@@ -301,10 +316,17 @@ class DSNRemoteIntegrationTest {
             smtpClient.disconnect();
         }
 
-        testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
+        String dsnMessage = testIMAPClient.connect(LOCALHOST_IP, jamesServer.getProbe(ImapGuiceProbe.class).getImapPort())
             .login(FROM, PASSWORD)
             .select(TestIMAPClient.INBOX)
-            .awaitMessageCount(awaitAtMostOneMinute, 1);
+            .awaitMessageCount(awaitAtMostOneMinute, 1)
+            .readFirstMessage();
+
+        Assertions.assertThat(dsnMessage).contains("Subject: [FAILURE]");
+        Assertions.assertThat(dsnMessage).contains("Status: 521 mock response");
+        Assertions.assertThat(dsnMessage).contains("Your message failed to be delivered\n" +
+            "Failed recipient(s):\n" +
+            "touser@other.com");
     }
 
     @AfterEach
