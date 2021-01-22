@@ -182,7 +182,7 @@ class DSNRemoteIntegrationTest {
     }
 
     @Test
-    void givenAMailWithNoNotifyWhenItSucceedThenNoEmailIsSentBack() throws Exception {
+    void givenAMailWithNoNotifyWhenItSucceedsThenNoEmailIsSentBack() throws Exception {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
