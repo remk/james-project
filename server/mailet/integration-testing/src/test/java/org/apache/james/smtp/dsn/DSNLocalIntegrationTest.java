@@ -149,7 +149,7 @@ class DSNLocalIntegrationTest {
     }
 
     @Test
-    void givenAMailWithNoNotifyWhenItSucceedThenNoDsnIsSentBack() throws IOException {
+    void givenAMailWithNoNotifyWhenItSucceedsThenNoDsnIsSentBack() throws IOException {
         AuthenticatingSMTPClient smtpClient = new AuthenticatingSMTPClient("TLS", "UTF-8");
 
         try {
